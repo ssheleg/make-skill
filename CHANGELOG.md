@@ -1,5 +1,23 @@
 # Changelog
 
+## v0.2.0 — 2026-07-24
+
+Correct multi-agent + cross-platform distribution guidance (learned shipping the
+`sshlg-skills` umbrella).
+
+- **skills CLI, multiple agents:** documented that multiple agents need
+  **repeated `--agent` flags** (`--agent cursor --agent zed`) — a comma/space
+  value is read as one invalid agent. Exact agent ids (`kimi` → `kimi-code-cli`,
+  `hermes` → `hermes-agent`), the `universal`/`*` targets, and the
+  `--agent __x__` trick to print the valid list.
+- **Umbrella / family distribution** (new matrix item): ship a family of skills
+  from their own repos aggregated as git submodules, with a zero-dep launcher
+  wrapping `npx skills add` + `claude plugin` + `git submodule update --remote`
+  and a `skills.json` source of truth — reference impl `ssheleg/sshlg-skills`.
+- **Platforms:** the Node installer, `npx github:`, the plugin, and the skills
+  CLI are cross-platform; `install.sh` is POSIX-only (on Windows use npx/plugin/
+  skills CLI). Build bin paths with `path.join`, never hardcoded `/`.
+
 ## v0.1.0 — 2026-07-24
 
 Initial release — the `make-skill` meta-skill promoted from a personal skill into

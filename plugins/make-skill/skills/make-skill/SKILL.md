@@ -158,11 +158,16 @@ duplicate skill listings confuse agents.
 2. **vercel-labs skills CLI (70+ agents):** `npx skills add <owner>/<repo>`
    — discovers skills through `.claude-plugin/marketplace.json`
    automatically; correct manifest = free compatibility. Non-interactive
-   flags: `--agent <name>|'*'`, `--global`, `--yes`, `--all` (= `--skill '*'
-   --agent '*' -y`); update with `npx skills update <name> --global --yes`.
-   Copies land in `~/.agents/skills/<name>`. **Do NOT `--agent '*'` when the
-   skill is also a Claude Code plugin** — it re-creates a `~/.claude/skills`
-   copy that shadows the plugin (see Gotchas).
+   flags: `--global`, `--yes`, `--all` (= `--skill '*' --agent '*' -y`);
+   update with `npx skills update <name> --global --yes`. Copies land in
+   `~/.agents/skills/<name>`. **Multiple agents = REPEATED `--agent` flags**
+   (`--agent cursor --agent zed`); a comma/space-joined value
+   (`--agent cursor,zed`) is read as one invalid agent. Agent ids are exact:
+   `kimi` → `kimi-code-cli`, `hermes` → `hermes-agent`; `universal` and `*`
+   target everything; `npx skills add <repo> --agent __x__` prints the valid
+   list. **Do NOT include `claude-code` (or `--agent '*'`) when the skill is
+   also a Claude Code plugin** — it re-creates a `~/.claude/skills` copy that
+   shadows the plugin (see Gotchas).
 3. **npx installer:** package.json (`bin`, `files` whitelist) + zero-dep
    CLI; works WITHOUT registry publish via `npx github:<owner>/<repo>`;
    registry publish only buys the short `npx <name>`.
@@ -173,6 +178,20 @@ duplicate skill listings confuse agents.
    `globs`); NO relative links inside .mdc (copied into foreign projects —
    embed contracts inline). Cursor has no native *global rules* dir, so global
    = skills CLI, per-project = `.mdc`, or paste into Cursor Settings → Rules.
+5. **Ship a FAMILY via an umbrella repo** (reference: `ssheleg/sshlg-skills`):
+   the skills live in their own repos, aggregated as git **submodules**, with a
+   zero-dep **launcher** that wraps the three engines above — `npx skills add`
+   (non-Claude agents, repeated `--agent`), `claude plugin` (Claude Code, to
+   avoid the shadow copy), and `git submodule update --remote` (bump pinned
+   snapshots on `update`). A `skills.json` manifest is the source of truth; the
+   validator keeps it in sync with `.gitmodules`. One command installs/updates
+   the whole family everywhere.
+
+**Platforms.** The Node installer (`bin/*.js`, `os.homedir()`/`path.join`), `npx
+github:…`, the Claude Code plugin, and the skills CLI are **cross-platform**
+(macOS / Linux / Windows). `install.sh` is POSIX-only — on Windows use `npx`,
+the plugin, or the skills CLI, never `install.sh`. Keep bin paths built with
+`path.join`, never hardcoded `/`.
 
 ## Gotchas (each cost a debugging round)
 
