@@ -185,6 +185,11 @@ duplicate skill listings confuse agents.
   names are exempt) + `"publishConfig": {"access": "public"}` so `npm publish`
   needs no flag; or pick a clearly dissimilar unscoped name. The `bin` command
   name is independent of the package name — keep it short even when scoped.
+- **First scoped publish lags the read path:** right after a successful publish,
+  `npm view @scope/pkg` can still E404 for ~1–2 min (write-master has it, read
+  replica hasn't). A publish that 403s "cannot publish over previously published
+  versions" PROVES it already landed — poll `npm view`, don't re-publish or assume
+  failure.
 - **npx inside the package's own repo** resolves to the local package →
   false `command not found`. Always e2e-test from another cwd.
 - **Piped stdin + readline:** sequential `rl.question()` drops buffered
