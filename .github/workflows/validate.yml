@@ -1,0 +1,65 @@
+name: validate
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Structural validator
+        run: python3 test/validate.py
+
+      - name: Negative self-test (validator must be able to fail)
+        run: |
+          set -eu
+          cp -R . /tmp/corrupt-copy
+          sed -i 's/"version": "[0-9.]*"/"version": "0.0.0-corrupt"/' \
+            /tmp/corrupt-copy/plugins/make-skill/.claude-plugin/plugin.json
+          if python3 /tmp/corrupt-copy/test/validate.py; then
+            echo "ERROR: validator passed on a corrupted copy — it cannot fail"
+            exit 1
+          else
+            echo "OK: validator correctly FAILs on corrupted copy"
+          fi
+
+      - name: Negative self-test (missing template must fail)
+        run: |
+          set -eu
+          cp -R . /tmp/notmpl-copy
+          rm -f /tmp/notmpl-copy/templates/SKILL.md
+          if python3 /tmp/notmpl-copy/test/validate.py; then
+            echo "ERROR: validator passed with templates/SKILL.md missing"
+            exit 1
+          else
+            echo "OK: validator requires the template skeleton"
+          fi
+
+      - name: install.sh syntax check
+        run: bash -n install.sh
+
+      - name: npm installer CLI check
+        run: node --check bin/make-skill.js
+
+      - name: npm installer functional test (fresh / rerun-skip / --force)
+        run: |
+          set -eu
+          export HOME=/tmp/fakehome
+          mkdir -p "$HOME"
+          node bin/make-skill.js
+          test -f "$HOME/.claude/skills/make-skill/SKILL.md"
+          test -f "$HOME/.claude/commands/make-skill.md"
+          node bin/make-skill.js | grep -q '^skip:'
+          node bin/make-skill.js --force | grep -q '^Installed'
+          if node bin/make-skill.js --wat; then
+            echo "ERROR: unknown arg accepted"; exit 1
+          fi
+          echo "OK: npm installer behaves"
+
+      - name: Workflow YAML parses (validate + release)
+        run: |
+          python3 -m pip install --quiet pyyaml
+          python3 -c "import yaml; yaml.safe_load(open('.github/workflows/release.yml')); yaml.safe_load(open('.github/workflows/validate.yml')); print('workflows parse OK')"

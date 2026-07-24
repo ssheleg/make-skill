@@ -1,0 +1,55 @@
+---
+description: "make-skill: create, retrofit, or publish an agent skill / plugin the proven ssheleg way — marketplace repo layout, four-way version sync, validator + CI, multi-channel distribution (Claude Code plugin, skills CLI, npx, Cursor), npm gotchas. Apply when creating a new skill, upgrading one to standard, or wrapping one into a plugin."
+alwaysApply: false
+---
+
+# make-skill — ship skills the proven way (Cursor)
+
+Self-contained rule (Cursor copies this into projects — no external links).
+
+## Authoring rules (every skill)
+
+- Front-matter: `name` == directory name; `description` starts "Use when …" with
+  concrete trigger phrases in English AND Russian. A skill nobody triggers is dead
+  weight.
+- One skill = one job. Multiple concerns → multiple skills + a shared contract file.
+- Body: imperative, procedural, checklists over prose. State non-negotiables as such.
+- Commands are thin wrappers: front-matter `description` (+ `argument-hint`), body =
+  "invoke skill X in mode Y", pass `$ARGUMENTS`.
+- Never overwrite user data: seed only when absent; overwrite only behind `--force`.
+
+## Distributable repo layout
+
+```
+.claude-plugin/marketplace.json            # plugins[0].source: ./plugins/<name>
+plugins/<name>/.claude-plugin/plugin.json
+plugins/<name>/commands/*.md
+plugins/<name>/skills/<skill>/SKILL.md (+ references/*.md)
+cursor/rules/*.mdc                         # self-contained, NO relative links
+templates/*.md                             # skeletons seeded into projects
+bin/<name>.js + package.json               # zero-dep npx installer
+test/validate.py                           # stdlib-only consistency validator
+.github/workflows/validate.yml (+ release.yml, off by default)
+install.sh, README.md (EN+RU), CHANGELOG.md, LICENSE (MIT)
+docs/superpowers/{specs,plans}/
+```
+
+## Hard rules
+
+- **Version sync:** marketplace.json, plugin.json, package.json (if npm), and the
+  top CHANGELOG entry carry the SAME semver, bumped together; the validator enforces.
+- **Validator must be able to fail:** CI runs a negative self-test (corrupt a copy →
+  expect FAIL). A validator that can't fail is decoration.
+- **One channel per agent:** don't run a plugin AND a plain `~/.claude/skills` copy
+  on the same install — the stale plain copy shadows the plugin.
+- **npm name first:** `npm view <name>` (E404 = free). **npm publish = human 2FA.**
+- **Cursor .mdc:** embed contracts inline (files get copied into foreign projects).
+- **e2e npx from a NON-repo cwd** (inside the repo it resolves the local package →
+  false "command not found").
+
+## Distribution
+
+Claude Code plugin (`claude plugin marketplace add` → `install <name>@<name>`),
+vercel skills CLI (`npx skills add <owner>/<repo>`, discovers via marketplace.json),
+npx (`npx github:<owner>/<repo>`, or the registry after publish), Cursor (global via
+`npx skills add … --agent cursor --global`, or per-project `.cursor/rules/*.mdc`).
