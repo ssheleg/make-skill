@@ -12,9 +12,11 @@ a full distributable plugin, built to its own canon.
   + release automation).
 - **Command** `/make-skill`: routes a task to the right workflow.
 - **Distribution (5 channels):** Claude Code plugin/marketplace, vercel skills CLI
-  (`npx skills add`), npm (`make-skill`) + `npx github:`, plain `install.sh`
-  (idempotent, `--force`), and a self-contained Cursor rule
-  (`cursor/rules/make-skill.mdc`).
+  (`npx skills add`), npm (**`@ssheleg/make-skill`** — scoped, because npm blocks
+  the bare `make-skill` as too similar to an existing package) + `npx github:`,
+  plain `install.sh` (idempotent, `--force`), and a self-contained Cursor rule
+  (`cursor/rules/make-skill.mdc`). Plugin, command, and `bin` names stay
+  `make-skill`; only the npm package is scoped.
 - **templates/SKILL.md**: canon skeleton seeded when scaffolding a new skill.
 - **Validator** (`test/validate.py`, stdlib-only): name sync, four-way version
   sync (marketplace / plugin.json / package.json / CHANGELOG top), command +

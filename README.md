@@ -1,6 +1,6 @@
 # make-skill
 
-[![npm](https://img.shields.io/npm/v/make-skill)](https://www.npmjs.com/package/make-skill)
+[![npm](https://img.shields.io/npm/v/@ssheleg/make-skill)](https://www.npmjs.com/package/@ssheleg/make-skill)
 [![validate](https://github.com/ssheleg/make-skill/actions/workflows/validate.yml/badge.svg)](https://github.com/ssheleg/make-skill/actions/workflows/validate.yml)
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
@@ -45,7 +45,7 @@ npx skills add ssheleg/make-skill
 **npm / npx (no clone):**
 ```
 npx github:ssheleg/make-skill     # straight from GitHub
-npx make-skill                    # from the npm registry
+npx @ssheleg/make-skill           # from the npm registry (scoped — npm blocks the bare name)
 ```
 
 **Cursor:**
@@ -69,7 +69,7 @@ Claude Code install shadow each other).
 |---|---|
 | Claude Code (plugin) | `claude plugin marketplace update make-skill` → `claude plugin update make-skill@make-skill` → restart |
 | Any agent (skills CLI) | `npx skills update make-skill --global --yes` |
-| npm | `npx make-skill@latest` / `npx github:ssheleg/make-skill` |
+| npm | `npx @ssheleg/make-skill@latest` / `npx github:ssheleg/make-skill` |
 | Plain skill | `git pull && ./install.sh --force` |
 
 ## Use

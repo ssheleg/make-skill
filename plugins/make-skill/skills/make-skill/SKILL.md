@@ -178,7 +178,13 @@ duplicate skill listings confuse agents.
 
 - **npm 2FA:** publish throws EOTP; non-interactive impossible without a
   granular automation token. Plan as the one human step; verify after.
-- **Check npm name FIRST:** `npm view <name>` → E404 means free.
+- **Check npm name FIRST:** `npm view <name>` → E404 means free. But E404 on
+  `view` ≠ publishable: npm's **name-similarity** policy only fires on PUT, so
+  `npm publish` can still 403 "too similar to existing package <x>" (e.g.
+  `make-skill` vs `makeskill`). Fix: a **scoped** name `@<user>/<name>` (scoped
+  names are exempt) + `"publishConfig": {"access": "public"}` so `npm publish`
+  needs no flag; or pick a clearly dissimilar unscoped name. The `bin` command
+  name is independent of the package name — keep it short even when scoped.
 - **npx inside the package's own repo** resolves to the local package →
   false `command not found`. Always e2e-test from another cwd.
 - **Piped stdin + readline:** sequential `rl.question()` drops buffered

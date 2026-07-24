@@ -21,9 +21,9 @@ function usage() {
   console.log(`make-skill installer
 
 Usage:
-  npx make-skill [--force]   install skill + /make-skill command into ~/.claude
-                             (skip existing unless --force)
-  npx make-skill --help
+  npx @ssheleg/make-skill [--force]   install skill + /make-skill command into
+                                      ~/.claude (skip existing unless --force)
+  npx @ssheleg/make-skill --help
 
 Other install paths:
   Claude Code plugin:  /plugin marketplace add ${REPO}
