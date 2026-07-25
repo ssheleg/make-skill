@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.3.1 — 2026-07-25
+
+- Gotcha: **npm reports auth failures as `404` on publish.** A `PUT … 404` for a
+  package that `npm view` resolves means an expired token, not a missing package —
+  check `npm whoami` (E401 → `npm login`) before debugging the name. Cost two
+  debugging rounds.
+
 ## v0.3.0 — 2026-07-25
 
 Review pass — a live shipping defect plus canon corrections that the repo itself

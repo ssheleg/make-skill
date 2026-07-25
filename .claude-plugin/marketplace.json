@@ -9,7 +9,7 @@
       "name": "make-skill",
       "source": "./plugins/make-skill",
       "description": "Encodes the proven ssheleg skill pipeline: marketplace repo layout, four-way version sync, validator + CI, multi-channel distribution (Claude Code plugin, vercel skills CLI, npx, Cursor), npm gotchas, and end-to-end first publish. Reference impls: super-ux (structure) + task-pipeline (config-contract + release automation).",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "author": { "name": "ssheleg" },
       "keywords": ["skill", "plugin", "scaffold", "marketplace", "validator", "distribution", "claude-code", "cursor"],
       "category": "development"

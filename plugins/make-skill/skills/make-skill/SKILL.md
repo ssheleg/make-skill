@@ -214,6 +214,12 @@ the plugin, or the skills CLI, never `install.sh`. Keep bin paths built with
   names are exempt) + `"publishConfig": {"access": "public"}` so `npm publish`
   needs no flag; or pick a clearly dissimilar unscoped name. The `bin` command
   name is independent of the package name — keep it short even when scoped.
+- **npm masks auth failures as 404 on publish.** A `PUT … 404 Not Found` for a
+  package that demonstrably exists (`npm view <name> version` returns a version)
+  is an EXPIRED TOKEN, not a missing/renamed package — npm hides 401/403 on write
+  so it can't be used to probe ownership. Always check `npm whoami` first: E401 →
+  `npm login`, then re-publish. npm sessions expire faster than you expect; before
+  a batch publish, run `npm whoami` once rather than debugging four 404s.
 - **First scoped publish lags the read path:** right after a successful publish,
   `npm view @scope/pkg` can still E404 for ~1–2 min (write-master has it, read
   replica hasn't). A publish that 403s "cannot publish over previously published
