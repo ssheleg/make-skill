@@ -1,5 +1,28 @@
 # Changelog
 
+## v0.3.0 — 2026-07-25
+
+Review pass — a live shipping defect plus canon corrections that the repo itself
+was violating.
+
+- **FIX (shipping defect): `templates/SKILL.md` was distributed as a real skill.**
+  The skills CLI discovers EVERY `SKILL.md` in a repo, so the skeleton was listed
+  and installed on every agent as a placeholder skill literally named
+  `<skill-name>` (`npx skills add ssheleg/make-skill --list` → "Found 2 skills").
+  Renamed to `templates/SKILL.template.md`; the validator now **rejects any
+  `SKILL.md` outside `plugins/*/skills/*/`** so it cannot recur.
+- **Canon: shared contracts must live INSIDE the skill dir.** The skills CLI
+  ships only the skill's own directory, so a sibling `skills/references/`
+  (linked `../references/…`) reaches Claude Code plugins but arrives broken on
+  every other agent. Layout, authoring rules and the retrofit checklist updated;
+  new gotcha documents both this and the stray-SKILL.md trap.
+- **Validator hardened** (it now enforces what the canon preaches): description
+  must start "Use when …", must carry Russian triggers, frontmatter < 1024 chars,
+  no relative links inside `.mdc`, no stray `SKILL.md`. Each rule has a negative
+  test.
+- **Docs:** README no longer suggests the skills CLI for Claude Code (it shadows
+  the plugin); release checklist quotes the validator's real output.
+
 ## v0.2.0 — 2026-07-24
 
 Correct multi-agent + cross-platform distribution guidance (learned shipping the

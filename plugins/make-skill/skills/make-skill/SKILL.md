@@ -37,8 +37,14 @@ skills and rules are written against that contract, never ad hoc.
 - Front-matter: `name` MUST equal the directory name; `description` starts
   "Use when …" and lists concrete trigger phrases — English AND Russian
   (user works in both). A skill nobody triggers is dead weight.
-- One skill = one job. Multiple concerns → multiple skills + shared contract
-  in `skills/references/<contract>.md`, linked relatively (`../references/…`).
+- One skill = one job. Multiple concerns → multiple skills + a shared contract
+  file. **Put contracts INSIDE the skill dir** (`skills/<skill>/references/…`,
+  linked `references/…`) — the skills CLI ships only the skill's OWN directory,
+  so a SIBLING `skills/references/` (linked `../references/…`) reaches Claude
+  Code plugins but arrives **broken on every other agent** (dangling links, the
+  agent can't read the contract). If several skills must share one contract,
+  either duplicate it into each skill dir (validator-checked identical) or state
+  a raw-URL fallback in the body.
 - Body: imperative, procedural, checklists over prose. Non-negotiables
   stated as such (model: super-ux "Evidence discipline").
 - Commands (`commands/*.md`) are thin wrappers: front-matter `description`
@@ -65,9 +71,9 @@ path if it proves useful.
 ├── plugins/<name>/
 │   ├── .claude-plugin/plugin.json
 │   ├── commands/*.md
-│   └── skills/<skill>/SKILL.md  +  skills/references/*.md
+│   └── skills/<skill>/SKILL.md  +  skills/<skill>/references/*.md
 ├── cursor/rules/*.mdc                  # if agent-rules make sense for Cursor
-├── templates/*.md                      # skeletons the skills seed into projects
+├── templates/*.md                      # skeletons (NEVER name one SKILL.md — see Gotchas)
 ├── bin/<name>.js + package.json        # npx installer (zero-dep Node)
 ├── test/validate.py                    # consistency validator (stdlib only)
 ├── .github/workflows/validate.yml      # validator on push+PR
@@ -80,8 +86,11 @@ path if it proves useful.
 top CHANGELOG entry — SAME semver, bumped together, validator enforces.
 
 **Validator** (adapt super-ux `test/validate.py`): manifests parse+fields;
-SKILL.md front-matter (name==dir, description); command front-matter; `.mdc`
-front-matter; templates exist; relative md links resolve; version sync.
+SKILL.md front-matter (name==dir, description starts "Use when", EN+RU
+triggers, <1024 chars); command front-matter; `.mdc` front-matter AND no
+relative links inside `.mdc`; **no stray `SKILL.md` outside
+`plugins/*/skills/*/`**; templates exist; relative md links resolve; version
+sync.
 Plus a negative self-test (corrupt a copy → expect FAIL) — a validator that
 can't fail is decoration.
 
@@ -122,8 +131,9 @@ with evidence (`file:line` or command output) — never "looks fine".
 **Audit checklist:**
 
 1. Front-matter: name==dir; description "Use when…" + EN and RU triggers.
-2. One-job check; shared contracts extracted to `references/`, linked
-   relatively; no format duplication drift between skills.
+2. One-job check; shared contracts INSIDE the skill dir
+   (`skills/<skill>/references/…`), not a sibling — verify by installing via
+   the skills CLI and checking the contract files actually arrived.
 3. Entry-point command exists, idempotent (inspect → repair → status → one
    next action).
 4. Layout matches the standard tree; manifests complete; version sync ×4.
@@ -211,6 +221,13 @@ the plugin, or the skills CLI, never `install.sh`. Keep bin paths built with
   failure.
 - **npx inside the package's own repo** resolves to the local package →
   false `command not found`. Always e2e-test from another cwd.
+- **A stray `SKILL.md` anywhere in the repo ships as a REAL skill.** The skills
+  CLI discovers every `SKILL.md` in the tree, so a skeleton at
+  `templates/SKILL.md` gets installed into every agent as a placeholder skill
+  (seen live: a skill literally named `<skill-name>`). Name skeletons
+  `SKILL.template.md` and make the validator reject any `SKILL.md` outside
+  `plugins/*/skills/*/`. Verify with `npx skills add <repo> --list` — it must
+  list ONLY your real skills.
 - **Piped stdin + readline:** sequential `rl.question()` drops buffered
   lines; use ONE persistent-listener prompter for the whole flow (super-ux
   `makePrompter`). Non-TTY fallback for every prompt (`1,3`/`all`/`q`).
@@ -236,7 +253,7 @@ the plugin, or the skills CLI, never `install.sh`. Keep bin paths built with
 
 1. Bump the four versions together (`package.json` only if npm-distributed —
    else it's a 3-way sync); CHANGELOG entry.
-2. `python3 test/validate.py` → `OK (<n> checks)`.
+2. `python3 test/validate.py` → exit 0 (`PASS: …`).
 3. Functional tests: installer against scratch dir (fresh / rerun-skip /
    `--force`), `node --check` on CLI, pipe-driven menu tests.
 4. Conventional commit; push; confirm CI `success`; tag `v<ver>` + push tag;

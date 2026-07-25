@@ -64,6 +64,14 @@ else:
             fail("SKILL.md: empty/missing name")
         if not dm or not dm.group(1).strip():
             fail("SKILL.md: empty/missing description")
+        else:
+            desc = dm.group(1).strip().strip('"').strip("'")
+            if not desc.lower().startswith("use when"):
+                fail("SKILL.md: description must start with 'Use when …' (canon)")
+            if not re.search(r"[а-яё]", desc, re.I):
+                fail("SKILL.md: description must include Russian trigger phrases too (canon)")
+        if len(fm) > 1024:
+            fail(f"SKILL.md: frontmatter is {len(fm)} chars, must be under 1024")
 
 # name sync across the three sources of truth
 for label, val in {"marketplace": mkt_name, "plugin.json": plg_name, "frontmatter": fm_name}.items():
@@ -139,13 +147,30 @@ for f in mdcs:
         fail(f"cursor/rules/{f}: empty/missing description")
     if not re.search(r"^alwaysApply:\s*(true|false)\s*$", mfm, re.M):
         fail(f"cursor/rules/{f}: alwaysApply must be true or false")
+    # .mdc files get copied into foreign projects — any relative link dangles there.
+    for target in re.findall(r"\[[^\]]*\]\(([^)\s]+)\)", mtxt):
+        if not target.startswith(("http://", "https://", "mailto:", "#")):
+            fail(f"cursor/rules/{f}: relative link {target!r} — .mdc must embed contracts inline")
 
-# templates/: at least the SKILL.md skeleton
+# templates/: the skeleton must NOT be named SKILL.md — the skills CLI discovers
+# every SKILL.md in the repo and would ship the placeholder as a real skill.
 tpl_dir = os.path.join(ROOT, "templates")
 if not os.path.isdir(tpl_dir):
     fail("missing templates/ directory")
-elif not os.path.isfile(os.path.join(tpl_dir, "SKILL.md")):
-    fail("missing template: templates/SKILL.md")
+elif not os.path.isfile(os.path.join(tpl_dir, "SKILL.template.md")):
+    fail("missing template: templates/SKILL.template.md")
+
+# HARD RULE: a SKILL.md may exist ONLY inside plugins/<plugin>/skills/<skill>/.
+# Anywhere else (templates/, docs/, examples/) the skills CLI picks it up and
+# installs a bogus skill into every agent.
+for dirpath, dirnames, filenames in os.walk(ROOT):
+    dirnames[:] = [d for d in dirnames if d not in (".git", "node_modules")]
+    if "SKILL.md" not in filenames:
+        continue
+    rel = os.path.relpath(os.path.join(dirpath, "SKILL.md"), ROOT)
+    if not re.match(r"^plugins/[^/]+/skills/[^/]+/SKILL\.md$", rel):
+        fail(f"stray SKILL.md at {rel} — the skills CLI would ship it as a skill; "
+             f"rename it (e.g. SKILL.template.md) or move it under plugins/<p>/skills/<s>/")
 
 # required root files
 for r in ("README.md", "LICENSE"):

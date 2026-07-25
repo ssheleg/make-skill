@@ -37,7 +37,7 @@ this canon.
 /plugin install make-skill@make-skill
 ```
 
-**Any agent via the skills CLI (Claude Code, Cursor, Codex, 70+):**
+**Any agent via the skills CLI (Cursor, Codex, OpenCode, 70+ — not Claude Code, use the plugin above):**
 ```
 npx skills add ssheleg/make-skill
 ```
@@ -68,7 +68,7 @@ Claude Code install shadow each other).
 | Channel | Update |
 |---|---|
 | Claude Code (plugin) | `claude plugin marketplace update make-skill` → `claude plugin update make-skill@make-skill` → restart |
-| Any agent (skills CLI) | `npx skills update make-skill --global --yes` |
+| Any agent (skills CLI) | `npx skills update make-skill --global --yes` (repeated `--agent`; never `claude-code`) |
 | npm | `npx @ssheleg/make-skill@latest` / `npx github:ssheleg/make-skill` |
 | Plain skill | `git pull && ./install.sh --force` |
 
@@ -83,7 +83,7 @@ Say *"make a skill"* / *"сделай скилл"* / *"приведи скилл
 .claude-plugin/marketplace.json
 plugins/make-skill/{.claude-plugin/plugin.json, commands/make-skill.md, skills/make-skill/SKILL.md}
 cursor/rules/make-skill.mdc          # self-contained Cursor rule
-templates/SKILL.md                   # skeleton seeded into new skills
+templates/SKILL.template.md                   # skeleton seeded into new skills
 bin/make-skill.js + package.json     # npx installer
 test/validate.py                     # structural validator (+ negative self-test in CI)
 .github/workflows/{validate,release}.yml

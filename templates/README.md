@@ -5,7 +5,7 @@ is absent; never overwrite existing files.
 
 | Template | Seeds | Used by |
 |---|---|---|
-| `SKILL.md` | a new `skills/<name>/SKILL.md` with canon frontmatter + section stubs | Create / Promote |
+|  `SKILL.template.md` | a new `skills/<name>/SKILL.md` with canon frontmatter + section stubs | Create / Promote |
 
 Distributable repos also get the full tree (manifests, `bin/`, `test/validate.py`,
 workflows, `install.sh`, README/CHANGELOG/LICENSE) — copy those from a reference
