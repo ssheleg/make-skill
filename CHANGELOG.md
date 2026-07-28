@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.6.1 — 2026-07-28
+
+Open-source hygiene pass — the repo is public, so the files a first-time
+contributor looks for now exist.
+
+### Added
+- `CODE_OF_CONDUCT.md`, issue forms for bugs and ideas, and a pull-request
+  template carrying this repo's actual checks (`test/validate.py`, `bash -n
+  install.sh`).
+- US spelling in the changelog.
+
 ## v0.6.0 — 2026-07-28
 
 Production pass for a public repository: the README now explains the project

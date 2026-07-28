@@ -1,0 +1,22 @@
+name: Idea or improvement
+description: Suggest a change to make-skill
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What are you trying to do that is awkward or impossible today? Describe the situation, not the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you would like instead
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: If this is a claim about how something behaves, what backs it up? Links, measurements, or a reproduction beat intuition.

@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Install or update problems across agents
+    url: https://github.com/ssheleg/sshlg-skills/issues
+    about: The launcher that installs this and the other four skills lives there.
+  - name: Security vulnerability
+    url: https://github.com/ssheleg/make-skill/security/advisories/new
+    about: Report privately. Please do not open a public issue.

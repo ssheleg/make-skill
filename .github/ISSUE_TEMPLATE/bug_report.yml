@@ -1,0 +1,48 @@
+name: Bug report
+description: Something in make-skill does not work
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: How to reproduce
+      description: The exact steps, command or prompt. Paste the full output; redact anything private.
+      render: shell
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: The installed version of make-skill.
+    validations:
+      required: true
+  - type: input
+    id: agent
+    attributes:
+      label: Agent and OS
+      placeholder: "Claude Code on macOS 15.4 / Cursor on Ubuntu 24.04"
+    validations:
+      required: true
+  - type: checkboxes
+    id: channel
+    attributes:
+      label: Install channel
+      options:
+        - label: Claude Code plugin
+        - label: vercel `skills` CLI (`~/.agents/skills/`)
+        - label: npx installer
+        - label: Cursor rule
+  - type: checkboxes
+    id: shadow
+    attributes:
+      label: Before filing
+      options:
+        - label: "I checked `~/.claude/skills/` for a plain copy shadowing the plugin — the usual cause of \"it behaves like the old version\""
