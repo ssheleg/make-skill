@@ -45,33 +45,142 @@ if mkt:
 plg_name = plg.get("name") if plg else None
 plg_ver = plg.get("version") if plg else None
 
-# SKILL.md frontmatter
-skill_path = os.path.join(ROOT, "plugins/make-skill/skills/make-skill/SKILL.md")
+# --- SKILL.md: Agent Skills spec rules + house canon -------------------------
+# Spec: https://agentskills.io/specification
+SPEC_KEYS = {"name", "description", "license", "compatibility", "metadata", "allowed-tools"}
+NAME_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+BODY_MAX_LINES = 500
+
+
+def strip_quotes(v):
+    v = v.strip()
+    if len(v) >= 2 and v[0] == v[-1] and v[0] in "\"'":
+        return v[1:-1]
+    return v
+
+
+def parse_frontmatter(text):
+    """YAML subset: top-level scalars, folded/literal blocks, one nested map."""
+    data, key, mode = {}, None, None
+    for raw in text.split("\n"):
+        if not raw.strip():
+            continue
+        if raw[0] not in " \t":
+            m = re.match(r"^([A-Za-z0-9_-]+):\s*(.*)$", raw)
+            if not m:
+                key, mode = None, None
+                continue
+            key, val = m.group(1), m.group(2).strip()
+            if val in (">", "|", ">-", "|-", ">+", "|+"):
+                data[key], mode = "", "block"
+            elif val == "":
+                data[key], mode = {}, "map"
+            else:
+                data[key], mode = strip_quotes(val), None
+        elif mode == "block":
+            data[key] = (data[key] + " " + raw.strip()).strip()
+        elif mode == "map":
+            m = re.match(r"^\s+([A-Za-z0-9_-]+):\s*(.*)$", raw)
+            if m:
+                data[key][m.group(1)] = strip_quotes(m.group(2).strip())
+    return data
+
+
+SKILL_DIR = os.path.join(ROOT, "plugins/make-skill/skills/make-skill")
+skill_path = os.path.join(SKILL_DIR, "SKILL.md")
 fm_name = None
+skill_meta = {}
+skill_txt = ""
 if not os.path.isfile(skill_path):
     fail("missing SKILL.md")
 else:
-    txt = open(skill_path, encoding="utf-8").read()
-    m = re.match(r"^---\n(.*?)\n---\n", txt, re.S)
+    skill_txt = open(skill_path, encoding="utf-8").read()
+    m = re.match(r"^---\n(.*?)\n---\n", skill_txt, re.S)
     if not m:
         fail("SKILL.md: no frontmatter")
     else:
-        fm = m.group(1)
-        nm = re.search(r"^name:\s*(.+)$", fm, re.M)
-        dm = re.search(r"^description:\s*(.+)$", fm, re.M)
-        fm_name = nm.group(1).strip().strip('"').strip("'") if nm else None
-        if not fm_name:
+        fm = parse_frontmatter(m.group(1))
+
+        unknown = sorted(set(fm) - SPEC_KEYS)
+        if unknown:
+            fail(f"SKILL.md: front-matter keys not in the Agent Skills spec: {unknown}")
+
+        # name — spec: 1-64 chars, [a-z0-9-], no leading/trailing/double hyphen,
+        # must equal the parent directory name
+        fm_name = fm.get("name")
+        if not isinstance(fm_name, str) or not fm_name:
             fail("SKILL.md: empty/missing name")
-        if not dm or not dm.group(1).strip():
+            fm_name = None
+        else:
+            if len(fm_name) > 64:
+                fail(f"SKILL.md: name is {len(fm_name)} chars, spec max is 64")
+            if not NAME_RE.match(fm_name):
+                fail(f"SKILL.md: name {fm_name!r} violates the spec charset "
+                     "(lowercase a-z0-9 and single internal hyphens only)")
+            if fm_name != os.path.basename(SKILL_DIR):
+                fail(f"SKILL.md: name {fm_name!r} != directory "
+                     f"{os.path.basename(SKILL_DIR)!r} (spec)")
+
+        # description — spec: 1-1024 chars; canon: "Use when …" + EN/RU triggers
+        desc = fm.get("description")
+        if not isinstance(desc, str) or not desc.strip():
             fail("SKILL.md: empty/missing description")
         else:
-            desc = dm.group(1).strip().strip('"').strip("'")
+            if len(desc) > 1024:
+                fail(f"SKILL.md: description is {len(desc)} chars, spec max is 1024")
             if not desc.lower().startswith("use when"):
                 fail("SKILL.md: description must start with 'Use when …' (canon)")
             if not re.search(r"[а-яё]", desc, re.I):
                 fail("SKILL.md: description must include Russian trigger phrases too (canon)")
-        if len(fm) > 1024:
-            fail(f"SKILL.md: frontmatter is {len(fm)} chars, must be under 1024")
+
+        # optional spec fields
+        compat = fm.get("compatibility")
+        if compat is not None:
+            if not isinstance(compat, str) or not compat.strip():
+                fail("SKILL.md: compatibility must be a non-empty string")
+            elif len(compat) > 500:
+                fail(f"SKILL.md: compatibility is {len(compat)} chars, spec max is 500")
+        if "license" in fm and not isinstance(fm["license"], str):
+            fail("SKILL.md: license must be a string")
+        if "allowed-tools" in fm and not isinstance(fm["allowed-tools"], str):
+            fail("SKILL.md: allowed-tools must be a space-separated string, not a map/list")
+        skill_meta = fm.get("metadata") or {}
+        if "metadata" in fm:
+            if not isinstance(skill_meta, dict):
+                fail("SKILL.md: metadata must be a map of string keys to string values")
+                skill_meta = {}
+            else:
+                for k, v in skill_meta.items():
+                    if not isinstance(v, str) or not v:
+                        fail(f"SKILL.md: metadata.{k} must be a non-empty string "
+                             "(quote versions: version: \"1.0\")")
+
+    # progressive disclosure — spec recommends < 500 lines
+    n_lines = skill_txt.count("\n") + 1
+    if n_lines >= BODY_MAX_LINES:
+        fail(f"SKILL.md is {n_lines} lines, spec recommends < {BODY_MAX_LINES} "
+             "— move detail into references/")
+
+# references/ must exist, stay one level deep, and each file must be reachable
+refs_dir = os.path.join(SKILL_DIR, "references")
+if not os.path.isdir(refs_dir):
+    fail("missing plugins/make-skill/skills/make-skill/references/")
+else:
+    for entry in sorted(os.listdir(refs_dir)):
+        full = os.path.join(refs_dir, entry)
+        if os.path.isdir(full):
+            fail(f"references/{entry}/ is nested — spec: keep references one level deep")
+        elif entry.endswith(".md") and f"references/{entry}" not in skill_txt:
+            fail(f"references/{entry} is never referenced from SKILL.md — "
+                 "an unreachable file is dead context")
+
+# no relative link may escape the skill directory (the skills CLI ships only it)
+for target in re.findall(r"\[[^\]]*\]\(([^)\s]+)\)", skill_txt):
+    if target.startswith(("http://", "https://", "mailto:", "#")):
+        continue
+    if target.startswith("../") or "/../" in target:
+        fail(f"SKILL.md: link {target!r} escapes the skill dir — it arrives broken "
+             "on every agent that installs only the skill folder")
 
 # name sync across the three sources of truth
 for label, val in {"marketplace": mkt_name, "plugin.json": plg_name, "frontmatter": fm_name}.items():
@@ -101,6 +210,11 @@ else:
         fail("CHANGELOG.md: no '## vX.Y.Z' entry found")
     elif plg_ver and vm.group(1) != plg_ver:
         fail(f"version mismatch: CHANGELOG top entry=v{vm.group(1)} plugin.json={plg_ver!r}")
+
+# optional 5th sync point: SKILL.md metadata.version (spec-legal, agent-visible)
+skill_ver = skill_meta.get("version") if isinstance(skill_meta, dict) else None
+if skill_ver and plg_ver and skill_ver != plg_ver:
+    fail(f"version mismatch: SKILL.md metadata.version={skill_ver!r} plugin.json={plg_ver!r}")
 
 # slash command with proper frontmatter
 cmd_path = os.path.join(ROOT, "plugins/make-skill/commands/make-skill.md")

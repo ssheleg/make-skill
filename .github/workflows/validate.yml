@@ -16,9 +16,14 @@ jobs:
       - name: Negative self-test (validator must be able to fail)
         run: |
           set -eu
+          rm -rf /tmp/corrupt-copy
           cp -R . /tmp/corrupt-copy
-          sed -i 's/"version": "[0-9.]*"/"version": "0.0.0-corrupt"/' \
-            /tmp/corrupt-copy/plugins/make-skill/.claude-plugin/plugin.json
+          python3 - <<'PY'
+          import pathlib, re
+          p = pathlib.Path("/tmp/corrupt-copy/plugins/make-skill/.claude-plugin/plugin.json")
+          p.write_text(re.sub(r'"version": "[0-9.]*"', '"version": "0.0.0-corrupt"',
+                              p.read_text(encoding="utf-8")), encoding="utf-8")
+          PY
           if python3 /tmp/corrupt-copy/test/validate.py; then
             echo "ERROR: validator passed on a corrupted copy — it cannot fail"
             exit 1
@@ -56,6 +61,34 @@ jobs:
             echo "OK: validator requires Russian trigger aliases"
           fi
 
+      - name: Negative self-test (spec violations must fail)
+        run: |
+          set -eu
+          for case in name desc key ref; do
+            rm -rf "/tmp/spec-$case"
+            cp -R . "/tmp/spec-$case"
+            CASE="$case" python3 - <<'PY'
+          import os, pathlib, re
+          case = os.environ["CASE"]
+          root = pathlib.Path(f"/tmp/spec-{case}")
+          skill = root / "plugins/make-skill/skills/make-skill/SKILL.md"
+          t = skill.read_text(encoding="utf-8")
+          if case == "name":      # spec charset: no uppercase, no double hyphen
+              t = re.sub(r"^name: make-skill$", "name: Make--Skill", t, count=1, flags=re.M)
+          elif case == "desc":    # spec: description <= 1024 chars
+              t = re.sub(r"^description: ", "description: " + "x" * 1100 + " ", t, count=1, flags=re.M)
+          elif case == "key":     # spec: no front-matter keys outside the standard
+              t = re.sub(r"^name: make-skill$", "name: make-skill\nauthor: nope", t, count=1, flags=re.M)
+          skill.write_text(t, encoding="utf-8")
+          if case == "ref":       # unreachable reference file = dead context
+              (root / "plugins/make-skill/skills/make-skill/references/orphan.md").write_text("# orphan\n")
+          PY
+            if python3 "/tmp/spec-$case/test/validate.py"; then
+              echo "ERROR: validator passed on spec violation '$case'"; exit 1
+            fi
+            echo "OK: validator rejects spec violation '$case'"
+          done
+
       - name: install.sh syntax check
         run: bash -n install.sh
 
@@ -70,6 +103,10 @@ jobs:
           node bin/make-skill.js
           test -f "$HOME/.claude/skills/make-skill/SKILL.md"
           test -f "$HOME/.claude/commands/make-skill.md"
+          # references must travel with the skill — relative links break otherwise
+          for r in agent-skills-spec distribution mcp a2a; do
+            test -f "$HOME/.claude/skills/make-skill/references/$r.md"
+          done
           node bin/make-skill.js | grep -q '^skip:'
           node bin/make-skill.js --force | grep -q '^Installed'
           if node bin/make-skill.js --wat; then

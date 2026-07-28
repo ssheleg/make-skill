@@ -20,9 +20,19 @@ as a skill so every new skill follows the same standard.
 | **Retrofit** | an existing skill/repo below the standard → audit → fix → release |
 | **Promote** | a personal skill that should become installable |
 
-It encodes: the repo layout, the version-sync hard rule, the validator (with a
-negative self-test), the distribution matrix (Claude Code plugin, vercel skills
-CLI, npx, Cursor), the npm gotchas, and a release checklist.
+It encodes: conformance to the [Agent Skills open standard](https://agentskills.io/specification),
+the repo layout, the version-sync hard rule, the validator (with negative
+self-tests), the distribution matrix (Claude Code plugin, vercel skills CLI, npx,
+Cursor), the npm gotchas, and a release checklist.
+
+Bundled references the skill loads on demand:
+
+| Reference | Covers |
+|---|---|
+| `agent-skills-spec.md` | the open standard — field limits, optional front-matter, token budgets, description-trigger evals |
+| `distribution.md` | every install channel, exact CLI flags, npm publishing traps |
+| `mcp.md` | [MCP](https://modelcontextprotocol.io) — skill vs server, primitives, transports, security rules |
+| `a2a.md` | [A2A](https://a2a-protocol.org) — Agent Cards, task lifecycle, v0.x→1.0 wire drift |
 
 Reference implementations it mirrors: [super-ux](https://github.com/ssheleg/super-ux)
 (structure) and [task-pipeline](https://github.com/ssheleg/task-pipeline)
@@ -82,7 +92,8 @@ Say *"make a skill"* or *"retrofit this skill to the standard"*, or invoke
 
 ```
 .claude-plugin/marketplace.json
-plugins/make-skill/{.claude-plugin/plugin.json, commands/make-skill.md, skills/make-skill/SKILL.md}
+plugins/make-skill/{.claude-plugin/plugin.json, commands/make-skill.md,
+                    skills/make-skill/{SKILL.md, references/*.md}}
 cursor/rules/make-skill.mdc          # self-contained Cursor rule
 templates/SKILL.template.md                   # skeleton seeded into new skills
 bin/make-skill.js + package.json     # npx installer

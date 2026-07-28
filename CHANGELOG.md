@@ -1,5 +1,67 @@
 # Changelog
 
+## v0.5.0 — 2026-07-28
+
+Audited the canon against the **Agent Skills open standard**
+(<https://agentskills.io/specification>, `agentskills/agentskills`). The canon
+was compatible but silent on most of the spec: it never stated the `name`
+charset rules, capped the wrong thing (whole front-matter instead of
+`description`), never mentioned `license` / `compatibility` / `metadata` /
+`allowed-tools`, `scripts/` / `assets/`, or the progressive-disclosure budgets.
+
+### Added
+- `references/agent-skills-spec.md` — the full standard as a conformance
+  reference: field table with limits, `name` charset rules, directory layout,
+  the <500-line / <5000-token budgets, the description trigger-eval loop
+  (20 queries × 3 runs, 60/40 train/validation split), body patterns, and an
+  audit checklist. Marks explicitly where the house canon *extends* the spec.
+- `references/mcp.md` — MCP for skill authors: skill vs MCP server, the
+  host/client/server model, lifecycle and capability negotiation, server
+  primitives with exact methods (`tools/list`, `tools/call`,
+  `resources/templates/list`, `prompts/get`, …), client primitives
+  (`sampling/createMessage`, `elicitation/create`, roots), stdio vs Streamable
+  HTTP, the consent/untrusted-output security rules, and the gotchas
+  (host-prefixed tool names, dynamic tool lists, interactive OAuth).
+- `references/a2a.md` — A2A for skill authors: A2A vs MCP, the Agent Card at
+  `/.well-known/agent-card.json`, Task/Message/Part/Artifact, the task
+  lifecycle, the 1.0 method mapping across JSON-RPC/gRPC/REST, streaming vs
+  webhook push, security, and the **v0.x→1.0 wire drift** (`message/send` →
+  `SendMessage`, lowercase states → `TASK_STATE_*`) that silently breaks
+  integrations.
+- `references/distribution.md` — the distribution matrix and npm publishing
+  traps, moved out of the body (progressive disclosure) so `SKILL.md` stays
+  inside the spec's budget.
+- SKILL.md: a **Spec floor** block in the authoring rules, a
+  **Protocol-connected skills (MCP / A2A)** section, a load-on-demand reference
+  index with a raw-URL fallback, and audit items 1 and 10 in the Retrofit
+  checklist.
+
+### Changed
+- **Validator now enforces the spec, not just house rules:** `name` charset /
+  ≤64 / == directory, `description` ≤1024 (the correct field — the old check
+  capped the whole front-matter block), `compatibility` ≤500, `metadata` as an
+  all-string map, `allowed-tools` as a string, rejection of any front-matter key
+  outside the standard, `SKILL.md` < 500 lines, `references/` one level deep with
+  every file reachable from the body, and no relative link escaping the skill
+  directory. Front-matter is now parsed (YAML subset incl. folded blocks and
+  nested maps) instead of regex-sniffed.
+- Optional 5th version-sync point: if `SKILL.md` carries `metadata.version`, it
+  must match the manifests.
+- `templates/SKILL.template.md` is spec-aware: optional front-matter fields
+  documented inline, budgets stated, plus References and Gotchas sections.
+- Cursor rule carries the spec floor and the MCP/A2A rules inline (no relative
+  links — it gets copied into foreign projects).
+
+### Testing
+- CI gained a four-case negative self-test for the spec rules (bad `name`
+  charset, over-long `description`, unknown front-matter key, orphaned reference
+  file) — each must fail the validator.
+- The installer functional test now asserts all four `references/*.md` land in
+  the install target; a channel that drops them ships broken relative links.
+- The first negative self-test used `sed -i` GNU-style, so it only ran on CI and
+  errored on any macOS/BSD dry run. Rewritten in `python3` like its siblings —
+  the whole workflow is now runnable locally.
+
 ## v0.4.1 — 2026-07-28
 
 ### Fixed
