@@ -1,9 +1,19 @@
 # make-skill — Promote Design Spec
 
 - **Date:** 2026-07-24
-- **Status:** approved
+- **Status:** approved and **executed** — historical record of the v0.1.0 design.
+  Three locked contracts did NOT survive contact; see *Superseded* below. The
+  live canon is `plugins/make-skill/skills/make-skill/SKILL.md`, not this file.
 - **Owner:** ssheleg
 - **Repo (target):** `ssheleg/make-skill` (GitHub, public, MIT)
+
+## Superseded
+
+| Locked here | What actually shipped | Since |
+|---|---|---|
+| npm name `make-skill` (E404 = free) | 403 "too similar to existing package" — npm's name-similarity policy only fires on PUT. Published as **`@ssheleg/make-skill`** with `publishConfig.access: public` | v0.1.0 |
+| `templates/SKILL.md` | renamed **`templates/SKILL.template.md`** — the skills CLI discovers every `SKILL.md` in the tree and shipped the skeleton as a real skill | v0.3.0 |
+| single-file skill body, "no references split needed" | body split per the open standard's progressive-disclosure budget: `references/{agent-skills-spec,distribution,mcp,a2a}.md` | v0.5.0 |
 
 ## Problem
 

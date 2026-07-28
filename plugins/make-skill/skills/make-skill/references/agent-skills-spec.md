@@ -6,7 +6,8 @@ install cleanly on agents outside Claude Code.
 Upstream sources (verify before locking anything — the spec moves):
 - Spec — <https://agentskills.io/specification>
 - Repo + reference validator — <https://github.com/agentskills/agentskills>
-  (`skills-ref validate ./my-skill`)
+  (`skills-ref validate ./my-skill`; Python, installed from source out of that
+  repo — it is not on npm or PyPI)
 - Best practices — <https://agentskills.io/skill-creation/best-practices>
 - Description tuning — <https://agentskills.io/skill-creation/optimizing-descriptions>
 

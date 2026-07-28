@@ -1,6 +1,6 @@
 ---
 name: make-skill
-description: Use when creating, upgrading, or publishing agent skills and Claude Code plugins - "make a skill" / "сделай скилл", "new skill" / "новый скилл", "ssheleg skill" / "ssheleg скилл", "wrap it in a plugin" / "заверни в плагин", "publish a skill" / "опубликуй скилл", "retrofit a skill to the standard" / "догони скилл до стандарта" / "приведи скилл к стандарту". Encodes the proven ssheleg pipeline - marketplace repo layout, version sync x4, validator+CI, multi-agent distribution (Claude Code plugin, vercel skills CLI, npx, Cursor), npm gotchas, end-to-end first publish. References - github.com/ssheleg/super-ux (structure) + github.com/ssheleg/task-pipeline (config-contract + release automation).
+description: Use when creating, upgrading, auditing, or publishing agent skills and Claude Code plugins - "make a skill" / "сделай скилл", "new skill" / "новый скилл", "ssheleg skill" / "ssheleg скилл", "wrap it in a plugin" / "заверни в плагин", "publish a skill" / "опубликуй скилл", "retrofit a skill to the standard" / "приведи скилл к стандарту", "does this skill match the spec" / "соответствует ли скилл стандарту" - or when a skill must reach an MCP server or another agent over A2A. Encodes the Agent Skills open standard (front-matter limits, progressive-disclosure budgets) plus the proven ssheleg pipeline - marketplace layout, version sync, validator+CI, multi-agent distribution (Claude Code plugin, vercel skills CLI, npx, Cursor), npm gotchas, end-to-end first publish.
 ---
 
 # make-skill — Create, Retrofit, and Ship Skills the Proven Way
@@ -107,14 +107,22 @@ path if it proves useful.
 ├── templates/*.md                      # skeletons (NEVER name one SKILL.md — see Gotchas)
 ├── bin/<name>.js + package.json        # npx installer (zero-dep Node)
 ├── test/validate.py                    # consistency validator (stdlib only)
-├── .github/workflows/validate.yml      # validator on push+PR
+├── .github/workflows/validate.yml      # validator on push+PR (+ release.yml, off by default)
 ├── install.sh                          # POSIX fallback
-├── README.md (EN + closing RU section), CHANGELOG.md, LICENSE (MIT)
+├── README.md (English-first), CHANGELOG.md, LICENSE (MIT)
 └── docs/superpowers/{specs,plans}/
 ```
 
+README language: **English-first** — it is the public face of the repo and most
+readers aren't Russian speakers. Russian belongs in the skill's trigger phrases
+(where it changes whether the skill fires) and, optionally, in a closing RU
+section for RU-facing projects. Not a validator rule either way.
+
 **Version sync (hard rule):** marketplace.json, plugin.json, package.json,
-top CHANGELOG entry — SAME semver, bumped together, validator enforces.
+top CHANGELOG entry — SAME semver, bumped together, validator enforces. If
+`SKILL.md` carries an optional `metadata.version` (spec-legal, and the only
+version an agent outside Claude Code ever sees), it joins the sync as a 5th
+point.
 
 **Validator** (adapt super-ux `test/validate.py`): manifests parse+fields;
 SKILL.md front-matter — **spec rules** (name charset/length, description ≤1024,
@@ -174,10 +182,13 @@ with evidence (`file:line` or command output) — never "looks fine".
    the skills CLI and checking the contract files actually arrived.
 3. Entry-point command exists, idempotent (inspect → repair → status → one
    next action).
-4. Layout matches the standard tree; manifests complete; version sync ×4.
+4. Layout matches the standard tree; manifests complete; version sync ×4
+   (×5 if `SKILL.md` carries `metadata.version`).
 5. Validator present AND green AND able to fail (run the negative test);
    CI workflow present, last run `success`.
-6. README: badges (npm/CI/license), install matrix documented, RU section.
+6. README: badges (npm/CI/license), install + update matrix documented,
+   English-first prose, bundled `references/` listed so a reader sees what
+   ships.
 7. Distribution live-checks (`references/distribution.md`):
    `npx --yes skills add <repo> --list` lists ONLY real skills; `npx <name>`
    works from a non-repo cwd (if npm published); `.mdc` rules have no relative

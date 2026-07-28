@@ -4,10 +4,11 @@
 [![validate](https://github.com/ssheleg/make-skill/actions/workflows/validate.yml/badge.svg)](https://github.com/ssheleg/make-skill/actions/workflows/validate.yml)
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-Create, retrofit, and ship agent **skills** and **Claude Code plugins** the proven
-ssheleg way — marketplace repo layout, four-way version sync, a structural
-validator + CI, multi-channel distribution, and end-to-end first publish, encoded
-as a skill so every new skill follows the same standard.
+Create, retrofit, audit, and ship agent **skills** and **Claude Code plugins** the
+proven ssheleg way — conformance to the [Agent Skills open standard](https://agentskills.io/specification),
+marketplace repo layout, four-way version sync, a structural validator + CI,
+multi-channel distribution, and end-to-end first publish, encoded as a skill so
+every new skill follows the same standard.
 
 ## What it does
 
@@ -84,9 +85,11 @@ Claude Code install shadow each other).
 
 ## Use
 
-Say *"make a skill"* or *"retrofit this skill to the standard"*, or invoke
-`/make-skill <what to build or retrofit>`. Russian phrasings (*"сделай скилл"*,
-*"приведи скилл к стандарту"*) route the same way.
+Say *"make a skill"*, *"retrofit this skill to the standard"*, or *"does this
+skill match the spec?"* — or invoke `/make-skill <what to build, retrofit, or
+audit>`. With no argument inside a skill repo it detects the situation and runs
+the audit rather than asking. Russian phrasings (*"сделай скилл"*, *"приведи
+скилл к стандарту"*) route the same way.
 
 ## Repo layout
 
@@ -113,9 +116,16 @@ you just fixed.
 
 - **Turns a workflow you keep repeating into something installable** — for
   yourself, your team, or the public.
+- **Keeps you inside the open standard** — the `name` charset, the 1024-char
+  `description` cap, the <500-line / <5000-token body budget. The validator
+  fails on each, so a skill that installs on Claude Code also installs
+  everywhere else.
 - **Ships the scaffolding that keeps it alive:** repo layout, a validator, CI
   with negative self-tests. A skill that fails loudly beats one that quietly
   stops firing.
+- **Knows where a skill ends and a protocol begins** — when to write an MCP
+  server instead, how to consume one safely, and what changes when the other
+  side is another agent over A2A.
 - **Covers every distribution channel** — Claude Code plugin, 70+ agents via the
   vercel `skills` CLI, `npx`, Cursor rules — and the one-channel-per-agent rule
   that stops them from shadowing each other.
@@ -124,7 +134,7 @@ you just fixed.
 
 ## Author
 
-Built by ssheleg — [svlab.online](https://svlab.online)
+Built by ssheleg — [sshlg.me](https://sshlg.me)
 
 - X / Twitter — [@fuck_this_year](https://x.com/fuck_this_year)
 - Telegram — [@sshlg](https://t.me/sshlg)

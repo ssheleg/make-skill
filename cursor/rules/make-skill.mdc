@@ -1,11 +1,13 @@
 ---
-description: "make-skill: create, retrofit, or publish an agent skill / plugin the proven ssheleg way — marketplace repo layout, four-way version sync, validator + CI, multi-channel distribution (Claude Code plugin, skills CLI, npx, Cursor), npm gotchas. Apply when creating a new skill, upgrading one to standard, or wrapping one into a plugin."
+description: "make-skill: create, retrofit, audit, or publish an agent skill / plugin the proven ssheleg way — the Agent Skills open standard (front-matter limits, progressive-disclosure budgets), marketplace repo layout, four-way version sync, validator + CI, multi-channel distribution (Claude Code plugin, skills CLI, npx, Cursor), npm gotchas, and the MCP / A2A rules for protocol-connected skills. Apply when creating a new skill, upgrading one to standard, checking one against the spec, or wrapping one into a plugin."
 alwaysApply: false
 ---
 
 # make-skill — ship skills the proven way (Cursor)
 
-Self-contained rule (Cursor copies this into projects — no external links).
+Self-contained rule: Cursor copies this file into foreign projects, so it carries
+every contract inline and uses **absolute URLs only — never a relative link**
+(a relative link dangles the moment the file is copied).
 
 ## Spec floor — the Agent Skills open standard (non-negotiable)
 
@@ -24,9 +26,8 @@ Self-contained rule (Cursor copies this into projects — no external links).
 
 ## Authoring rules (every skill)
 
-- Front-matter: `name` == directory name; `description` starts "Use when …" with
-  concrete trigger phrases in English AND Russian. A skill nobody triggers is dead
-  weight.
+- `description` starts "Use when …" with concrete trigger phrases in English AND
+  Russian. A skill nobody triggers is dead weight.
 - One skill = one job. Multiple concerns → multiple skills + a shared contract file.
 - Body: imperative, procedural, checklists over prose. State non-negotiables as such.
 - Commands are thin wrappers: front-matter `description` (+ `argument-hint`), body =
@@ -39,20 +40,24 @@ Self-contained rule (Cursor copies this into projects — no external links).
 .claude-plugin/marketplace.json            # plugins[0].source: ./plugins/<name>
 plugins/<name>/.claude-plugin/plugin.json
 plugins/<name>/commands/*.md
-plugins/<name>/skills/<skill>/SKILL.md (+ references/*.md)
+plugins/<name>/skills/<skill>/SKILL.md (+ references/, scripts/, assets/)
 cursor/rules/*.mdc                         # self-contained, NO relative links
-templates/*.md                             # skeletons seeded into projects
+templates/*.md                             # skeletons — NEVER name one SKILL.md
 bin/<name>.js + package.json               # zero-dep npx installer
 test/validate.py                           # stdlib-only consistency validator
 .github/workflows/validate.yml (+ release.yml, off by default)
-install.sh, README.md (EN+RU), CHANGELOG.md, LICENSE (MIT)
+install.sh, README.md (English-first), CHANGELOG.md, LICENSE (MIT)
 docs/superpowers/{specs,plans}/
 ```
 
 ## Hard rules
 
 - **Version sync:** marketplace.json, plugin.json, package.json (if npm), and the
-  top CHANGELOG entry carry the SAME semver, bumped together; the validator enforces.
+  top CHANGELOG entry carry the SAME semver, bumped together; the validator
+  enforces. An optional `SKILL.md` `metadata.version` joins as a 5th point.
+- **A stray `SKILL.md` anywhere in the repo ships as a REAL skill** — the skills
+  CLI discovers every one in the tree. Name skeletons `SKILL.template.md`; verify
+  with `npx skills add <repo> --list`.
 - **Validator must be able to fail:** CI runs a negative self-test (corrupt a copy →
   expect FAIL). A validator that can't fail is decoration.
 - **One channel per agent:** don't run a plugin AND a plain `~/.claude/skills` copy

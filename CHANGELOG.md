@@ -1,5 +1,48 @@
 # Changelog
 
+## v0.5.1 — 2026-07-28
+
+Full-repo consistency pass: every file read against every other, contradictions
+fixed rather than annotated.
+
+### Fixed
+- **The Cursor rule claimed "no external links" while carrying four.** The actual
+  rule — the one the validator enforces — is *no **relative** links*, because the
+  `.mdc` gets copied into foreign projects. Stated correctly now.
+- **The canon demanded a README section this repo deliberately doesn't have.**
+  `README.md (EN + closing RU section)` in the layout and "RU section" in the
+  Retrofit audit contradicted the v0.4.0 decision to ship an English-only README.
+  Canon now says English-first, with Russian where it actually changes behaviour
+  (trigger phrases) and an optional RU section for RU-facing projects.
+- **The entry-point command contradicted its own design rule.** The canon says a
+  `/<name>` command must "detect mode, never ask"; `/make-skill` with no argument
+  asked what to build. It now inspects the working directory (`SKILL.md`,
+  `.claude-plugin/`, `plugins/*/skills/*/`) and runs the Retrofit audit, asking
+  only when there is nothing to detect.
+- **The release workflow could ship a broken skill.** Its npx smoke test asserted
+  `SKILL.md` and the command but not `references/*.md`, so a release missing them
+  would pass while every reference link dangled. Now asserted, matching the
+  validate workflow.
+- Version-sync arity was stated as four in the body while the validator enforced
+  a fifth point (`SKILL.md` `metadata.version`) when present — documented in the
+  hard rule, the audit checklist, the Cursor rule, and the validator comment.
+- The v0.1.0 promote spec still stated three contracts that did not survive
+  contact (bare npm name, `templates/SKILL.md`, "no references split needed").
+  Marked executed, with a Superseded table pointing at what actually shipped.
+- Layout trees disagreed across SKILL.md, the Cursor rule, and README
+  (`release.yml`, `scripts/`, `assets/`, `references/`) — reconciled.
+
+### Changed
+- **Descriptions refreshed everywhere they exist** — skill front-matter (772/1024
+  chars), `plugin.json`, `marketplace.json`, `package.json`, the slash command,
+  and the Cursor rule now name spec conformance, auditing, and MCP/A2A, and carry
+  the new trigger pair *"does this skill match the spec" / "соответствует ли
+  скилл стандарту"*. Keywords gained `agent-skills`, `mcp`, `a2a`, `spec`.
+- README: standard-conformance and protocol-boundary bullets in "What this gives
+  you"; the Use section documents no-argument auto-detect.
+- `templates/README.md` documents the spec-aware skeleton, the
+  never-name-it-`SKILL.md` rule, and where `references/`/`scripts/`/`assets/` go.
+
 ## v0.5.0 — 2026-07-28
 
 Audited the canon against the **Agent Skills open standard**

@@ -4,15 +4,15 @@
     "name": "ssheleg",
     "url": "https://github.com/ssheleg"
   },
-  "description": "Create, retrofit, and ship agent skills & Claude Code plugins the proven ssheleg way.",
+  "description": "Create, retrofit, audit, and ship agent skills & Claude Code plugins the proven ssheleg way — spec-conformant, validated, and installable on every agent.",
   "homepage": "https://github.com/ssheleg/make-skill",
   "repository": "https://github.com/ssheleg/make-skill",
   "plugins": [
     {
       "name": "make-skill",
       "source": "./plugins/make-skill",
-      "description": "Encodes the proven ssheleg skill pipeline: marketplace repo layout, four-way version sync, validator + CI, multi-channel distribution (Claude Code plugin, vercel skills CLI, npx, Cursor), npm gotchas, and end-to-end first publish. Reference impls: super-ux (structure) + task-pipeline (config-contract + release automation).",
-      "version": "0.5.0",
+      "description": "Encodes the Agent Skills open standard (front-matter limits, progressive-disclosure budgets) plus the proven ssheleg pipeline: marketplace repo layout, version sync, validator + CI, multi-channel distribution (Claude Code plugin, vercel skills CLI, npx, Cursor), npm gotchas, end-to-end first publish, and MCP / A2A rules for protocol-connected skills.",
+      "version": "0.5.1",
       "author": {
         "name": "ssheleg"
       },
@@ -24,7 +24,11 @@
         "validator",
         "distribution",
         "claude-code",
-        "cursor"
+        "cursor",
+        "spec",
+        "agent-skills",
+        "mcp",
+        "a2a"
       ],
       "category": "development"
     }

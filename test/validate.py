@@ -187,7 +187,8 @@ for label, val in {"marketplace": mkt_name, "plugin.json": plg_name, "frontmatte
     if val != NAME:
         fail(f"name mismatch: {label}={val!r} expected {NAME!r}")
 
-# four-way version sync: marketplace entry, plugin.json, package.json, CHANGELOG top
+# version sync: marketplace entry, plugin.json, package.json, CHANGELOG top
+# (+ an optional 5th point, SKILL.md metadata.version, checked below)
 pkg_ver = pkg.get("version") if pkg else None
 if not plg_ver:
     fail("plugin.json: missing version")

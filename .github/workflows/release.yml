@@ -60,4 +60,8 @@ jobs:
           npx --yes "github:ssheleg/make-skill#${GITHUB_REF_NAME}"
           test -f "$HOME/.claude/skills/make-skill/SKILL.md"
           test -f "$HOME/.claude/commands/make-skill.md"
+          # the body links these — a release without them ships dangling links
+          for r in agent-skills-spec distribution mcp a2a; do
+            test -f "$HOME/.claude/skills/make-skill/references/$r.md"
+          done
           echo "OK: released $GITHUB_REF_NAME installs cleanly via npx"
