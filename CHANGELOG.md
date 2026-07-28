@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.4.0 — 2026-07-28
+
+### Changed
+- Description restructured English-first: each Russian trigger is now paired
+  with its English equivalent (`"publish a skill" / "опубликуй скилл"`) rather
+  than trailing the English list.
+- README is English-only, with a plain statement of what the skill gives you and
+  an author/links block.
+
 ## v0.3.1 — 2026-07-25
 
 - Gotcha: **npm reports auth failures as `404` on publish.** A `PUT … 404` for a

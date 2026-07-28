@@ -1,10 +1,22 @@
 {
   "name": "make-skill",
   "description": "Create, retrofit, and ship agent skills & Claude Code plugins the proven ssheleg way: marketplace repo layout, four-way version sync, validator + CI, multi-channel distribution (plugin, vercel skills CLI, npx, Cursor), npm gotchas, end-to-end first publish. Reference impls: super-ux (structure) + task-pipeline (config-contract + release automation).",
-  "version": "0.3.1",
-  "author": { "name": "ssheleg" },
+  "version": "0.4.0",
+  "author": {
+    "name": "ssheleg"
+  },
   "homepage": "https://github.com/ssheleg/make-skill",
   "repository": "https://github.com/ssheleg/make-skill",
   "license": "MIT",
-  "keywords": ["skill", "plugin", "scaffold", "marketplace", "validator", "distribution", "claude-code", "cursor", "npm"]
+  "keywords": [
+    "skill",
+    "plugin",
+    "scaffold",
+    "marketplace",
+    "validator",
+    "distribution",
+    "claude-code",
+    "cursor",
+    "npm"
+  ]
 }

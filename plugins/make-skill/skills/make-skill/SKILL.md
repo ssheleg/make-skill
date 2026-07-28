@@ -1,6 +1,6 @@
 ---
 name: make-skill
-description: Use when creating, upgrading, or publishing agent skills and Claude Code plugins - "ssheleg skill", "ssheleg скилл", "сделай скилл", "новый скилл", "make a skill", "заверни в плагин", "опубликуй скилл", "догони скилл до стандарта", "retrofit/upgrade a skill", "приведи скилл к стандарту". Encodes the proven ssheleg pipeline - marketplace repo layout, version sync x4, validator+CI, multi-agent distribution (Claude Code plugin, vercel skills CLI, npx, Cursor), npm gotchas, end-to-end first publish. References - github.com/ssheleg/super-ux (structure) + github.com/ssheleg/task-pipeline (config-contract + release automation).
+description: Use when creating, upgrading, or publishing agent skills and Claude Code plugins - "make a skill" / "сделай скилл", "new skill" / "новый скилл", "ssheleg skill" / "ssheleg скилл", "wrap it in a plugin" / "заверни в плагин", "publish a skill" / "опубликуй скилл", "retrofit a skill to the standard" / "догони скилл до стандарта" / "приведи скилл к стандарту". Encodes the proven ssheleg pipeline - marketplace repo layout, version sync x4, validator+CI, multi-agent distribution (Claude Code plugin, vercel skills CLI, npx, Cursor), npm gotchas, end-to-end first publish. References - github.com/ssheleg/super-ux (structure) + github.com/ssheleg/task-pipeline (config-contract + release automation).
 ---
 
 # make-skill — Create, Retrofit, and Ship Skills the Proven Way

@@ -74,8 +74,9 @@ Claude Code install shadow each other).
 
 ## Use
 
-Say *"make a skill"* / *"сделай скилл"* / *"приведи скилл к стандарту"*, or
-`/make-skill <what to build or retrofit>`.
+Say *"make a skill"* or *"retrofit this skill to the standard"*, or invoke
+`/make-skill <what to build or retrofit>`. Russian phrasings (*"сделай скилл"*,
+*"приведи скилл к стандарту"*) route the same way.
 
 ## Repo layout
 
@@ -91,22 +92,39 @@ install.sh  README.md  CHANGELOG.md  LICENSE
 docs/superpowers/{specs,plans}/
 ```
 
-## По-русски
+## What this gives you
 
-**make-skill** — мета-скилл: создаёт, дотягивает до стандарта и публикует агентские
-**скиллы** и **плагины Claude Code** проверенным способом ssheleg. Кодирует канон:
-раскладку marketplace-репозитория, синхрон версий по четырём точкам, структурный
-валидатор с негативным self-test'ом в CI, матрицу дистрибуции (плагин Claude Code,
-vercel skills CLI, npx, Cursor), npm-грабли и end-to-end первый релиз.
+The moment you catch yourself re-explaining the same workflow to your agent, you
+want a skill. Then the packaging eats your evening: front-matter limits, four
+files that must carry the identical version, plugin ids that only work in full
+`name@name` form, a CLI that silently installs a second copy shadowing the one
+you just fixed.
 
-Маршрутизация по задаче: **Create (personal)** — скилл только для своих агентов;
-**Create (distributable)** — устанавливаемый другими, полный репо + публикация;
-**Retrofit** — довести существующий скилл/репо до стандарта (аудит → фиксы →
-релиз); **Promote** — превратить персональный скилл в устанавливаемый.
+- **Turns a workflow you keep repeating into something installable** — for
+  yourself, your team, or the public.
+- **Ships the scaffolding that keeps it alive:** repo layout, a validator, CI
+  with negative self-tests. A skill that fails loudly beats one that quietly
+  stops firing.
+- **Covers every distribution channel** — Claude Code plugin, 70+ agents via the
+  vercel `skills` CLI, `npx`, Cursor rules — and the one-channel-per-agent rule
+  that stops them from shadowing each other.
+- **Encodes the gotchas that each cost a debugging round**, so your first
+  publish works instead of your fourth.
 
-Эталоны структуры: [super-ux](https://github.com/ssheleg/super-ux) и
-[task-pipeline](https://github.com/ssheleg/task-pipeline). Запуск — `/make-skill
-<что создать/дотянуть>` или «сделай скилл». Установка — см. раздел Install выше.
+## Author
+
+Built by ssheleg — [svlab.online](https://svlab.online)
+
+- X / Twitter — [@fuck_this_year](https://x.com/fuck_this_year)
+- Telegram — [@sshlg](https://t.me/sshlg)
+
+Part of the [ssheleg skill family](https://github.com/ssheleg/sshlg-skills):
+`super-ux`, `task-pipeline`, `make-skill`, `sheleg-design`, `seo-aeo-audit`.
+One command installs all five for every agent you use:
+
+```bash
+npx sshlg-skills install
+```
 
 ## License
 
