@@ -29,13 +29,31 @@ jobs:
       - name: Negative self-test (missing template must fail)
         run: |
           set -eu
+          rm -rf /tmp/notmpl-copy
           cp -R . /tmp/notmpl-copy
-          rm -f /tmp/notmpl-copy/templates/SKILL.md
+          rm -f /tmp/notmpl-copy/templates/SKILL.template.md
           if python3 /tmp/notmpl-copy/test/validate.py; then
-            echo "ERROR: validator passed with templates/SKILL.md missing"
+            echo "ERROR: validator passed with templates/SKILL.template.md missing"
             exit 1
           else
             echo "OK: validator requires the template skeleton"
+          fi
+
+      - name: Negative self-test (Russian-free description must fail)
+        run: |
+          set -eu
+          rm -rf /tmp/noru-copy
+          cp -R . /tmp/noru-copy
+          python3 - <<'PY'
+          import pathlib, re
+          p = pathlib.Path("/tmp/noru-copy/plugins/make-skill/skills/make-skill/SKILL.md")
+          p.write_text(re.sub(r"[а-яё]", "x", p.read_text(encoding="utf-8"), flags=re.I), encoding="utf-8")
+          PY
+          if python3 /tmp/noru-copy/test/validate.py; then
+            echo "ERROR: validator passed with no Russian trigger aliases"
+            exit 1
+          else
+            echo "OK: validator requires Russian trigger aliases"
           fi
 
       - name: install.sh syntax check

@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.4.1 — 2026-07-28
+
+### Fixed
+- The `validate` workflow had been **red since v0.3.0**: its negative self-test
+  deleted `templates/SKILL.md`, a file renamed to `templates/SKILL.template.md`
+  three releases earlier. Deleting a non-existent file is a no-op, the validator
+  correctly passed, and the step reported that as an error — so the check proved
+  nothing while looking like it failed.
+
+### Added
+- A second negative self-test: stripping the Russian trigger aliases out of the
+  description must fail the validator.
+
 ## v0.4.0 — 2026-07-28
 
 ### Changed
