@@ -58,7 +58,7 @@ fixed rather than annotated.
 - **The canon demanded a README section this repo deliberately doesn't have.**
   `README.md (EN + closing RU section)` in the layout and "RU section" in the
   Retrofit audit contradicted the v0.4.0 decision to ship an English-only README.
-  Canon now says English-first, with Russian where it actually changes behaviour
+  Canon now says English-first, with Russian where it actually changes behavior
   (trigger phrases) and an optional RU section for RU-facing projects.
 - **The entry-point command contradicted its own design rule.** The canon says a
   `/<name>` command must "detect mode, never ask"; `/make-skill` with no argument
