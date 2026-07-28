@@ -6,6 +6,20 @@ auditing an existing repo's distribution in a Retrofit.
 Hard rule across all channels: **one channel per agent.** Two installs of the same
 skill on one agent = two listings, and the stale copy shadows the fresh one.
 
+**The shadow comes back on its own.** `npx skills add|update … --global`
+auto-detects Claude Code and writes `~/.claude/skills/<name>` — often as a symlink
+into `~/.agents/skills/<name>` — *even when `claude-code` was never named as a
+target*. So the routine that refreshes the Cursor/Codex channel silently recreates
+the shadow every single run. It cannot be handled by discipline; it needs a step:
+
+```bash
+npx skills update <name> --global --yes && rm -f ~/.claude/skills/<name>
+```
+
+Put that prune inside whatever script performs the update, so the supported path
+can't leave a shadow behind. A symlink shadows exactly as a directory does — check
+with `ls -ld`, and remember `find -type f` will not see through it.
+
 ## 1. Claude Code plugin
 
 `/plugin marketplace add <owner>/<repo>` → `/plugin install <name>@<name>`;

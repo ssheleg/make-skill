@@ -47,6 +47,7 @@ bin/<name>.js + package.json               # zero-dep npx installer
 test/validate.py                           # stdlib-only consistency validator
 .github/workflows/validate.yml (+ release.yml, off by default)
 install.sh, README.md (English-first), CHANGELOG.md, LICENSE (MIT)
+CONTRIBUTING.md + SECURITY.md              # required once the repo is public
 docs/superpowers/{specs,plans}/
 ```
 

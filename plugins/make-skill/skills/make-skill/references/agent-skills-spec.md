@@ -11,6 +11,9 @@ Upstream sources (verify before locking anything — the spec moves):
 - Best practices — <https://agentskills.io/skill-creation/best-practices>
 - Description tuning — <https://agentskills.io/skill-creation/optimizing-descriptions>
 
+*Field limits and budgets below were read from the spec on 2026-07-28. Re-read
+before trusting them in a new quarter.*
+
 The ssheleg canon in `SKILL.md` is a **superset** of this spec. It may add rules
 (RU triggers, version sync, marketplace layout); it must never violate one.
 

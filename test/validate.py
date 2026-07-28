@@ -170,9 +170,14 @@ else:
         full = os.path.join(refs_dir, entry)
         if os.path.isdir(full):
             fail(f"references/{entry}/ is nested — spec: keep references one level deep")
-        elif entry.endswith(".md") and f"references/{entry}" not in skill_txt:
-            fail(f"references/{entry} is never referenced from SKILL.md — "
-                 "an unreachable file is dead context")
+        elif entry.endswith(".md"):
+            if f"references/{entry}" not in skill_txt:
+                fail(f"references/{entry} is never referenced from SKILL.md — "
+                     "an unreachable file is dead context")
+            head = open(full, encoding="utf-8").read(600)
+            if "Load this when" not in head:
+                fail(f"references/{entry} has no '**Load this when:**' line near the "
+                     "top — progressive disclosure needs a condition, not a pointer")
 
 # no relative link may escape the skill directory (the skills CLI ships only it)
 for target in re.findall(r"\[[^\]]*\]\(([^)\s]+)\)", skill_txt):
@@ -287,8 +292,9 @@ for dirpath, dirnames, filenames in os.walk(ROOT):
         fail(f"stray SKILL.md at {rel} — the skills CLI would ship it as a skill; "
              f"rename it (e.g. SKILL.template.md) or move it under plugins/<p>/skills/<s>/")
 
-# required root files
-for r in ("README.md", "LICENSE"):
+# required root files — a public repo also owes contributors an entry point and
+# a place to report something exploitable privately
+for r in ("README.md", "LICENSE", "CHANGELOG.md", "CONTRIBUTING.md", "SECURITY.md"):
     if not os.path.isfile(os.path.join(ROOT, r)):
         fail(f"missing root file: {r}")
 

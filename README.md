@@ -4,133 +4,184 @@
 [![validate](https://github.com/ssheleg/make-skill/actions/workflows/validate.yml/badge.svg)](https://github.com/ssheleg/make-skill/actions/workflows/validate.yml)
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-Create, retrofit, audit, and ship agent **skills** and **Claude Code plugins** the
-proven ssheleg way — conformance to the [Agent Skills open standard](https://agentskills.io/specification),
-marketplace repo layout, four-way version sync, a structural validator + CI,
-multi-channel distribution, and end-to-end first publish, encoded as a skill so
-every new skill follows the same standard.
+**A skill that builds skills.** Install it and your coding agent knows how to
+create, audit, and ship [Agent Skills](https://agentskills.io/specification) and
+Claude Code plugins properly — conforming to the open standard, validated in CI,
+and installable on every agent instead of just yours.
+
+The idea for a skill takes ten minutes. The packaging eats the evening: which
+front-matter fields are legal, how long a description may be, four manifests that
+must carry one identical version, plugin ids that only work in full `name@name`
+form, an installer that quietly leaves a second copy shadowing the one you just
+fixed. `make-skill` is that evening, written down and enforced.
+
+## Quickstart
+
+```bash
+claude plugin marketplace add ssheleg/make-skill
+claude plugin install make-skill@make-skill
+```
+
+Restart Claude Code, then just ask:
+
+```
+make a skill that turns our incident runbooks into a triage workflow
+```
+
+…or point it at something that already exists:
+
+```
+/make-skill audit ./skills/my-skill against the spec
+```
+
+Inside a skill repo, `/make-skill` with no argument detects the situation and runs
+the audit rather than asking you what you meant.
 
 ## What it does
 
-`make-skill` is a meta-skill: point it at a task and it routes to the right workflow.
+Four workflows, picked automatically from what you asked for:
 
 | Workflow | When |
 |---|---|
 | **Create (personal)** | a skill only for your own agents (`~/.claude/skills/<name>/`) |
 | **Create (distributable)** | a skill others install → full marketplace repo + first publish |
-| **Retrofit** | an existing skill/repo below the standard → audit → fix → release |
+| **Retrofit** | an existing skill or repo below the standard → audit → fix → release |
 | **Promote** | a personal skill that should become installable |
 
-It encodes: conformance to the [Agent Skills open standard](https://agentskills.io/specification),
-the repo layout, the version-sync hard rule, the validator (with negative
-self-tests), the distribution matrix (Claude Code plugin, vercel skills CLI, npx,
-Cursor), the npm gotchas, and a release checklist.
+Each one ends somewhere verifiable — a validator exit code, a green CI run, a
+resolvable install — not "should work now".
 
-Bundled references the skill loads on demand:
+## What you get
+
+**Conformance to the open standard, not just a house style.** The
+[Agent Skills specification](https://agentskills.io/specification) sets hard
+limits — `name` is 1–64 chars of `a-z0-9` and single hyphens and must match its
+directory, `description` caps at 1024 characters, the body should stay under 500
+lines and 5000 tokens. Local conventions that merely *feel* right drift from those
+without anyone noticing; here they're checked.
+
+**A validator that can fail.** `test/validate.py` (Python stdlib only, no deps)
+checks spec rules, version sync across every manifest, front-matter on commands
+and Cursor rules, link integrity, and the traps below. CI runs it plus **negative
+self-tests** — deliberately broken copies that must make it exit non-zero. A
+validator nobody has seen fail is decoration.
+
+**Every distribution channel, with the flags that actually work.** Claude Code
+plugin, the [vercel `skills` CLI](https://github.com/vercel-labs/skills) (70+
+agents), `npx`, Cursor rules, and umbrella-repo families — including the
+one-channel-per-agent rule that stops them from shadowing each other.
+
+**The gotchas that each cost a debugging round**, so your first publish works
+instead of your fourth:
+
+- a stray `SKILL.md` anywhere in the repo ships as a *real* skill on every agent;
+- `npm view` returning E404 does **not** mean the name is publishable;
+- npm reports expired-token failures as `404 Not Found` on publish;
+- `npx <pkg>` inside the package's own repo resolves the local copy and lies;
+- the skills CLI recreates the Claude Code shadow copy on every `--global` update,
+  whether or not you targeted Claude Code.
+
+**Knowing where a skill ends.** A skill is instructions — it cannot hold a
+credential or open a socket. When the task needs a live system that's an **MCP**
+server; when the other side is another autonomous agent that's **A2A**. The skill
+ships references for both, including the version drift that silently breaks
+integrations.
+
+## What ships with it
+
+The skill body stays small on purpose; the detail sits in reference files the
+agent opens only when the situation calls for them:
 
 | Reference | Covers |
 |---|---|
-| `agent-skills-spec.md` | the open standard — field limits, optional front-matter, token budgets, description-trigger evals |
+| `agent-skills-spec.md` | the open standard — field limits, optional front-matter, token budgets, the description trigger-eval loop |
 | `distribution.md` | every install channel, exact CLI flags, npm publishing traps |
-| `mcp.md` | [MCP](https://modelcontextprotocol.io) — skill vs server, primitives, transports, security rules |
-| `a2a.md` | [A2A](https://a2a-protocol.org) — Agent Cards, task lifecycle, v0.x→1.0 wire drift |
+| `mcp.md` | [MCP](https://modelcontextprotocol.io) — skill vs server, primitives and methods, transports, consent and untrusted-output rules |
+| `a2a.md` | [A2A](https://a2a-protocol.org) — Agent Cards, task lifecycle, method mapping, v0.x→1.0 wire drift |
 
-Reference implementations it mirrors: [super-ux](https://github.com/ssheleg/super-ux)
-(structure) and [task-pipeline](https://github.com/ssheleg/task-pipeline)
-(config-contract + toggleable release automation). make-skill is itself built to
-this canon.
+Plus `templates/SKILL.template.md`, a spec-legal skeleton with the limits written
+into it.
 
 ## Install
 
-**Plugin (recommended):**
-```
-/plugin marketplace add ssheleg/make-skill
-/plugin install make-skill@make-skill
+**Claude Code (recommended):**
+
+```bash
+claude plugin marketplace add ssheleg/make-skill
+claude plugin install make-skill@make-skill
 ```
 
-**Any agent via the skills CLI (Cursor, Codex, OpenCode, 70+ — not Claude Code, use the plugin above):**
-```
+**Any other agent — Cursor, Codex, OpenCode, Zed, 70+ via the skills CLI:**
+
+```bash
 npx skills add ssheleg/make-skill
 ```
 
-**npm / npx (no clone):**
-```
-npx github:ssheleg/make-skill     # straight from GitHub
-npx @ssheleg/make-skill           # from the npm registry (scoped — npm blocks the bare name)
+Don't target `claude-code` here if you installed the plugin above — see
+one-channel-per-agent.
+
+**npx, no clone:**
+
+```bash
+npx github:ssheleg/make-skill     # always current with this repo
+npx @ssheleg/make-skill           # npm registry (scoped: npm blocks the bare name)
 ```
 
-**Cursor:**
-```
-npx skills add ssheleg/make-skill --agent cursor --global
-```
-…or copy `cursor/rules/make-skill.mdc` into a project's `.cursor/rules/`.
+**Cursor, per project:** copy [`cursor/rules/make-skill.mdc`](cursor/rules/make-skill.mdc)
+into `.cursor/rules/` — it is self-contained by design.
 
 **Plain skill:**
-```
+
+```bash
 git clone https://github.com/ssheleg/make-skill
 cd make-skill && ./install.sh          # idempotent; --force to overwrite
 ```
 
-## Updating everywhere
+### Updating
 
-One channel per agent (a plugin plus a plain `~/.claude/skills` copy on the same
-Claude Code install shadow each other).
+**One channel per agent.** A plugin plus a plain `~/.claude/skills` copy on the
+same Claude Code install shadow each other, and the stale one usually wins.
 
 | Channel | Update |
 |---|---|
 | Claude Code (plugin) | `claude plugin marketplace update make-skill` → `claude plugin update make-skill@make-skill` → restart |
-| Any agent (skills CLI) | `npx skills update make-skill --global --yes` (repeated `--agent`; never `claude-code`) |
-| npm | `npx @ssheleg/make-skill@latest` / `npx github:ssheleg/make-skill` |
+| Any agent (skills CLI) | `npx skills update make-skill --global --yes && rm -f ~/.claude/skills/make-skill` |
+| npx | `npx github:ssheleg/make-skill` / `npx @ssheleg/make-skill@latest` |
 | Plain skill | `git pull && ./install.sh --force` |
 
-## Use
+The prune in row two is not optional: the skills CLI recreates the Claude Code
+copy on every global update, even when Claude Code was never named.
 
-Say *"make a skill"*, *"retrofit this skill to the standard"*, or *"does this
-skill match the spec?"* — or invoke `/make-skill <what to build, retrofit, or
-audit>`. With no argument inside a skill repo it detects the situation and runs
-the audit rather than asking. Russian phrasings (*"сделай скилл"*, *"приведи
-скилл к стандарту"*) route the same way.
+### Requirements
+
+Node ≥ 16 for the `npx` installer; Python 3 only if you run the validator;
+`bash` for `install.sh` (Windows users: use `npx`, the plugin, or the skills CLI).
+The skill itself is plain Markdown and needs nothing.
 
 ## Repo layout
 
 ```
 .claude-plugin/marketplace.json
-plugins/make-skill/{.claude-plugin/plugin.json, commands/make-skill.md,
-                    skills/make-skill/{SKILL.md, references/*.md}}
-cursor/rules/make-skill.mdc          # self-contained Cursor rule
-templates/SKILL.template.md                   # skeleton seeded into new skills
-bin/make-skill.js + package.json     # npx installer
-test/validate.py                     # structural validator (+ negative self-test in CI)
+plugins/make-skill/
+├── .claude-plugin/plugin.json
+├── commands/make-skill.md            # the /make-skill entry point
+└── skills/make-skill/
+    ├── SKILL.md                      # the canon, < 500 lines by rule
+    └── references/*.md               # loaded on demand
+cursor/rules/make-skill.mdc           # self-contained Cursor rule
+templates/SKILL.template.md           # spec-legal skeleton
+bin/make-skill.js + package.json      # zero-dep npx installer
+test/validate.py                      # structural validator
 .github/workflows/{validate,release}.yml
-install.sh  README.md  CHANGELOG.md  LICENSE
-docs/superpowers/{specs,plans}/
+install.sh  README.md  CHANGELOG.md  CONTRIBUTING.md  SECURITY.md  LICENSE
+docs/superpowers/{specs,plans}/       # historical design records
 ```
 
-## What this gives you
+## Contributing
 
-The moment you catch yourself re-explaining the same workflow to your agent, you
-want a skill. Then the packaging eats your evening: front-matter limits, four
-files that must carry the identical version, plugin ids that only work in full
-`name@name` form, a CLI that silently installs a second copy shadowing the one
-you just fixed.
-
-- **Turns a workflow you keep repeating into something installable** — for
-  yourself, your team, or the public.
-- **Keeps you inside the open standard** — the `name` charset, the 1024-char
-  `description` cap, the <500-line / <5000-token body budget. The validator
-  fails on each, so a skill that installs on Claude Code also installs
-  everywhere else.
-- **Ships the scaffolding that keeps it alive:** repo layout, a validator, CI
-  with negative self-tests. A skill that fails loudly beats one that quietly
-  stops firing.
-- **Knows where a skill ends and a protocol begins** — when to write an MCP
-  server instead, how to consume one safely, and what changes when the other
-  side is another agent over A2A.
-- **Covers every distribution channel** — Claude Code plugin, 70+ agents via the
-  vercel `skills` CLI, `npx`, Cursor rules — and the one-channel-per-agent rule
-  that stops them from shadowing each other.
-- **Encodes the gotchas that each cost a debugging round**, so your first
-  publish works instead of your fourth.
+Issues and PRs welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for how to run the
+validator and the full CI suite locally (both work offline, no dependencies to
+install). Security reports: [SECURITY.md](SECURITY.md).
 
 ## Author
 

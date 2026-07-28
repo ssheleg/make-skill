@@ -17,12 +17,21 @@ const os = require('os');
 const ROOT = path.resolve(__dirname, '..');
 const REPO = 'ssheleg/make-skill';
 
+function version() {
+  try {
+    return require(path.join(ROOT, 'package.json')).version;
+  } catch {
+    return 'unknown';
+  }
+}
+
 function usage() {
-  console.log(`make-skill installer
+  console.log(`make-skill installer v${version()}
 
 Usage:
   npx @ssheleg/make-skill [--force]   install skill + /make-skill command into
                                       ~/.claude (skip existing unless --force)
+  npx @ssheleg/make-skill --version
   npx @ssheleg/make-skill --help
 
 Other install paths:
@@ -57,6 +66,10 @@ function main(argv) {
   const args = argv.slice(2);
   if (args.includes('--help') || args.includes('-h')) {
     usage();
+    return 0;
+  }
+  if (args.includes('--version') || args.includes('-v')) {
+    console.log(version());
     return 0;
   }
   const force = args.includes('--force');

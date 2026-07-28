@@ -7,6 +7,7 @@ Spec revision referenced here: **2025-11-25**
 (<https://modelcontextprotocol.io/specification/latest>). Pin the revision you
 build against and re-verify method names before locking a contract — MCP versions
 by date and the negotiated `protocolVersion` string is part of the handshake.
+*Read from the spec on 2026-07-28.*
 
 ## Skill vs MCP server — pick the right one
 

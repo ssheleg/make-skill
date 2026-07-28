@@ -1,29 +1,7 @@
 {
   "name": "@ssheleg/make-skill",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "description": "Create, retrofit, audit, and ship agent skills & Claude Code plugins the proven ssheleg way — conformance to the Agent Skills open standard (front-matter limits, progressive-disclosure budgets), marketplace repo layout, version sync, validator + CI, multi-channel distribution (plugin, vercel skills CLI, npx, Cursor), npm gotchas, and MCP / A2A rules for protocol-connected skills. This package is the installer CLI.",
-  "bin": {
-    "make-skill": "bin/make-skill.js"
-  },
-  "publishConfig": {
-    "access": "public"
-  },
-  "files": [
-    "bin",
-    "plugins",
-    "cursor",
-    "templates",
-    "README.md",
-    "LICENSE",
-    "CHANGELOG.md"
-  ],
-  "repository": "github:ssheleg/make-skill",
-  "homepage": "https://github.com/ssheleg/make-skill",
-  "license": "MIT",
-  "author": "ssheleg",
-  "engines": {
-    "node": ">=16"
-  },
   "keywords": [
     "skill",
     "plugin",
@@ -37,5 +15,31 @@
     "agent-skills",
     "mcp",
     "a2a"
-  ]
+  ],
+  "homepage": "https://github.com/ssheleg/make-skill",
+  "bugs": {
+    "url": "https://github.com/ssheleg/make-skill/issues"
+  },
+  "repository": "github:ssheleg/make-skill",
+  "license": "MIT",
+  "author": "ssheleg",
+  "bin": {
+    "make-skill": "bin/make-skill.js"
+  },
+  "files": [
+    "bin",
+    "plugins",
+    "cursor",
+    "templates",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md",
+    "SECURITY.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=16"
+  }
 }

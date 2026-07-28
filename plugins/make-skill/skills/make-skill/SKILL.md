@@ -5,18 +5,13 @@ description: Use when creating, upgrading, auditing, or publishing agent skills 
 
 # make-skill — Create, Retrofit, and Ship Skills the Proven Way
 
-Reference implementations (local checkouts usually at `~/DATA/<name>`):
-- **`ssheleg/super-ux`** — the canonical structure; copy it verbatim when in
-  doubt. Multi-skill suite, Cursor rules, templates seeded into projects.
-- **`ssheleg/task-pipeline`** — the reference for the newer patterns: a
-  single-skill orchestrator with a generic JSON **config-contract**
-  (`pipeline.schema.json` + a copy-and-rewrite `pipeline.example.json`),
-  four-way version sync with jsonschema conformance in the validator, and
-  **toggleable release automation**.
-
-Both work end-to-end; match whichever is closer to the skill at hand.
-**make-skill itself** (`ssheleg/make-skill`) is built to this exact canon — the
-single-skill-plus-templates shape, distributed on all channels.
+Reference implementations to copy from (local checkouts usually `~/DATA/<name>`):
+**`ssheleg/super-ux`** — canonical structure, multi-skill suite, Cursor rules,
+seeded templates. **`ssheleg/task-pipeline`** — newer patterns: single-skill
+orchestrator, generic JSON config-contract (`pipeline.schema.json` +
+`pipeline.example.json`), jsonschema conformance in the validator, toggleable
+release automation. Match whichever is closer; both work end-to-end.
+**make-skill itself** is built to this canon.
 
 ## References — load on demand
 
@@ -110,8 +105,15 @@ path if it proves useful.
 ├── .github/workflows/validate.yml      # validator on push+PR (+ release.yml, off by default)
 ├── install.sh                          # POSIX fallback
 ├── README.md (English-first), CHANGELOG.md, LICENSE (MIT)
+├── CONTRIBUTING.md + SECURITY.md       # public repo: how to check work, where to report
 └── docs/superpowers/{specs,plans}/
 ```
+
+**Public-repo floor** (validator-enforced): a README that says what it does
+before how to install it; `CONTRIBUTING.md` with the exact offline commands that
+verify a change; `SECURITY.md` naming a private reporting channel and what the
+installers touch — a skill is text an agent executes, so "review before
+installing" belongs in writing.
 
 README language: **English-first** — it is the public face of the repo and most
 readers aren't Russian speakers. Russian belongs in the skill's trigger phrases
@@ -193,7 +195,8 @@ with evidence (`file:line` or command output) — never "looks fine".
    `npx --yes skills add <repo> --list` lists ONLY real skills; `npx <name>`
    works from a non-repo cwd (if npm published); `.mdc` rules have no relative
    links and valid front-matter.
-8. Repo meta: homepage → npm page; LICENSE; CHANGELOG current.
+8. Repo meta: homepage + description + topics set on the forge; LICENSE;
+   CHANGELOG current; public repos also carry CONTRIBUTING.md and SECURITY.md.
 9. Gotcha compliance (see below): `from __future__ import annotations` in
    validate.py; `\x1b` literals not raw ESC; single prompter for piped
    stdin; raw-mode only behind isTTY guards.
@@ -283,11 +286,13 @@ Non-negotiables for any such skill:
   `3.x` won't catch it, local run will.
 - **gh auth status may lie** (invalid-token report while git+ssh path
   works): attempt the operation before declaring it blocked.
-- **Duplicate-shadow: one channel per agent.** A plugin install AND a plain
-  `~/.claude/skills/<name>` copy (from `install.sh` or `npx skills add
-  --agent '*'`) on the SAME Claude Code install = two listings; the plain copy
-  can be STALE and shadow the fresh plugin. Keep exactly one channel per
-  agent; `rm -rf ~/.claude/skills/<name>` if a stray plain copy appears.
+- **Duplicate-shadow: one channel per agent — and the shadow regrows.** A plugin
+  install AND a plain `~/.claude/skills/<name>` copy on the SAME Claude Code
+  install = two listings, and the plain copy (often STALE) wins. It is not only
+  `install.sh`: `npx skills add|update … --global` auto-detects Claude Code and
+  recreates that path — usually as a symlink — **even when `claude-code` was
+  never targeted**. So the prune belongs in the update step itself:
+  `npx skills update <name> --global --yes && rm -f ~/.claude/skills/<name>`.
 - **Plugin commands need the full `<name>@<name>`:** `claude plugin update
   <name>` → "Plugin not found"; it must be `claude plugin update
   <name>@<name>`. Same for install.

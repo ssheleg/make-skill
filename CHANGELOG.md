@@ -1,5 +1,51 @@
 # Changelog
 
+## v0.6.0 — 2026-07-28
+
+Production pass for a public repository: the README now explains the project
+before it explains its own conventions, contributors get an entry point, and the
+last inaccuracies found by reading every file end to end are gone.
+
+### Added
+- **`CONTRIBUTING.md`** — what belongs in the canon (evidence, not advice), the
+  offline one-liner that runs the entire CI suite locally, the rules the
+  validator enforces, and the standing requirement that every new validator rule
+  ships with a negative test.
+- **`SECURITY.md`** — private reporting channel, an exact statement of what the
+  installers touch (`~/.claude/skills/make-skill`, `~/.claude/commands/`, no
+  network, no postinstall, zero dependencies), and the point that a skill is text
+  an agent executes, so it deserves review before installation.
+- `--version` / `-v` on the installer CLI, asserted in CI against
+  `package.json`.
+- **Public-repo floor** in the canon and in the validator: README, CHANGELOG,
+  LICENSE, CONTRIBUTING and SECURITY are required root files once a repo is
+  public, each with a negative self-test.
+- Validator rule: every `references/*.md` must carry a `Load this when:` line.
+  A reference without a stated condition is loaded always or never — the exact
+  failure progressive disclosure exists to prevent.
+- `bugs` URL in `package.json`; `SECURITY.md` added to the published files.
+
+### Fixed
+- **The shadow-copy gotcha understated the problem.** Docs said to remove a stray
+  `~/.claude/skills/<name>` copy "if it appears". It reappears on schedule: the
+  skills CLI auto-detects Claude Code and recreates that path — usually as a
+  symlink — on every `--global` add or update, whether or not `claude-code` was
+  targeted. The prune is now documented as part of the update command itself.
+- The v0.1.0 implementation plan still described `templates/SKILL.md` and an
+  unscoped npm package; marked executed and pointed at the spec's Superseded
+  table, matching the treatment its sibling spec already had.
+- Reference files derived from moving specs (Agent Skills, MCP, A2A) now carry
+  the date they were read, so a stale claim is visible instead of implied.
+
+### Changed
+- **README rewritten for a first-time reader**: what it is in two sentences, a
+  quickstart that ends in a working command, what you actually get (standard
+  conformance, a validator that can fail, every channel, the named gotchas,
+  where a skill ends and MCP/A2A begin), an install matrix with the prune step
+  in it, and a requirements section.
+- `permissions: contents: read` on the validate workflow.
+- `package.json` keys ordered conventionally.
+
 ## v0.5.1 — 2026-07-28
 
 Full-repo consistency pass: every file read against every other, contradictions

@@ -1,7 +1,10 @@
 # make-skill — Promote Implementation Plan
 
 - **Date:** 2026-07-24
-- **Spec:** docs/superpowers/specs/2026-07-24-make-skill-promote-design.md
+- **Status:** executed — historical record of the v0.1.0 build. Steps below name
+  `templates/SKILL.md` and the unscoped npm package; both changed on contact. See
+  the *Superseded* table in the spec.
+- **Spec:** [2026-07-24-make-skill-promote-design.md](../specs/2026-07-24-make-skill-promote-design.md)
 
 Single-implementer build; TDD gate = `test/validate.py` (structural). Red first
 (validator fails before files exist) → green after each file lands.

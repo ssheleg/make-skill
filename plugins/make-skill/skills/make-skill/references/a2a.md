@@ -8,7 +8,7 @@ Spec referenced here: **A2A 1.0.0**
 (<https://a2a-protocol.org/latest/specification/>). **Verify field and method
 names against the version you target before locking a contract** — v0.x → v1.0
 renamed the wire surface (examples below), and plenty of SDKs and blog posts still
-document v0.3.
+document v0.3. *Read from the spec on 2026-07-28.*
 
 ## A2A vs MCP — not competitors
 
