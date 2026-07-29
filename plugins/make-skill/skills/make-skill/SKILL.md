@@ -166,6 +166,11 @@ No half-done handoffs — the ONLY human step is npm 2FA.
    `npx --yes skills add <owner>/<name> --list` finds the skills.
 9. Done = four verified facts: GitHub repo + CI green; npm resolvable via
    npx; plugin installed; skills-CLI discovery works.
+10. **If it belongs to a family** (`sshlg-skills`): bump its `version` pin in
+   the umbrella's `skills.json`, release the umbrella, and verify with
+   `npx --yes sshlg-skills@latest list`. Until that lands the launcher
+   advertises the OLD version and `update` installs it — see
+   `references/distribution.md` §5.
 
 ## Retrofit (bring an existing skill/repo up to standard)
 

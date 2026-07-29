@@ -104,6 +104,14 @@ above — `npx skills add` (non-Claude agents, repeated `--agent`), `claude plug
 truth; the validator keeps it in sync with `.gitmodules`. One command
 installs/updates the whole family everywhere.
 
+**The umbrella pins each member's version, so a member release is not done until the pin moves.**
+`sshlg-skills/skills.json` carries a `version` per member and `list` prints it. Publish a member
+without bumping that pin and the launcher keeps advertising — and `update` keeps installing — the
+previous release, with nothing in either repo to reveal the gap. Observed 2026-07-29: `agent-sync`
+1.3.4 was on npm and installed everywhere while `list` still said 1.3.3, so a project comparing its
+install against `list` told every agent to update to what it already had. Bump the pin, release the
+umbrella, then confirm with `npx --yes sshlg-skills@latest list`.
+
 ## Platforms
 
 The Node installer (`bin/*.js`, `os.homedir()`/`path.join`), `npx github:…`, the

@@ -90,3 +90,25 @@ to npm stays a human step (2FA).
 
 You do not need to bump the version in a PR; say what changed and the maintainer
 will fold it into the next release.
+
+
+### The family catalogue moves with the release
+
+`sshlg-skills` — the launcher that installs and updates the whole ssheleg family — pins every
+member's version in its own `skills.json`. **A release that does not bump that pin is invisible.**
+`npx sshlg-skills list` keeps reporting the previous version, `update` keeps installing it, and
+anyone comparing their install against `list` is told the wrong number with nothing to reveal it.
+
+So a release is not finished at `npm publish`:
+
+```bash
+# in ssheleg/sshlg-skills
+#   1. bump this member's "version" in skills.json
+#   2. bump the launcher's own version, changelog, tag
+npm publish --access public
+npx --yes sshlg-skills@latest list   # the new number must appear here
+```
+
+This is not hypothetical. On 2026-07-29 `agent-sync` 1.3.4 was on npm, installed everywhere, and
+`list` still said 1.3.3 — so a project whose onboarding compares the running version against `list`
+told every agent to update to a version it already had.
