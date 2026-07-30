@@ -1,5 +1,24 @@
 # Changelog
 
+## v0.6.5 — 2026-07-30
+
+### Added
+- **`claude plugin validate <path> --strict` is now canon** — the upstream gate,
+  wired into CI against both the plugin and the marketplace manifest. It needs
+  no auth or API key, so a runner can install `@anthropic-ai/claude-code` and run
+  it. The canon records the two failures it found across all six repos of this
+  family at once, because neither is visible to a house validator:
+  - **`argument-hint` must be quoted.** Bare `[a | b]` is a YAML flow sequence,
+    so it parses as a list — and one comma or stray character breaks the block
+    outright, at which point the command loads with empty metadata and no
+    description, silently.
+  - **`homepage` and `repository` are not top-level `marketplace.json` fields.**
+    They belong to a plugin entry. Unrecognized fields are warnings the runtime
+    tolerates, which is why they survive everything except `--strict`.
+
+### Fixed
+- This repo's own command hint and marketplace manifest, per the above.
+
 ## v0.6.4 — 2026-07-30
 
 ### Changed

@@ -134,6 +134,24 @@ top CHANGELOG entry — SAME semver, bumped together, validator enforces. If
 version an agent outside Claude Code ever sees), it joins the sync as a 5th
 point.
 
+**`claude plugin validate <path> --strict` is the upstream gate — wire it into
+CI, both manifests.** Your own validator enforces house rules; this one enforces
+Claude Code's actual schema, and it catches a class your validator cannot see.
+It needs no auth and no API key, so a GitHub runner can install
+`@anthropic-ai/claude-code` and run it. Two failures it found across this whole
+family at once:
+
+- **Front matter that silently drops.** `argument-hint: [a | b]` is a YAML flow
+  sequence, not a string: it parses as a *list*, and one value containing a
+  comma or a stray character breaks the block outright — at which point the
+  command loads with **empty metadata and no description**, with nothing at
+  runtime saying so. **Always quote `argument-hint`**, single quotes when the
+  value itself contains double quotes.
+- **`homepage` and `repository` at the top level of `marketplace.json` are not
+  fields.** They are valid on a *plugin entry*; at the root Claude Code ignores
+  them. Unrecognized fields are warnings the runtime tolerates, which is exactly
+  why they survive without `--strict`.
+
 **Validator** (adapt super-ux `test/validate.py`): manifests parse+fields;
 SKILL.md front-matter — **spec rules** (name charset/length, description ≤1024,
 `compatibility` ≤500, `metadata` all-string, `allowed-tools` a string, no unknown

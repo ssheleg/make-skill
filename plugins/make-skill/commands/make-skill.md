@@ -1,6 +1,6 @@
 ---
 description: Create, retrofit, audit, or publish an agent skill / Claude Code plugin the proven ssheleg way — Agent Skills spec conformance, marketplace layout, version sync, validator + CI, multi-channel distribution, MCP / A2A rules.
-argument-hint: <what to build/retrofit/audit, or a skill path>
+argument-hint: "<what to build/retrofit/audit, or a skill path>"
 ---
 Use the `make-skill` skill for the task below. First **detect the workflow** from
 the task and any path in `$ARGUMENTS`, announce it, then follow the skill exactly:
