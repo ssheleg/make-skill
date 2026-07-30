@@ -45,6 +45,19 @@ before anyone runs it, not after.
 - Gotchas: unknown manifest fields load fine and mean nothing (only `--strict`
   surfaces them); a pinned `version` you forget to bump freezes every user,
   because the version is the update cache key.
+- `displayName` in both manifests, and the v0.6.6 canon on `claude plugin
+  details`, folded in from the parallel release.
+
+### Removed
+- **`plugins/make-skill/commands/make-skill.md`.** `claude plugin details`
+  reported `Skills (2) make-skill, make-skill`: a command and a skill of the
+  same name register `/make-skill` twice, the skill wins, and the command was
+  ~100 always-on tokens per session for something unreachable. Its workflow
+  detection now lives in the skill body, where it was always going to be read.
+  The validator rejects any `commands/<x>.md` that collides with `skills/<x>/`
+  and any unquoted `argument-hint`, with negative tests for both; the npx
+  installer and `install.sh` no longer write `~/.claude/commands/make-skill.md`
+  (an existing copy from an older install is harmless and can be deleted).
 
 ### Changed
 - **Progressive disclosure applied to the body itself.** The four installer
@@ -53,8 +66,21 @@ before anyone runs it, not after.
   out of `SKILL.md` into `references/distribution.md`, each under a stated load
   condition: they matter only while writing the CLI or actually publishing,
   while the body's token budget is paid by every session. `SKILL.md` ends this
-  release under both caps — 344 lines, ~5k tokens — despite everything added
+  release under both caps — 347 lines, ~5k tokens — despite everything added
   here and in v0.6.2–v0.6.5.
+
+## v0.6.6 — 2026-07-30
+
+### Added
+- **`claude plugin details` joins the canon as the check no manifest performs**:
+  it prints what Claude Code believes the plugin contains and the always-on token
+  cost per component. Two defects are visible only there — a component listed
+  **twice**, because a `commands/<x>.md` and a `skills/<x>/SKILL.md` both claim
+  `/<x>` now that custom commands are merged into skills, and a description whose
+  always-on cost is worth trimming.
+- **`displayName` in both manifests** is now canon: `name` is kebab-case because
+  it namespaces components, and the `/plugin` picker falls back to it, so a
+  listing reads `my-cool-plugin` until the field is set.
 
 ## v0.6.5 — 2026-07-30
 

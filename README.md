@@ -190,8 +190,7 @@ The skill itself is plain Markdown and needs nothing.
 .claude-plugin/marketplace.json
 plugins/make-skill/
 ├── .claude-plugin/plugin.json
-├── commands/make-skill.md            # the /make-skill entry point
-└── skills/make-skill/
+└── skills/make-skill/                # the skill IS /make-skill — no command file
     ├── SKILL.md                      # the canon, < 500 lines by rule
     └── references/*.md               # loaded on demand
 cursor/rules/make-skill.mdc           # self-contained Cursor rule

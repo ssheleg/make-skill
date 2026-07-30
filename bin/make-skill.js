@@ -2,8 +2,9 @@
 /*
  * make-skill installer CLI.
  *
- * Installs the make-skill skill into ~/.claude/skills/make-skill and the
- * /make-skill slash command into ~/.claude/commands/ (same layout as install.sh).
+ * Installs the make-skill skill into ~/.claude/skills/make-skill, which is what
+ * provides /make-skill (same layout as install.sh). No separate command file:
+ * a command sharing a skill's name registers the same slash command twice.
  * Idempotent: existing installs are skipped unless --force. Zero dependencies.
  *
  * For other agents (Cursor, Codex, 70+) use: npx skills add ssheleg/make-skill
@@ -29,7 +30,7 @@ function usage() {
   console.log(`make-skill installer v${version()}
 
 Usage:
-  npx @ssheleg/make-skill [--force]   install skill + /make-skill command into
+  npx @ssheleg/make-skill [--force]   install the make-skill skill into
                                       ~/.claude (skip existing unless --force)
   npx @ssheleg/make-skill --version
   npx @ssheleg/make-skill --help
@@ -81,27 +82,17 @@ function main(argv) {
   }
 
   const skillSrc = path.join(ROOT, 'plugins/make-skill/skills/make-skill');
-  const cmdSrc = path.join(ROOT, 'plugins/make-skill/commands/make-skill.md');
-  for (const [p, what] of [[skillSrc, 'skill sources'], [cmdSrc, 'command source']]) {
-    if (!fs.existsSync(p)) {
-      console.error(`error: ${what} missing at ${p} — corrupted package?`);
-      return 1;
-    }
+  if (!fs.existsSync(skillSrc)) {
+    console.error(`error: skill sources missing at ${skillSrc} — corrupted package?`);
+    return 1;
   }
 
   const home = os.homedir();
   installOne(
-    'make-skill skill  ',
+    'make-skill skill',
     skillSrc,
     path.join(home, '.claude', 'skills', 'make-skill'),
     true,
-    force
-  );
-  installOne(
-    '/make-skill command',
-    cmdSrc,
-    path.join(home, '.claude', 'commands', 'make-skill.md'),
-    false,
     force
   );
   return 0;

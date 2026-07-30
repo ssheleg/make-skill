@@ -21,19 +21,26 @@ release automation). **make-skill itself** is built to this canon.
 | `references/mcp.md` | the skill calls/wraps/documents an **MCP** server, or you're choosing skill vs server |
 | `references/a2a.md` | the skill spans two autonomous agents (**A2A**): Agent Cards, task lifecycle, delegation |
 
-Raw fallback if a copy arrived without them:
-`https://raw.githubusercontent.com/ssheleg/make-skill/main/plugins/make-skill/skills/make-skill/references/<file>`
+Missing from this copy? Raw fallback:
+`raw.githubusercontent.com/ssheleg/make-skill/main/plugins/make-skill/skills/make-skill/references/<file>`
 
 ## Choosing a workflow
+
+Detect from the request and any path in `$ARGUMENTS`; announce the choice.
 
 | Situation | Workflow |
 |---|---|
 | New skill, only for this user's agents | Create (personal) |
 | New skill, installable by others/other agents | Create (distributable) |
-| Existing skill or repo below this standard | Retrofit |
+| Existing skill or repo below this standard, "does this match the spec?" | Retrofit |
 | Personal skill should become installable | Promote |
 
-Announce the workflow. Distributable work is a real project: brainstorm → spec
+With no argument, **detect instead of asking**: a `SKILL.md`, `.claude-plugin/`,
+or `plugins/*/skills/*/` in the current directory → run the Retrofit audit and
+report the gap table plus exactly ONE next action. Only when there is nothing to
+detect, ask in one line what to create.
+
+Distributable work is a real project: brainstorm → spec
 (`docs/superpowers/specs/`) → plan → build → validate → publish. The spec locks
 target-project file contracts (paths, formats, statuses) FIRST; skills and rules
 are written against that contract, never ad hoc.
@@ -53,10 +60,9 @@ is non-negotiable; this canon only adds on top** (details + checklist:
   `allowed-tools` (space-separated string, experimental). That is the whole
   **portable** set.
 - **`license` is optional — declare it anyway**, in the front matter AND the
-  `marketplace.json` plugin entry. A root `LICENSE` file is invisible to someone
-  reading the listing or the installed skill, and nothing errors, so the gap
-  stays open (all six repos in this family, 2026-07-30: file present, manifests
-  silent).
+  `marketplace.json` plugin entry: a root `LICENSE` file reaches neither the
+  plugin listing nor an installed skill, and nothing errors, so the gap stays
+  open (all six repos here, 2026-07-30: file present, manifests silent).
 - **Host extensions are legal, never load-bearing.** Claude Code also reads
   `disable-model-invocation`, `context: fork`, `model`, `paths` + ~10 more
   (`references/claude-code-plugin.md`); other agents ignore them, so a skill
@@ -72,18 +78,19 @@ House additions on top of the spec:
 - `description` starts "Use when …" and lists concrete trigger phrases — English
   AND Russian (user works in both). A skill nobody triggers is dead weight.
 - One skill = one job. Multiple concerns → multiple skills + a shared contract
-  file. **Put contracts INSIDE the skill dir** (`references/…`) — the skills CLI
-  ships only the skill's OWN directory, so a SIBLING `skills/references/`
-  (`../references/…`) works as a Claude Code plugin and arrives **broken on
-  every other agent**. Sharing one contract across skills → duplicate it per
-  skill dir (validator-checked identical) or give a raw-URL fallback.
+  file. **Put contracts INSIDE the skill dir** (`references/…`): the skills CLI
+  ships only the skill's OWN directory, so a SIBLING `skills/references/` works
+  as a Claude Code plugin and arrives **broken on every other agent**. Sharing
+  one across skills → duplicate per skill dir (validator-checked identical) or
+  a raw-URL fallback.
 - Body: imperative, procedural, checklists over prose. Non-negotiables
   stated as such (model: super-ux "Evidence discipline").
-- Commands (`commands/*.md`) are thin wrappers: front-matter `description`
-  (+ `argument-hint`), body = "invoke skill X in mode Y", pass `$ARGUMENTS`.
-- Ship a one-command entry point `/<name>`: idempotent — inspect state →
-  repair missing pieces → status report → suggest exactly ONE next action.
-  Detect mode, never ask. (Pattern: super-ux `/ux`.)
+- Ship a one-command entry point `/<name>`: idempotent — inspect state → repair
+  missing pieces → status report → suggest exactly ONE next action. Detect mode,
+  never ask. (Pattern: super-ux `/ux`.) **The skill IS that command** — commands
+  are skills now, so a `commands/<name>.md` beside `skills/<name>/` registers
+  `/<name>` twice. Add a `commands/*.md` only under a DIFFERENT name, with a
+  quoted `argument-hint`.
 - Never overwrite user data: seed only when absent; overwrite only behind
   `--force`.
 
@@ -107,8 +114,8 @@ Needs hooks, an agent, or an MCP server too, still with no repo? Add
 ├── .claude-plugin/marketplace.json     # root manifest, plugins[0].source: ./plugins/<name>
 ├── plugins/<name>/
 │   ├── .claude-plugin/plugin.json      # ONLY the manifest lives in .claude-plugin/
-│   ├── commands/*.md                   # every component dir sits at the PLUGIN ROOT
 │   └── skills/<skill>/SKILL.md  +  references/*.md (+ scripts/, assets/)
+│       (commands/*.md too — but never named after a skill; see below)
 ├── cursor/rules/*.mdc                  # if agent-rules make sense for Cursor
 ├── templates/*.md                      # skeletons (NEVER name one SKILL.md — see Gotchas)
 ├── bin/<name>.js + package.json        # npx installer (zero-dep Node)
@@ -133,39 +140,42 @@ top CHANGELOG entry — SAME semver, bumped together, validator enforces. If
 version an agent outside Claude Code ever sees), it joins the sync as a 5th
 point.
 
-**`claude plugin validate <path> --strict` is the upstream gate — run it on BOTH
-manifests and wire it into CI.** Your validator enforces house rules; this one
-enforces Claude Code's actual schema and catches a class yours cannot see. It
-needs no auth, so a runner can `npm i -g @anthropic-ai/claude-code` and run it.
-Ship `$schema` in both manifests, keep component paths `./`-relative; field
-tables, sources, reserved marketplace names and path variables live in
-**`references/claude-code-plugin.md`**. Two failures it found across this whole
-family at once:
+**Two Claude Code checks, both mandatory** (details, field tables, sources,
+reserved names: **`references/claude-code-plugin.md`**):
 
-- **Front matter that silently drops.** `argument-hint: [a | b]` is a YAML flow
-  sequence, not a string — one comma or stray character breaks the block and the
-  command loads with **empty metadata and no description**, silently. **Always
-  quote `argument-hint`.**
-- **`homepage`/`repository` at the TOP level of `marketplace.json` are not
-  fields** — valid on a plugin entry, ignored at the root. Unrecognized fields
-  are warnings the runtime tolerates, which is why they survive without
-  `--strict`.
+- **`claude plugin validate <path> --strict` on BOTH manifests, wired into CI**
+  — your validator enforces house rules, this one enforces Claude Code's schema
+  and catches what yours cannot see. No auth needed
+  (`npm i -g @anthropic-ai/claude-code`). Ship `$schema` and `displayName` in
+  both manifests, keep component paths `./`-relative. Unrecognized fields are
+  warnings the runtime tolerates — `--strict` is the only thing that shows them
+  (that is how `homepage`/`repository`, plugin-ENTRY fields, sat at the
+  marketplace root here unnoticed).
+- **`claude plugin details <name>@<marketplace>`** — the only view of what
+  Claude Code *thinks* the plugin contains and what it costs every session.
+  Catches a component listed twice and a description worth trimming.
+
+Two silent failures found across this family at once, neither visible to a house
+validator: **always quote `argument-hint`** (bare `[a | b]` is a YAML flow
+sequence — one comma and the whole front-matter block drops, leaving a command
+with no description and no warning), and **never name a `commands/<x>.md` after
+a `skills/<x>/`** (commands are skills now: same name = two components, the
+skill wins, the command is unreachable always-on cost — ~100 tok/session here).
 
 **Validator** (adapt super-ux `test/validate.py`): manifests parse + `$schema` +
 only Anthropic-recognized keys + `./`-relative paths; SKILL.md front-matter —
 **spec rules** (name charset/length, description ≤1024, `compatibility` ≤500,
 `metadata` all-string, `allowed-tools` a string, no keys outside spec ∪ host
 extensions, body <500 lines) **plus house rules** (description starts "Use
-when", EN+RU triggers); command and `.mdc` front-matter, no relative links in
-`.mdc`; **no stray `SKILL.md` outside `plugins/*/skills/*/`**; templates exist;
-relative md links resolve and never escape the skill dir; version sync.
-Plus a negative self-test (corrupt a copy → expect FAIL) — a validator that
-can't fail is decoration. The house validator owns only repo rules; upstream
-tie-breakers are `skills-ref validate <skill dir>` (Python, from source out of
-`agentskills/agentskills`) on the standard and `claude plugin validate <path>
---strict` on the plugin schema. The latter is offline, so put it in CI
-(`npm i -g @anthropic-ai/claude-code`) as its OWN job — an upstream outage must
-not mask a house-validator failure.
+when", EN+RU triggers); no command colliding with a skill name; `.mdc`
+front-matter with no relative links; **no stray `SKILL.md` outside
+`plugins/*/skills/*/`**; templates exist; relative md links resolve and never
+escape the skill dir; version sync. Plus a negative self-test (corrupt a copy →
+expect FAIL) — a validator that can't fail is decoration. It owns only repo
+rules: `skills-ref validate <skill dir>` (from `agentskills/agentskills`) is the
+tie-breaker on the standard, `claude plugin validate --strict` on the plugin
+schema — the latter as its OWN CI job, so an upstream outage can't mask a house
+failure.
 
 ### First publish — end-to-end, same session
 
@@ -203,10 +213,10 @@ with evidence (`file:line` or command output) — never "looks fine".
    via the skills CLI and checking the files actually arrived.
 4. Entry-point command exists, idempotent (inspect → repair → status → one
    next action).
-5. Layout matches the standard tree; manifests complete; version sync ×4
-   (×5 if `SKILL.md` carries `metadata.version`).
-6. Validator present AND green AND able to fail (run the negative test);
-   CI workflow present, last run `success`.
+5. Layout matches the tree; manifests complete; version sync ×4 (×5 with
+   `metadata.version`).
+6. Validator present, green, and able to fail (run the negative test); CI
+   present, last run `success`.
 7. README: badges (npm/CI/license), install + update matrix, English-first
    prose, bundled `references/` listed so a reader sees what ships.
 8. Distribution live-checks (`references/distribution.md`):
@@ -254,9 +264,9 @@ system, decide the boundary first:
 | Need | Build | Read first |
 |---|---|---|
 | Teach the agent HOW (procedure, conventions, gotchas) | a skill | — |
-| New capability against a live system (API/DB/SaaS) | an **MCP server** | `references/mcp.md` |
-| Existing MCP server used badly | a skill documenting its tools | `references/mcp.md` |
-| Delegate an outcome to ANOTHER autonomous agent | **A2A** client/server | `references/a2a.md` |
+| New capability against a live system (API/DB/SaaS) | an **MCP server** | `mcp.md` |
+| Existing MCP server used badly | a skill documenting its tools | `mcp.md` |
+| Delegate an outcome to ANOTHER autonomous agent | **A2A** client/server | `a2a.md` |
 
 Non-negotiables for any such skill:
 
@@ -271,8 +281,7 @@ Non-negotiables for any such skill:
   agent to auto-approve tool calls or bypass consent prompts.
 - Interactive auth (OAuth, `TASK_STATE_AUTH_REQUIRED`) is a human step, not a
   retry loop.
-- Wire-level detail (methods, field tables, payloads) goes in `references/` —
-  in the body it blows the 5000-token budget.
+- Wire-level detail (methods, field tables, payloads) goes in `references/`.
 
 ## Gotchas (each cost a debugging round)
 
@@ -300,10 +309,6 @@ Non-negotiables for any such skill:
 - **Plugin commands need the full `<name>@<name>`:** `claude plugin update
   <name>` → "Plugin not found"; it must be `claude plugin update
   <name>@<name>`. Same for install.
-- **Unknown manifest fields load fine and mean nothing** — `homepage` at the
-  MARKETPLACE level looks right and does nothing. Only
-  `claude plugin validate <path> --strict` surfaces them; run it on BOTH
-  manifests every release.
 - **A pinned `version` you forget to bump freezes every user.** The version is
   the update cache key: twenty commits under `0.6.1` and `/plugin update` still
   says "already at the latest version".
@@ -315,8 +320,8 @@ Non-negotiables for any such skill:
 2. `python3 test/validate.py` → exit 0 (`PASS: …`), then
    `claude plugin validate ./plugins/<name> --strict` and
    `claude plugin validate . --strict` → both exit 0.
-3. Functional tests: installer against scratch dir (fresh / rerun-skip /
-   `--force`), `node --check` on CLI, pipe-driven menu tests.
+3. Functional tests: installer against a scratch dir (fresh / rerun-skip /
+   `--force`), `node --check` on the CLI, pipe-driven menu tests.
 4. Conventional commit; push; confirm CI `success`; tag `v<ver>` + push tag;
    `gh release create` from the CHANGELOG section (or let the release workflow
    below do it).
@@ -335,9 +340,7 @@ Non-negotiables for any such skill:
 `RELEASE_ENABLED` for the GitHub release, `PUBLISH_NPMJS` for the registry. It
 checks tag ↔ manifest version, cuts the release from the CHANGELOG section,
 smoke-tests `npx github:<owner>/<repo>#<tag>` from a clean cwd, then publishes
-with provenance (auth per `references/distribution.md` §3 — OIDC or `NPM_TOKEN`,
-written so both work). Turns steps 2/4/5 into CI; step 6 stays manual.
-
-**A release nobody has to attend is the point.** Manual publishing is how a
-registry ends up versions behind its own tags with nothing showing the gap —
-measured across this family on 2026-07-30: six of seven packages behind.
+with provenance (auth per `references/distribution.md` §3). Turns steps 2/4/5
+into CI; step 6 stays manual. **A release nobody has to attend is the point:**
+manual publishing is how a registry ends up versions behind its own tags with
+nothing showing the gap — six of this family's seven packages, 2026-07-30.

@@ -9,6 +9,7 @@
   "plugins": [
     {
       "name": "make-skill",
+      "displayName": "Make Skill",
       "source": "./plugins/make-skill",
       "description": "Encodes the Agent Skills open standard (front-matter limits, progressive-disclosure budgets) and the Claude Code plugin reference (manifest schemas, component layout, `claude plugin validate --strict`) plus the proven ssheleg pipeline: marketplace repo layout, version sync, validator + CI, multi-channel distribution (Claude Code plugin, vercel skills CLI, npx, Cursor), npm gotchas, end-to-end first publish, and MCP / A2A rules for protocol-connected skills.",
       "version": "0.7.0",

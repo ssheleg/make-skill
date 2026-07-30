@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Installs the make-skill skill + /make-skill command into ~/.claude.
+# Installs the make-skill skill into ~/.claude/skills (that is what gives
+# /make-skill; a same-named command file would register it a second time).
 # Idempotent: skips anything already installed; pass --force to overwrite.
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -12,7 +13,6 @@ elif [[ -n "${1:-}" ]]; then
   exit 2
 fi
 
-# 1. skill
 SRC="$HERE/plugins/make-skill/skills/make-skill"
 DEST="${HOME}/.claude/skills/make-skill"
 if [[ -e "$DEST" && "$FORCE" -eq 0 ]]; then
@@ -24,13 +24,3 @@ else
   echo "Installed make-skill skill   -> $DEST"
 fi
 
-# 2. slash command
-CMD_SRC="$HERE/plugins/make-skill/commands/make-skill.md"
-CMD_DEST="${HOME}/.claude/commands/make-skill.md"
-if [[ -e "$CMD_DEST" && "$FORCE" -eq 0 ]]; then
-  echo "skip: command already installed at $CMD_DEST (rerun with --force to overwrite)"
-else
-  mkdir -p "$(dirname "$CMD_DEST")"
-  cp "$CMD_SRC" "$CMD_DEST"
-  echo "Installed /make-skill command -> $CMD_DEST"
-fi

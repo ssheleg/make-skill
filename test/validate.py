@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Structural validator for the make-skill plugin repo. Exit 0 = pass."""
-import json, os, re, sys
+import glob, json, os, re, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 NAME = "make-skill"
@@ -329,21 +329,36 @@ skill_ver = skill_meta.get("version") if isinstance(skill_meta, dict) else None
 if skill_ver and plg_ver and skill_ver != plg_ver:
     fail(f"version mismatch: SKILL.md metadata.version={skill_ver!r} plugin.json={plg_ver!r}")
 
-# slash command with proper frontmatter
-cmd_path = os.path.join(ROOT, "plugins/make-skill/commands/make-skill.md")
-if not os.path.isfile(cmd_path):
-    fail("missing command: plugins/make-skill/commands/make-skill.md")
-else:
-    ctxt = open(cmd_path, encoding="utf-8").read()
-    cm = re.match(r"^---\n(.*?)\n---\n", ctxt, re.S)
-    if not cm:
-        fail("command: no frontmatter")
-    else:
+# commands are skills now: a commands/<x>.md next to a skills/<x>/ registers the
+# same /<x> twice — the skill wins and the command is unreachable always-on cost
+# (visible only in `claude plugin details`). Any command that does exist must
+# carry a description and a QUOTED argument-hint (bare `[a | b]` parses as a YAML
+# list and drops the whole block).
+for plugin_dir in sorted(glob.glob(os.path.join(ROOT, "plugins", "*"))):
+    if not os.path.isdir(plugin_dir):
+        continue
+    skill_names = {os.path.basename(d)
+                   for d in glob.glob(os.path.join(plugin_dir, "skills", "*"))
+                   if os.path.isfile(os.path.join(d, "SKILL.md"))}
+    for cmd_path in sorted(glob.glob(os.path.join(plugin_dir, "commands", "*.md"))):
+        cmd_name = os.path.basename(cmd_path)[:-3]
+        rel = os.path.relpath(cmd_path, ROOT)
+        if cmd_name in skill_names:
+            fail(f"{rel} collides with skills/{cmd_name}/ — both claim /{cmd_name}; "
+                 "the skill wins and the command is unreachable always-on cost "
+                 "(check with `claude plugin details`)")
+        ctxt = open(cmd_path, encoding="utf-8").read()
+        cm = re.match(r"^---\n(.*?)\n---\n", ctxt, re.S)
+        if not cm:
+            fail(f"{rel}: no frontmatter")
+            continue
         cfm = cm.group(1)
         if not re.search(r"^description:\s*\S", cfm, re.M):
-            fail("command: empty/missing description in frontmatter")
-        if not re.search(r"^argument-hint:\s*\S", cfm, re.M):
-            fail("command: empty/missing argument-hint in frontmatter")
+            fail(f"{rel}: empty/missing description in frontmatter")
+        hint = re.search(r"^argument-hint:\s*(\S.*)$", cfm, re.M)
+        if hint and not re.match(r"""^["'].*["']$""", hint.group(1).strip()):
+            fail(f"{rel}: argument-hint must be quoted — bare [a | b] is a YAML "
+                 "list and silently drops the whole frontmatter block")
 
 # npm package: bin resolves, files whitelist ships the sources
 if pkg:

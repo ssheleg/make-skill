@@ -100,7 +100,7 @@ jobs:
       - name: Negative self-test (Claude Code manifest violations must fail)
         run: |
           set -eu
-          for case in mktfield mktschema plgschema srcpath buried; do
+          for case in mktfield mktschema plgschema srcpath buried dupcmd; do
             rm -rf "/tmp/cc-$case"
             cp -R . "/tmp/cc-$case"
             CASE="$case" python3 - <<'PY'
@@ -123,6 +123,10 @@ jobs:
               d = root / "plugins/make-skill/.claude-plugin/commands"
               d.mkdir(parents=True, exist_ok=True)
               (d / "buried.md").write_text("---\ndescription: x\n---\n")
+          elif case == "dupcmd":     # commands/<x>.md + skills/<x>/ = /<x> registered twice
+              d = root / "plugins/make-skill/commands"
+              d.mkdir(parents=True, exist_ok=True)
+              (d / "make-skill.md").write_text("---\ndescription: x\n---\nbody\n")
           mkt_p.write_text(json.dumps(mkt, indent=2) + "\n", encoding="utf-8")
           plg_p.write_text(json.dumps(plg, indent=2) + "\n", encoding="utf-8")
           PY
@@ -150,7 +154,9 @@ jobs:
           mkdir -p "$HOME"
           node bin/make-skill.js
           test -f "$HOME/.claude/skills/make-skill/SKILL.md"
-          test -f "$HOME/.claude/commands/make-skill.md"
+          # no ~/.claude/commands/make-skill.md: a command sharing the skill's
+          # name registers /make-skill twice (see `claude plugin details`)
+          test ! -e "$HOME/.claude/commands/make-skill.md"
           # references must travel with the skill — relative links break otherwise
           for r in agent-skills-spec claude-code-plugin distribution mcp a2a; do
             test -f "$HOME/.claude/skills/make-skill/references/$r.md"
