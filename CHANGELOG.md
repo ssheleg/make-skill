@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.6.6 — 2026-07-30
+
+### Added
+- **`claude plugin details` joins the canon as the check no manifest performs**:
+  it prints what Claude Code believes the plugin contains and the always-on token
+  cost per component. Two defects are visible only there — a component listed
+  **twice**, because a `commands/<x>.md` and a `skills/<x>/SKILL.md` both claim
+  `/<x>` now that custom commands are merged into skills, and a description whose
+  always-on cost is worth trimming.
+- **`displayName` in both manifests** is now canon: `name` is kebab-case because
+  it namespaces components, and the `/plugin` picker falls back to it, so a
+  listing reads `my-cool-plugin` until the field is set.
+
 ## v0.6.5 — 2026-07-30
 
 ### Added

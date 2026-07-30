@@ -152,6 +152,20 @@ family at once:
   them. Unrecognized fields are warnings the runtime tolerates, which is exactly
   why they survive without `--strict`.
 
+Also set **`displayName`** in both manifests. `name` is kebab-case because it
+namespaces components; `displayName` is what the `/plugin` picker shows, and it
+falls back to `name` when absent — so a listing reads `my-cool-plugin` until you
+write `My Cool Plugin`.
+
+**`claude plugin details <name>@<marketplace>` is the other check worth running**,
+and it answers a question no manifest does: what Claude Code *thinks* your plugin
+contains, and what it costs. It prints the component inventory and the always-on
+token cost per component. Two things show up there and nowhere else: a component
+listed **twice** (a `commands/<x>.md` and a `skills/<x>/SKILL.md` both claim
+`/<x>` — custom commands are merged into skills, so same name means two
+components, both paying always-on tokens, one unreachable), and a description
+long enough that its always-on cost is worth trimming.
+
 **Validator** (adapt super-ux `test/validate.py`): manifests parse+fields;
 SKILL.md front-matter — **spec rules** (name charset/length, description ≤1024,
 `compatibility` ≤500, `metadata` all-string, `allowed-tools` a string, no unknown
