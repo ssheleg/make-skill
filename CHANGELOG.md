@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.6.3 — 2026-07-30
+
+### Added
+- **Declare the licence in BOTH manifests — now part of the spec floor.** An
+  SPDX id belongs in the SKILL.md front matter *and* in the `marketplace.json`
+  plugin entry (a documented field there too). A `LICENSE` file in the repo root
+  reaches neither the plugin listing nor an installed skill. This gap was found
+  across all six repos of this family on the same day, and it stayed open
+  precisely because this checklist never asked for it: both fields are optional,
+  so nothing ever errored.
+
+### Changed
+- `license: MIT` declared in this repo's own two manifests, which is where the
+  rule should have been demonstrated first.
+
 ## v0.6.2 — 2026-07-30
 
 A family member's release did not end where the skill said it ended. Publishing

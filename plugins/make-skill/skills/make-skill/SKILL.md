@@ -1,6 +1,7 @@
 ---
 name: make-skill
 description: Use when creating, upgrading, auditing, or publishing agent skills and Claude Code plugins - "make a skill" / "сделай скилл", "new skill" / "новый скилл", "ssheleg skill" / "ssheleg скилл", "wrap it in a plugin" / "заверни в плагин", "publish a skill" / "опубликуй скилл", "retrofit a skill to the standard" / "приведи скилл к стандарту", "does this skill match the spec" / "соответствует ли скилл стандарту" - or when a skill must reach an MCP server or another agent over A2A. Encodes the Agent Skills open standard (front-matter limits, progressive-disclosure budgets) plus the proven ssheleg pipeline - marketplace layout, version sync, validator+CI, multi-agent distribution (Claude Code plugin, vercel skills CLI, npx, Cursor), npm gotchas, end-to-end first publish.
+license: MIT
 ---
 
 # make-skill — Create, Retrofit, and Ship Skills the Proven Way
@@ -53,6 +54,13 @@ is non-negotiable; this canon only adds on top** (details + checklist:
   required MCP servers, runtimes, network here), `metadata` (string→string map;
   quote versions), `allowed-tools` (space-separated string, experimental).
   Nothing else belongs in front-matter.
+- **`license` is optional but declare it anyway — in BOTH manifests.** An SPDX
+  id in the front matter AND in the `marketplace.json` plugin entry (a documented
+  field there too). A `LICENSE` file in the repo root is invisible to someone
+  reading the plugin listing or the installed skill: shipping code whose terms
+  are one repo-visit away is a gap, and it stays open because nothing errors.
+  Observed 2026-07-30 across all six repos in this family at once — every one had
+  the file, none declared it in either manifest.
 - Body **< 500 lines and < 5000 tokens**. Heavier material goes to `references/`,
   `scripts/`, `assets/` INSIDE the skill dir, one level deep, each with a stated
   load trigger ("read X when Y") — never a bare "see references/".
