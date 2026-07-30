@@ -1,7 +1,7 @@
 {
   "name": "make-skill",
   "description": "Create, retrofit, audit, and ship agent skills & Claude Code plugins the proven ssheleg way: conformance to the Agent Skills open standard, marketplace repo layout, version sync, validator + CI, multi-channel distribution (plugin, vercel skills CLI, npx, Cursor), npm gotchas, end-to-end first publish, plus MCP / A2A references for protocol-connected skills.",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "author": {
     "name": "ssheleg"
   },

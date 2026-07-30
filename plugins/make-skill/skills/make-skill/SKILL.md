@@ -149,7 +149,8 @@ is the tie-breaker on the standard; the house validator owns the repo rules.
 ### First publish — end-to-end, same session
 
 Take it ALL the way: GitHub + CI green + npm published + verified installs.
-No half-done handoffs — the ONLY human step is npm 2FA.
+No half-done handoffs. The first publish needs a human for 2FA; **arming CI
+publishing is part of shipping**, so the second one does not (see step 9).
 
 1. **Preflight before code:** `npm view <name>` (E404 = free);
    `gh auth status` (may lie — just try repo create later); `npm whoami`
@@ -172,9 +173,16 @@ No half-done handoffs — the ONLY human step is npm 2FA.
 8. **Install for the user:** `claude plugin marketplace add <owner>/<name>` +
    `claude plugin install <name>@<name>`; verify
    `npx --yes skills add <owner>/<name> --list` finds the skills.
-9. Done = four verified facts: GitHub repo + CI green; npm resolvable via
-   npx; plugin installed; skills-CLI discovery works.
-10. **If it belongs to a family** (`sshlg-skills`): bump its `version` pin in
+9. **Arm CI publishing so this is the last manual publish.** Ship the release
+   workflow (above), then hand over exactly two commands — `gh secret set
+   NPM_TOKEN --repo <owner>/<name>` (a GRANULAR AUTOMATION token; the user
+   pastes it, never you) and `gh variable set PUBLISH_NPMJS --body true --repo
+   <owner>/<name>`. Secret first: arming the variable with no token queues a red
+   run on the next tag.
+10. Done = five verified facts: GitHub repo + CI green; npm resolvable via
+   npx; plugin installed; skills-CLI discovery works; the next tag publishes
+   without a human.
+11. **If it belongs to a family** (`sshlg-skills`): bump its `version` pin in
    the umbrella's `skills.json`, release the umbrella, and verify with
    `npx --yes sshlg-skills@latest list`. Until that lands the launcher
    advertises the OLD version and `update` installs it — see
@@ -330,10 +338,18 @@ Non-negotiables for any such skill:
 7. Global `~/.claude/CLAUDE.md` — only for rules that must fire even without
    the skill installed.
 
-**Optional — toggleable release automation** (reference impl:
-`ssheleg/task-pipeline` `.github/workflows/release.yml`). A `v*`-tag workflow,
-**off by default** and armed per repo via a `RELEASE_ENABLED` repo variable
-(so forks decide for themselves), that validates the tag ↔ manifest version,
-cuts the GitHub release from the matching CHANGELOG section, and smoke-tests
-`npx github:<owner>/<repo>#<tag>` from a clean cwd. npm publish stays the human
-2FA step. Turns steps 2/4 into CI; keep step 6 manual (it touches this machine).
+**Toggleable release automation — set it up, don't leave it optional**
+(reference impl: `ssheleg/task-pipeline` `.github/workflows/release.yml`). A
+`v*`-tag workflow, **off by default** and armed per repo by two variables so a
+fork inherits nothing: `RELEASE_ENABLED` for the GitHub release,
+`PUBLISH_NPMJS` for the registry. It validates the tag ↔ manifest version, cuts
+the GitHub release from the matching CHANGELOG section, smoke-tests `npx
+github:<owner>/<repo>#<tag>` from a clean cwd, then publishes to npm with
+provenance. Auth per `references/distribution.md` §3 — OIDC or `NPM_TOKEN`,
+written so both work. Turns steps 2/4/5 into CI; keep step 6 manual (it touches
+this machine).
+
+**A release nobody has to attend is the point.** Leaving publish manual is how a
+registry ends up several versions behind its own tags with nothing anywhere
+showing the gap — measured across this family on 2026-07-30: six of seven
+packages behind, one by three releases.

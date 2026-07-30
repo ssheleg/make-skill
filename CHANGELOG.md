@@ -1,5 +1,29 @@
 # Changelog
 
+## v0.6.4 — 2026-07-30
+
+### Changed
+- **Publishing to npm is no longer taught as a permanent human step.** The canon
+  said 2FA makes non-interactive publishing impossible and to plan the manual
+  step; that is only true of an interactive publish and a classic token. Arming
+  CI publishing is now step 9 of the first publish, and the definition of done
+  gained a fifth fact: *the next tag publishes without a human*.
+- **`references/distribution.md` §3** carries both auth routes — npm trusted
+  publishing (OIDC, no credential at all: npm >= 11.5.1, Node >= 22.14,
+  `id-token: write`, the workflow filename registered on npmjs.com) and a
+  granular automation token in `NPM_TOKEN` — and says to write the workflow so
+  both work, which makes adopting OIDC later a secret deletion rather than a CI
+  edit.
+- Three properties the publish job needs, each of which is a red build if
+  missing: skip a version already on the registry (publishing over one is a hard
+  403), a `workflow_dispatch` input naming an existing tag (a dispatch runs the
+  workflow file as of the ref it is dispatched on, so an old tag can never gain
+  a new job), and polling `npm view` afterwards, because published is a claim
+  until the registry serves it.
+- The release-automation section is no longer marked *optional*, with the
+  measurement that argues it: six of this family's seven packages were behind
+  their own tags on 2026-07-30, one by three releases.
+
 ## v0.6.3 — 2026-07-30
 
 ### Added

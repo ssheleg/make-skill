@@ -58,8 +58,30 @@ package's own repo, `npx` resolves the local package and reports a false
 
 ### npm gotchas — each one cost a debugging round
 
-- **npm 2FA:** publish throws EOTP; non-interactive is impossible without a
-  granular automation token. Plan it as the one human step; verify after.
+- **npm 2FA:** an interactive `npm publish` throws EOTP, and a *classic* token
+  does not get past it. Two ways out, both of which remove the human step for
+  good — set one up rather than planning a manual publish forever:
+  - **Trusted publishing (OIDC) — preferred, no credential exists to leak.**
+    npm CLI ≥ 11.5.1, Node ≥ 22.14, `permissions: id-token: write`, and the
+    package configured on npmjs.com with the exact workflow *filename* as its
+    trusted publisher. No `NODE_AUTH_TOKEN` at all.
+  - **Granular automation token** in `NPM_TOKEN`, passed as `NODE_AUTH_TOKEN`.
+    Works immediately with no npmjs.com setup, at the cost of a long-lived
+    credential to rotate.
+
+  Write the workflow so both work — always grant `id-token: write` and always
+  pass `NODE_AUTH_TOKEN` from the secret. Then adopting OIDC later is deleting a
+  secret, not editing CI. `id-token: write` is also what signs `--provenance`.
+
+  Three properties the job needs, each earned the hard way:
+  - **Skip a version already on the registry.** Publishing over one is a hard
+    403, which turns every re-run into a red build.
+  - **A `workflow_dispatch` input naming an existing tag.** A dispatch runs the
+    workflow file *as of the ref it is dispatched on*, so a tag pushed before the
+    publish job existed can never gain one — the input lets the current workflow
+    run against an old tag.
+  - **Poll `npm view` after publishing.** The read replica lags the write master
+    by a minute or two; published is a claim until the registry serves it.
 - **Check the npm name FIRST, but don't trust E404:** `npm view <name>` → E404
   means free, yet npm's **name-similarity** policy only fires on PUT, so
   `npm publish` can still 403 "too similar to existing package <x>" (e.g.
