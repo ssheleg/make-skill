@@ -1,0 +1,280 @@
+# Claude Code plugin reference — the Anthropic layer
+
+**Load this when:** building, retrofitting, or auditing anything that ships as a
+**Claude Code plugin or marketplace** — writing `plugin.json` / `marketplace.json`,
+adding agents / hooks / MCP / LSP / monitors to a plugin, or resolving a
+`claude plugin validate` failure.
+
+Upstream (read against these, not from memory — the schema grows every release):
+- Plugins reference — <https://code.claude.com/docs/en/plugins-reference>
+- Marketplaces — <https://code.claude.com/docs/en/plugin-marketplaces>
+- Skills — <https://code.claude.com/docs/en/skills>
+
+*Read from the docs on 2026-07-30 against Claude Code 2.1.212. Re-read before
+trusting a version-gated field in a new quarter.*
+
+The [Agent Skills spec](https://agentskills.io/specification) (see
+`references/agent-skills-spec.md`) is the portable floor. **This file is the
+host layer on top of it**: everything here is Claude-Code-specific and is
+ignored by other agents — so nothing here may be load-bearing for a skill that
+must also run on Cursor, Codex, or the skills CLI.
+
+## The gate: `claude plugin validate`
+
+```bash
+claude plugin validate ./plugins/<name> --strict   # the plugin manifest
+claude plugin validate . --strict                  # the marketplace manifest
+```
+
+Both must exit 0. Rules that decide the outcome:
+
+- Unrecognized top-level fields are **warnings**, not errors — the plugin still
+  loads. `--strict` turns them into failures, which is what you want in CI:
+  a field from another ecosystem, or one typo'd by two characters, is caught
+  before publish.
+- Wrong **types** always fail (`keywords` as a string, not an array).
+- It runs offline and needs no auth, so it belongs in CI:
+  `npm i -g @anthropic-ai/claude-code && claude plugin validate … --strict`.
+
+## `plugin.json` — `.claude-plugin/plugin.json`
+
+The manifest is optional (components auto-discover, name falls back to the
+directory). Ship one anyway: without it there is no version, no metadata, and
+nothing to validate. **`name` is the only required field.**
+
+| Field | Type | Notes |
+|---|---|---|
+| `$schema` | string | `https://json.schemastore.org/claude-code-plugin-manifest.json` — editor autocomplete; ignored at load |
+| `name` | string | **required**, kebab-case, no spaces; namespaces every component (`plugin-dev:agent-creator`). A marketplace entry listing it under another name wins for `enabledPlugins` and `/plugin` |
+| `displayName` | string | UI label, may contain spaces/case; never used for lookup (CC ≥ 2.1.143) |
+| `version` | string | semver. **Set it and you must bump it** — CC uses the version as the cache key, so new commits under an unchanged version never reach users. Omit it entirely and the git SHA is the version (every commit ships) |
+| `description`, `author{name,email,url}`, `homepage`, `repository`, `license`, `keywords[]` | | metadata |
+| `defaultEnabled` | boolean | `false` = installs disabled until the user opts in (CC ≥ 2.1.154). The marketplace entry's copy wins over this one; an existing `enabledPlugins` entry wins over both |
+| `skills` | string\|array | extra skill dirs — **adds to** the default `skills/` scan |
+| `commands`, `agents`, `workflows`, `outputStyles` | string\|array | **replace** the default folder. To keep it, list it: `["./commands/", "./extras/"]` |
+| `hooks`, `mcpServers`, `lspServers` | string\|array\|object | path(s) or inline config; own merge rules |
+| `experimental.themes`, `experimental.monitors` | string\|array | still moving; top level warns today, will be required under `experimental` |
+| `userConfig` | object | values prompted at enable time — `type` (`string`/`number`/`boolean`/`directory`/`file`), `title`, `description` required; `sensitive`, `required`, `default`, `multiple`, `min`/`max` optional |
+| `channels` | array | message channels; each `server` must match a key in `mcpServers` |
+| `dependencies` | array | `["helper-lib", {"name":"secrets-vault","version":"~2.1.0"}]` |
+
+All component paths are **relative to the plugin root and start with `./`**.
+
+`${user_config.KEY}` substitutes in MCP/LSP configs and hook commands, and in
+skill/agent content for non-sensitive values — but **not** in shell-form hook
+commands, monitor commands, or MCP `headersHelper` (a shell would execute
+whatever the value contains); those read `CLAUDE_PLUGIN_OPTION_<KEY>` from the
+environment instead. Sensitive values go to the OS keychain (~2 KB shared
+budget), never to `settings.json`.
+
+## `marketplace.json` — `.claude-plugin/marketplace.json`
+
+| Field | Required | Notes |
+|---|---|---|
+| `name` | yes | kebab-case, public (`/plugin install x@<name>`). One marketplace per name per user — a second add **replaces** the first |
+| `owner` | yes | `{name}` required, `email`/`url` optional |
+| `plugins[]` | yes | entries, below |
+| `$schema` | no | `https://json.schemastore.org/claude-code-marketplace.json` |
+| `description`, `version` | no | also accepted under `metadata` for backward compatibility |
+| `metadata.pluginRoot` | no | prefix for relative sources (`"./plugins"` → `"source": "formatter"`) |
+| `allowCrossMarketplaceDependenciesOn` | no | marketplaces this one's plugins may depend on; anything else is blocked at install |
+| `renames` | no | old plugin name → new name, or `null` if removed; migrates existing users (CC ≥ 2.1.193) |
+
+**There is no top-level `homepage`, `repository`, or `license`.** Those are
+plugin-entry fields; at marketplace level they are unrecognized and `--strict`
+fails on them. Put the project URL in `owner.url`.
+
+**Reserved marketplace names** (third-party use blocked, re-checked on every
+load, so a name can become reserved under a live marketplace):
+`claude-code-marketplace`, `claude-code-plugins`, `claude-plugins-official`,
+`claude-plugins-community`, `claude-community`, `anthropic-marketplace`,
+`anthropic-plugins`, `agent-skills`, `anthropic-agent-skills`,
+`knowledge-work-plugins`, `life-sciences`, `claude-for-legal`,
+`claude-for-financial-services`, `financial-services-plugins`,
+`first-party-plugins`, `healthcare` — plus anything that impersonates them
+(`official-claude-plugins`, `anthropic-plugins-v2`).
+
+### Plugin entries
+
+Required: `name` and `source`. Any plugin-manifest field is allowed, plus the
+marketplace-only `source`, `category`, `tags`, `strict`, `relevance`,
+`defaultEnabled`.
+
+| Source | Shape |
+|---|---|
+| relative path | `"./plugins/my-plugin"` — must start with `./`, resolved from the marketplace **root**, not `.claude-plugin/` |
+| `github` | `{"source":"github","repo":"owner/repo","ref?":"main","sha?":"…"}` |
+| `url` | `{"source":"url","url":"https://…​.git","ref?":…,"sha?":…}` |
+| `git-subdir` | `{"source":"git-subdir","url":"…","path":"packages/x","ref?":…,"sha?":…}` — sparse clone |
+| `npm` | `{"source":"npm","package":"@scope/pkg","version?":…,"registry?":…}` — version resolves to `unknown`, so no update detection |
+
+`sha` beats `ref` when both are set. **Marketplace source ≠ plugin source**: the
+first says where `marketplace.json` lives (supports `ref` only), the second where
+each plugin comes from (`ref` and `sha`).
+
+`strict` (default `true`): `plugin.json` is the authority and the entry may add
+to it. `strict: false` makes the entry the entire definition — and a
+`plugin.json` that also declares components is then a load error.
+
+Version resolution order: `plugin.json` → marketplace entry → git SHA →
+`unknown`.
+
+## Component locations
+
+| Component | Default location |
+|---|---|
+| manifest | `.claude-plugin/plugin.json` |
+| skills | `skills/<name>/SKILL.md` |
+| commands | `commands/*.md` (flat skills; prefer `skills/` for new plugins) |
+| agents | `agents/*.md` |
+| workflows | `workflows/*.js` |
+| output styles | `output-styles/*.md` |
+| hooks | `hooks/hooks.json` |
+| MCP | `.mcp.json` |
+| LSP | `.lsp.json` |
+| monitors | `monitors/monitors.json` |
+| executables | `bin/` — on the Bash tool's PATH while enabled |
+| defaults | `settings.json` (only `agent` and `subagentStatusLine` keys) |
+
+**Only `plugin.json` goes inside `.claude-plugin/`.** Every component directory
+sits at the plugin root; components buried in `.claude-plugin/` load as nothing
+and the plugin still "works", which is why this one costs an afternoon.
+
+A plugin-root `CLAUDE.md` is **not** loaded as context. Ship instructions as a
+skill.
+
+A plugin root `SKILL.md` with no `skills/` dir and no `skills` field loads as a
+single-skill plugin (CC ≥ 2.1.142) — set frontmatter `name`, or the invocation
+name becomes the install directory, which for marketplace installs is a version
+string that changes on every update.
+
+## Skill frontmatter — host extensions
+
+Portable floor (`name`, `description`, `license`, `compatibility`, `metadata`,
+`allowed-tools`) is in `references/agent-skills-spec.md`. Claude Code also reads:
+
+| Field | Effect |
+|---|---|
+| `when_to_use` | extra trigger text appended to `description` in the listing |
+| `argument-hint`, `arguments` | autocomplete hint; named `$name` substitutions |
+| `disable-model-invocation` | `true` = only the user can fire it (`/name`) |
+| `user-invocable` | `false` = hidden from the `/` menu |
+| `disallowed-tools` | tools removed while the skill is active |
+| `model`, `effort` | override for the turn that invoked the skill |
+| `context: fork`, `agent`, `background` | run the skill in a subagent |
+| `hooks` | hooks scoped to this skill's lifecycle |
+| `paths` | globs that gate automatic activation |
+| `shell` | `bash` (default) or `powershell` for inline `` !`cmd` `` |
+
+Booleans accept `yes/no/on/off/1/0` in any case as of CC 2.1.218 — earlier
+versions read only `true`/`false`, so write `true`/`false`.
+
+Listing budget: `description` + `when_to_use` is truncated at **1,536 chars** in
+the skill listing; the spec's own `description` cap of 1024 is the tighter rule
+and stays the one to hold.
+
+Command name: a plugin skill is `/<plugin>:<skill-dir>`, and frontmatter `name`
+replaces the last segment (`name: fancy` → `/my-plugin:fancy`). Personal and
+project skills take the command name from the directory; `name` is only a label
+there.
+
+## Agents, hooks, MCP inside a plugin
+
+- **Agents** (`agents/*.md`) support `name`, `description`, `model`, `effort`,
+  `maxTurns`, `tools`, `disallowedTools`, `skills`, `memory`, `background`,
+  `isolation` (only value: `"worktree"`). `hooks`, `mcpServers`, and
+  `permissionMode` are **rejected** for plugin-shipped agents. They appear as
+  `<plugin>:<agent>`.
+- **Hooks** use the standard event set (`SessionStart`, `PreToolUse`,
+  `PostToolUse`, `UserPromptSubmit`, `Stop`, `SessionEnd`, …) and types
+  `command`, `http`, `mcp_tool`, `prompt`, `agent`. Event names are
+  case-sensitive; scripts need `chmod +x` and a shebang.
+- A hook targeting the plugin's **own** MCP server must use scoped names:
+  matcher/`if` take `mcp__plugin_<plugin>_<server>__<tool>`, and an `mcp_tool`
+  hook's `server` takes `plugin:<plugin>:<server>`. A matcher on the bare server
+  key never fires.
+
+## Path variables
+
+| Variable | Resolves to |
+|---|---|
+| `${CLAUDE_PLUGIN_ROOT}` | the plugin's install directory — **changes on every update**, never store state there |
+| `${CLAUDE_PLUGIN_DATA}` | `~/.claude/plugins/data/<id>/`, survives updates; for `node_modules`, venvs, caches |
+| `${CLAUDE_PROJECT_DIR}` | project root |
+| `${CLAUDE_SKILL_DIR}` | the skill's own directory (skill content and `allowed-tools` Bash rules) |
+
+They substitute in skill/agent content, hook and monitor commands, MCP
+`command`/`args`/`env` (or `url`/`headers`/`headersHelper`), and LSP
+`command`/`args`/`env`/`workspaceFolder`. In shell-form commands, quote them:
+`"${CLAUDE_PLUGIN_ROOT}"/scripts/x.sh`.
+
+**Portability:** all four are Claude Code inventions. A skill that must also run
+on other agents references bundled files by **relative path** and treats the
+variables as an optimization, not the contract.
+
+## Caching, symlinks, path traversal
+
+Marketplace plugins are copied into `~/.claude/plugins/cache` per version;
+orphaned versions are cleaned up ~14 days later. Consequences:
+
+- `../shared-utils` — anything outside the plugin root — **does not exist after
+  install**. It was never copied.
+- Symlinks inside the plugin dir are preserved; symlinks to elsewhere in the
+  same marketplace are **dereferenced** (content copied); symlinks outside the
+  marketplace are skipped. This is why a meta-plugin can link sibling skills —
+  and why the same trick still breaks on non-Claude agents, which install only
+  the skill folder.
+
+## Skills-directory plugins
+
+A folder under a skills directory with `.claude-plugin/plugin.json` loads next
+session as `<name>@skills-dir` — no marketplace, no install, discovered in
+place. Scaffold with `claude plugin init <name> [--with skills agents hooks mcp
+lsp output-style channel]`.
+
+`~/.claude/skills/` → personal, every project. `<cwd>/.claude/skills/` →
+project-scope, loads only after the workspace trust dialog, MCP servers still
+need per-server approval, monitors don't load at all. Project-scope
+`@skills-dir` plugins do **not** walk up to the repo root — launch Claude from
+the repository root or run `/reload-plugins`.
+
+`SKILL.md` edits apply live; `hooks/`, `.mcp.json`, `agents/`, `output-styles/`
+need `/reload-plugins`. Disable with `claude plugin disable <name>@skills-dir`.
+
+## CLI
+
+| Command | Use |
+|---|---|
+| `claude plugin validate <path> [--strict]` | the conformance gate, offline |
+| `claude plugin init <name> [--with …]` | scaffold a `@skills-dir` plugin |
+| `claude plugin install <name>@<marketplace> [-s user\|project\|local] [--config k=v]` | install |
+| `claude plugin update <name>@<marketplace>` | update — the **full `name@marketplace` form is mandatory** |
+| `claude plugin enable\|disable <name>@<marketplace>` | toggle without uninstalling |
+| `claude plugin uninstall <name>@<marketplace> [--keep-data] [--prune]` | remove (deletes the data dir unless `--keep-data`) |
+| `claude plugin list [--json]` | installed plugins, versions, source, state |
+| `claude plugin details <name>` | component inventory + **always-on vs on-invoke token cost** — run it before claiming a plugin is cheap |
+| `claude plugin tag [path] [--push]` | cut the release tag for dependency resolution |
+| `claude plugin marketplace add\|update\|remove\|list <repo>` | manage catalogues |
+
+`claude --debug` prints plugin loading, manifest errors, and component
+registration — the first stop when a component silently doesn't appear.
+
+## Conformance checklist
+
+- [ ] `claude plugin validate ./plugins/<name> --strict` → exit 0
+- [ ] `claude plugin validate . --strict` → exit 0 (marketplace)
+- [ ] `$schema` set in both manifests
+- [ ] `name` kebab-case and identical in `plugin.json`, the marketplace entry,
+      and the plugin directory
+- [ ] `version` present and bumped this release (or deliberately absent for
+      SHA-based iteration)
+- [ ] marketplace `name` not on the reserved list
+- [ ] every component path relative and starting with `./`
+- [ ] only `plugin.json` inside `.claude-plugin/`; `skills/`, `commands/`,
+      `agents/`, `hooks/` at the plugin root
+- [ ] no path escapes the plugin root (`../`), no symlink leaves the marketplace
+- [ ] scripts referenced through `${CLAUDE_PLUGIN_ROOT}`, state through
+      `${CLAUDE_PLUGIN_DATA}`, and both treated as Claude-only conveniences
+- [ ] plugin agents free of `hooks` / `mcpServers` / `permissionMode`
+- [ ] `claude plugin details <name>` token cost is one you would pay in every
+      session

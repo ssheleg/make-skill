@@ -1,5 +1,5 @@
 ---
-description: "make-skill: create, retrofit, audit, or publish an agent skill / plugin the proven ssheleg way — the Agent Skills open standard (front-matter limits, progressive-disclosure budgets), marketplace repo layout, four-way version sync, validator + CI, multi-channel distribution (Claude Code plugin, skills CLI, npx, Cursor), npm gotchas, and the MCP / A2A rules for protocol-connected skills. Apply when creating a new skill, upgrading one to standard, checking one against the spec, or wrapping one into a plugin."
+description: "make-skill: create, retrofit, audit, or publish an agent skill / plugin the proven ssheleg way — the Agent Skills open standard (front-matter limits, progressive-disclosure budgets), the Claude Code plugin reference (manifest schemas, component layout, claude plugin validate --strict), marketplace repo layout, four-way version sync, validator + CI, multi-channel distribution (Claude Code plugin, skills CLI, npx, Cursor), npm gotchas, and the MCP / A2A rules for protocol-connected skills. Apply when creating a new skill, upgrading one to standard, checking one against the spec, or wrapping one into a plugin."
 alwaysApply: false
 ---
 
@@ -15,9 +15,13 @@ every contract inline and uses **absolute URLs only — never a relative link**
 
 - `name`: 1–64 chars, `a-z0-9` + single internal hyphens, == directory name.
 - `description`: ≤1024 chars (that cap is on the field, not the whole front-matter).
-- Only these front-matter keys exist: `name`, `description`, `license`,
+- Portable front-matter keys: `name`, `description`, `license`,
   `compatibility` (≤500), `metadata` (string→string map), `allowed-tools`
-  (space-separated string, experimental).
+  (space-separated string, experimental). Claude Code additionally reads
+  `when_to_use`, `argument-hint`, `arguments`, `disable-model-invocation`,
+  `user-invocable`, `disallowed-tools`, `model`, `effort`, `context`, `agent`,
+  `background`, `hooks`, `paths`, `shell` — legal, ignored elsewhere, never
+  load-bearing. Anything outside both sets is a typo.
 - Body < 500 lines and < 5000 tokens. Overflow goes to `references/` (docs),
   `scripts/` (code), `assets/` (templates) INSIDE the skill dir, one level deep,
   each with a stated load trigger ("read X when Y"). Gotchas stay in SKILL.md.
@@ -50,6 +54,36 @@ install.sh, README.md (English-first), CHANGELOG.md, LICENSE (MIT)
 CONTRIBUTING.md + SECURITY.md              # required once the repo is public
 docs/superpowers/{specs,plans}/
 ```
+
+## Claude Code plugin conformance (Anthropic's own reference)
+
+<https://code.claude.com/docs/en/plugins-reference> — the gate is Anthropic's
+checker, not a house opinion:
+
+- `claude plugin validate ./plugins/<name> --strict` **and**
+  `claude plugin validate . --strict` (marketplace) must both exit 0. Unknown
+  fields are warnings that `--strict` turns into errors; wrong types always fail.
+  It runs offline, so it belongs in CI.
+- `$schema` in both manifests:
+  `https://json.schemastore.org/claude-code-plugin-manifest.json` and
+  `https://json.schemastore.org/claude-code-marketplace.json`.
+- Marketplace level takes ONLY `name`, `owner`, `plugins`, `$schema`,
+  `description`, `version`, `metadata`, `allowCrossMarketplaceDependenciesOn`,
+  `renames`. `homepage`/`repository`/`license` are plugin-entry fields; the
+  project URL goes in `owner.url`. Plugin entry needs `name` + `source`.
+- Only `plugin.json` lives in `.claude-plugin/`; `skills/`, `commands/`,
+  `agents/`, `hooks/`, `.mcp.json` sit at the plugin ROOT. Buried components
+  load as nothing and the plugin still appears to work.
+- Every component path is relative and starts `./`; nothing outside the plugin
+  root survives install (the plugin is copied into a version cache).
+  `skills` ADDS to the default scan, `commands`/`agents`/`workflows`/
+  `outputStyles` REPLACE it.
+- A pinned `version` is the update cache key — bump it or nobody ever receives
+  the change. Marketplace names like `agent-skills`/`anthropic-*` are reserved
+  and stop loading.
+- Bundled scripts resolve through `${CLAUDE_PLUGIN_ROOT}`, state through
+  `${CLAUDE_PLUGIN_DATA}` — both Claude-Code-only, so keep relative paths as the
+  portable contract.
 
 ## Hard rules
 

@@ -102,6 +102,58 @@ package's own repo, `npx` resolves the local package and reports a false
 - **`npx` inside the package's own repo** resolves the local package → a false
   `command not found`. Always e2e-test from another cwd.
 
+### Installer implementation traps (read while WRITING the CLI)
+
+- **Piped stdin + readline:** sequential `rl.question()` drops buffered lines.
+  Use ONE persistent-listener prompter for the whole flow (super-ux
+  `makePrompter`), with a non-TTY fallback for every prompt (`1,3` / `all` / `q`).
+- **Interactive pickers:** raw-mode multiselect only when
+  `stdin.isTTY && stdout.isTTY`; restore `setRawMode(false)` on every exit path.
+  Delegate agent-matrix pickers to `npx skills add` instead of rebuilding one.
+- **ANSI escapes:** write `\x1b[…` literals in source, never raw ESC bytes — an
+  editor or a copy-paste eats the invisible one.
+- **Python drift:** system `python3` may be 3.9, so a validator using `str |
+  None` annotations needs `from __future__ import annotations`. CI's `3.x` is
+  newer and won't catch it; the user's local run will.
+
+## First publish — the 11-step sequence
+
+Run it end-to-end in one session. The only human step is npm 2FA, and step 9
+removes even that for every release after this one.
+
+1. **Preflight before code:** `npm view <name>` (E404 = free — but read the
+   name-similarity trap above); `gh auth status` (may lie — try the operation
+   anyway); `npm whoami` (401 → plan the 2FA human step, keep building).
+2. Build per the SKILL.md layout; `git init -b main`; conventional commits; set
+   the local git identity if `git config user.email` is empty.
+3. House validator + functional tests + BOTH `claude plugin validate … --strict`
+   runs green BEFORE publishing.
+4. **GitHub:** `gh repo create <owner>/<name> --public --source . --push`, then
+   `gh repo edit <owner>/<name> --homepage "https://www.npmjs.com/package/<name>"`.
+5. **Badges day one:** npm (shields.io), CI
+   (`actions/workflows/validate.yml/badge.svg`), license.
+6. **CI:** poll `gh run list --repo <owner>/<name> --limit 1` until
+   `completed success`. Red = fix now, not later.
+7. **npm:** `npm publish --dry-run` (eye the tarball) → `npm publish`. On
+   EOTP/2FA hand the user exactly one command (`cd <repo> && npm publish`), wait,
+   then verify `npm view <name> version` and e2e `npx <name>@<ver> --help`
+   **from a non-repo cwd**.
+8. **Install for the user:** `claude plugin marketplace add <owner>/<name>` +
+   `claude plugin install <name>@<name>`; verify
+   `npx --yes skills add <owner>/<name> --list` finds the skills.
+9. **Arm CI publishing so this is the last manual publish.** Ship the release
+   workflow, then hand over two commands — `gh secret set NPM_TOKEN --repo
+   <owner>/<name>` (a GRANULAR AUTOMATION token; the user pastes it, never you)
+   and `gh variable set PUBLISH_NPMJS --body true --repo <owner>/<name>`. Secret
+   first: arming the variable with no token queues a red run on the next tag.
+10. **Done = five verified facts:** repo + CI green; npm resolvable via npx;
+   plugin installed; skills-CLI discovery works; the next tag publishes without
+   a human.
+11. **If it belongs to a family** (`sshlg-skills`): bump its `version` pin in the
+   umbrella's `skills.json`, release the umbrella, verify with
+   `npx --yes sshlg-skills@latest list` — until that lands, the launcher
+   advertises the OLD version and `update` installs it (§5 below).
+
 ## 4. Cursor
 
 Two routes, no overlap:

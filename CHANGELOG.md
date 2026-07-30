@@ -1,5 +1,61 @@
 # Changelog
 
+## v0.7.0 — 2026-07-30
+
+Conformance to Anthropic's own plugin reference
+(<https://code.claude.com/docs/en/plugins-reference>), checked with Anthropic's
+own checker. The canon already matched the Agent Skills open standard; the
+Claude Code layer on top of it — manifest schemas, component layout, path
+variables, the CLI — was folk knowledge until now. Everything stays
+multi-agent: the host layer is documented as host-specific and never
+load-bearing for skills that also run on Cursor, Codex, or the skills CLI.
+
+v0.6.5 wired the upstream gate into CI and fixed the two failures it caught;
+this release is the rulebook behind it — so the next repo passes `--strict`
+before anyone runs it, not after.
+
+### Added
+- **`references/claude-code-plugin.md`** — the Anthropic layer: full
+  `plugin.json` and `marketplace.json` schemas, plugin sources, strict mode,
+  reserved marketplace names, component locations, skill front-matter host
+  extensions, plugin-agent restrictions, scoped MCP hook names,
+  `${CLAUDE_PLUGIN_ROOT}` / `${CLAUDE_PLUGIN_DATA}` / `${CLAUDE_SKILL_DIR}`,
+  cache and symlink behavior, skills-directory plugins, the whole
+  `claude plugin` CLI, and a conformance checklist. Dated against Claude Code
+  2.1.212.
+- `$schema` in both manifests (schemastore), so the next edit gets autocomplete
+  and inline validation.
+- The upstream gate now also covers the **retrofit audit** and the **release
+  checklist**, and CI runs it as **its own job** so an upstream CLI outage
+  cannot mask a house-validator failure.
+- Validator rules, each with a negative self-test: recognized-fields-only for
+  both manifests, `$schema` present, reserved marketplace names, `./`-relative
+  component paths that never escape the plugin root, source directory name ==
+  plugin name, and nothing but the manifest inside `.claude-plugin/`.
+- Skill front-matter now accepts the **Claude Code extension keys**
+  (`when_to_use`, `argument-hint`, `arguments`, `disable-model-invocation`,
+  `user-invocable`, `disallowed-tools`, `model`, `effort`, `context`, `agent`,
+  `background`, `hooks`, `paths`, `shell`) alongside the spec set. Previously a
+  conformant Claude Code skill failed this repo's own audit.
+- `templates/plugin.template.json` and `templates/marketplace.template.json` —
+  annotated, schema-linked skeletons for the two manifests.
+- Personal workflow: a `~/.claude/skills/<name>/` folder with
+  `.claude-plugin/plugin.json` loads as `<name>@skills-dir` with hooks, agents,
+  and MCP servers — no marketplace, no install step (`claude plugin init`).
+- Gotchas: unknown manifest fields load fine and mean nothing (only `--strict`
+  surfaces them); a pinned `version` you forget to bump freezes every user,
+  because the version is the update cache key.
+
+### Changed
+- **Progressive disclosure applied to the body itself.** The four installer
+  implementation traps (piped-stdin readline, raw-mode pickers, ANSI literals,
+  Python 3.9 annotation drift) and the 11-step **First publish** sequence moved
+  out of `SKILL.md` into `references/distribution.md`, each under a stated load
+  condition: they matter only while writing the CLI or actually publishing,
+  while the body's token budget is paid by every session. `SKILL.md` ends this
+  release under both caps — 344 lines, ~5k tokens — despite everything added
+  here and in v0.6.2–v0.6.5.
+
 ## v0.6.5 — 2026-07-30
 
 ### Added

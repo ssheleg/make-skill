@@ -60,6 +60,16 @@ directory, `description` caps at 1024 characters, the body should stay under 500
 lines and 5000 tokens. Local conventions that merely *feel* right drift from those
 without anyone noticing; here they're checked.
 
+**Plugins Anthropic's own tooling accepts.** The
+[Claude Code plugin reference](https://code.claude.com/docs/en/plugins-reference)
+is a second rulebook on top of the standard: which fields `plugin.json` and
+`marketplace.json` actually recognize, where components must sit, which paths
+survive installation. Unknown fields load silently and do nothing, so the repo is
+checked with Anthropic's own gate — `claude plugin validate <path> --strict` on
+both manifests, in CI as its own job. That check is what caught this repo's own
+`marketplace.json` shipping `homepage` and `repository` at a level where Claude
+Code ignores them.
+
 **A validator that can fail.** `test/validate.py` (Python stdlib only, no deps)
 checks spec rules, version sync across every manifest, front-matter on commands
 and Cursor rules, link integrity, and the traps below. CI runs it plus **negative
@@ -95,12 +105,15 @@ agent opens only when the situation calls for them:
 | Reference | Covers |
 |---|---|
 | `agent-skills-spec.md` | the open standard — field limits, optional front-matter, token budgets, the description trigger-eval loop |
+| `claude-code-plugin.md` | the [Claude Code layer](https://code.claude.com/docs/en/plugins-reference) — `plugin.json` / `marketplace.json` schemas, plugin sources, component locations, host-only front-matter, path variables, cache and symlink rules, the `claude plugin` CLI |
 | `distribution.md` | every install channel, exact CLI flags, npm publishing traps |
 | `mcp.md` | [MCP](https://modelcontextprotocol.io) — skill vs server, primitives and methods, transports, consent and untrusted-output rules |
 | `a2a.md` | [A2A](https://a2a-protocol.org) — Agent Cards, task lifecycle, method mapping, v0.x→1.0 wire drift |
 
-Plus `templates/SKILL.template.md`, a spec-legal skeleton with the limits written
-into it.
+Plus three skeletons in `templates/`: `SKILL.template.md` with the spec limits
+written into it, and `plugin.template.json` / `marketplace.template.json`, which
+carry only fields Claude Code recognizes so a seeded repo passes
+`claude plugin validate --strict` on day one.
 
 ## Install
 
@@ -182,7 +195,7 @@ plugins/make-skill/
     ├── SKILL.md                      # the canon, < 500 lines by rule
     └── references/*.md               # loaded on demand
 cursor/rules/make-skill.mdc           # self-contained Cursor rule
-templates/SKILL.template.md           # spec-legal skeleton
+templates/                            # SKILL.template.md + the two manifest skeletons
 bin/make-skill.js + package.json      # zero-dep npx installer
 test/validate.py                      # structural validator
 .github/workflows/{validate,release}.yml

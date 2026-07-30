@@ -8,6 +8,12 @@ description: Use when <concrete triggering conditions and symptoms>. Add trigger
 #   author: <you>
 #   version: "0.1.0"          # quote it, or YAML makes it a float
 # allowed-tools: Bash(git:*) Read     # space-separated string, experimental
+#
+# Claude Code host extensions — legal here, IGNORED by every other agent, so
+# never let portable behavior depend on one:
+# when_to_use / argument-hint / arguments / disable-model-invocation /
+# user-invocable / disallowed-tools / model / effort / context: fork / agent /
+# background / hooks / paths / shell
 ---
 
 # <Skill Name>

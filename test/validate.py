@@ -28,19 +28,117 @@ mkt = load_json(".claude-plugin/marketplace.json")
 plg = load_json("plugins/make-skill/.claude-plugin/plugin.json")
 pkg = load_json("package.json")
 
+# --- Claude Code manifest conformance ----------------------------------------
+# https://code.claude.com/docs/en/plugins-reference (read 2026-07-30, CC 2.1.212)
+# `claude plugin validate <path> --strict` is the upstream tie-breaker; these
+# rules keep the repo green without needing the CLI installed.
+MKT_TOP_KEYS = {
+    "$schema", "name", "owner", "plugins", "description", "version", "metadata",
+    "allowCrossMarketplaceDependenciesOn", "renames",
+}
+PLUGIN_MANIFEST_KEYS = {
+    "$schema", "name", "displayName", "version", "description", "author", "homepage",
+    "repository", "license", "keywords", "defaultEnabled", "skills", "commands",
+    "agents", "workflows", "hooks", "mcpServers", "outputStyles", "lspServers",
+    "experimental", "userConfig", "channels", "dependencies",
+}
+# a marketplace entry may carry any plugin-manifest field plus these
+MKT_ENTRY_KEYS = PLUGIN_MANIFEST_KEYS | {"source", "category", "tags", "strict", "relevance"}
+# component paths — every one must be relative and start with "./"
+PATH_FIELDS = ("skills", "commands", "agents", "workflows", "outputStyles",
+               "hooks", "mcpServers", "lspServers")
+# reserved for official Anthropic use; re-checked on every load, so a marketplace
+# under one of these names simply stops loading
+RESERVED_MARKETPLACE_NAMES = {
+    "claude-code-marketplace", "claude-code-plugins", "claude-plugins-official",
+    "claude-plugins-community", "claude-community", "anthropic-marketplace",
+    "anthropic-plugins", "agent-skills", "anthropic-agent-skills",
+    "knowledge-work-plugins", "life-sciences", "claude-for-legal",
+    "claude-for-financial-services", "financial-services-plugins",
+    "first-party-plugins", "healthcare",
+}
+
+
+def check_paths(where, obj):
+    """Component paths must be relative, start with './', and stay in the plugin."""
+    for field in PATH_FIELDS:
+        val = obj.get(field)
+        vals = val if isinstance(val, list) else [val]
+        for v in vals:
+            if not isinstance(v, str):
+                continue  # inline hook/MCP/LSP config, not a path
+            if not v.startswith("./"):
+                fail(f"{where}: {field} path {v!r} must be relative and start with './'")
+            elif ".." in v.split("/"):
+                fail(f"{where}: {field} path {v!r} escapes the plugin root — "
+                     "files outside it are never copied into the plugin cache")
+
+
 mkt_name = mkt_ver = None
 if mkt:
+    if mkt.get("$schema") != "https://json.schemastore.org/claude-code-marketplace.json":
+        fail("marketplace.json: missing/wrong $schema "
+             "(https://json.schemastore.org/claude-code-marketplace.json)")
+    unknown = sorted(set(mkt) - MKT_TOP_KEYS)
+    if unknown:
+        fail(f"marketplace.json: fields Claude Code does not recognize at marketplace "
+             f"level: {unknown} — 'claude plugin validate . --strict' fails on these "
+             "(homepage/repository/license belong to the plugin entry)")
+    if mkt.get("name") in RESERVED_MARKETPLACE_NAMES:
+        fail(f"marketplace.json: name {mkt.get('name')!r} is reserved for Anthropic — "
+             "the marketplace would stop loading")
+    owner = mkt.get("owner")
+    if not isinstance(owner, dict) or not owner.get("name"):
+        fail("marketplace.json: owner.name is required")
+
     plugins = mkt.get("plugins") or []
     if not plugins:
         fail("marketplace.json: plugins[] empty")
     else:
         p0 = plugins[0]
+        unknown = sorted(set(p0) - MKT_ENTRY_KEYS)
+        if unknown:
+            fail(f"marketplace.json: plugin entry has unrecognized fields {unknown}")
         mkt_name = p0.get("name")
         mkt_ver = p0.get("version")
         src = p0.get("source", "")
+        if not isinstance(src, str):
+            fail("marketplace.json: this repo ships its plugin in-tree — source must be "
+                 "a relative path string")
+            src = ""
+        elif not src.startswith("./"):
+            fail(f"marketplace.json: source {src!r} must start with './' "
+                 "(resolved from the marketplace root, not .claude-plugin/)")
         srcdir = os.path.normpath(os.path.join(ROOT, src))
         if not os.path.isfile(os.path.join(srcdir, ".claude-plugin", "plugin.json")):
             fail(f"marketplace source {src!r} has no .claude-plugin/plugin.json")
+        elif os.path.basename(srcdir) != mkt_name:
+            fail(f"marketplace.json: source dir {os.path.basename(srcdir)!r} != plugin "
+                 f"name {mkt_name!r}")
+        check_paths("marketplace.json plugin entry", p0)
+
+if plg:
+    if plg.get("$schema") != "https://json.schemastore.org/claude-code-plugin-manifest.json":
+        fail("plugin.json: missing/wrong $schema "
+             "(https://json.schemastore.org/claude-code-plugin-manifest.json)")
+    unknown = sorted(set(plg) - PLUGIN_MANIFEST_KEYS)
+    if unknown:
+        fail(f"plugin.json: fields Claude Code does not recognize: {unknown} — "
+             "'claude plugin validate <dir> --strict' fails on these")
+    check_paths("plugin.json", plg)
+
+# only the manifest may live in .claude-plugin/ — components buried there load as
+# nothing, and the plugin still "works", which is why this one is expensive
+for dirpath, dirnames, filenames in os.walk(ROOT):
+    dirnames[:] = [d for d in dirnames if d not in (".git", "node_modules")]
+    if os.path.basename(dirpath) != ".claude-plugin":
+        continue
+    rel = os.path.relpath(dirpath, ROOT)
+    for extra in sorted(set(filenames) - {"marketplace.json", "plugin.json"}):
+        fail(f"{rel}/{extra}: only the manifest belongs in .claude-plugin/")
+    for extra in sorted(dirnames):
+        fail(f"{rel}/{extra}/: component directories belong at the plugin root, "
+             "not inside .claude-plugin/ — they load as nothing here")
 
 plg_name = plg.get("name") if plg else None
 plg_ver = plg.get("version") if plg else None
@@ -48,6 +146,14 @@ plg_ver = plg.get("version") if plg else None
 # --- SKILL.md: Agent Skills spec rules + house canon -------------------------
 # Spec: https://agentskills.io/specification
 SPEC_KEYS = {"name", "description", "license", "compatibility", "metadata", "allowed-tools"}
+# Claude Code host extensions (https://code.claude.com/docs/en/skills). Legal in a
+# SKILL.md and ignored by every other agent — so they may tune behavior here, but
+# nothing portable may depend on one. Anything outside both sets is a typo.
+CC_SKILL_KEYS = {
+    "when_to_use", "argument-hint", "arguments", "disable-model-invocation",
+    "user-invocable", "disallowed-tools", "model", "effort", "context", "agent",
+    "background", "hooks", "paths", "shell",
+}
 NAME_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 BODY_MAX_LINES = 500
 
@@ -101,9 +207,10 @@ else:
     else:
         fm = parse_frontmatter(m.group(1))
 
-        unknown = sorted(set(fm) - SPEC_KEYS)
+        unknown = sorted(set(fm) - SPEC_KEYS - CC_SKILL_KEYS)
         if unknown:
-            fail(f"SKILL.md: front-matter keys not in the Agent Skills spec: {unknown}")
+            fail(f"SKILL.md: front-matter keys in neither the Agent Skills spec nor "
+                 f"the Claude Code extension set: {unknown}")
 
         # name — spec: 1-64 chars, [a-z0-9-], no leading/trailing/double hyphen,
         # must equal the parent directory name
@@ -279,6 +386,35 @@ if not os.path.isdir(tpl_dir):
     fail("missing templates/ directory")
 elif not os.path.isfile(os.path.join(tpl_dir, "SKILL.template.md")):
     fail("missing template: templates/SKILL.template.md")
+
+# manifest skeletons: must parse, carry $schema, and stay inside the recognized
+# field sets — a template that fails `claude plugin validate --strict` seeds a
+# repo that fails it too
+for tpl, allowed, schema_url in (
+    ("plugin.template.json", PLUGIN_MANIFEST_KEYS,
+     "https://json.schemastore.org/claude-code-plugin-manifest.json"),
+    ("marketplace.template.json", MKT_TOP_KEYS,
+     "https://json.schemastore.org/claude-code-marketplace.json"),
+):
+    tpl_path = os.path.join(tpl_dir, tpl)
+    if not os.path.isfile(tpl_path):
+        fail(f"missing template: templates/{tpl}")
+        continue
+    try:
+        tpl_data = json.load(open(tpl_path, encoding="utf-8"))
+    except Exception as e:
+        fail(f"templates/{tpl}: invalid JSON: {e}")
+        continue
+    if tpl_data.get("$schema") != schema_url:
+        fail(f"templates/{tpl}: missing/wrong $schema ({schema_url})")
+    unknown = sorted(set(tpl_data) - allowed)
+    if unknown:
+        fail(f"templates/{tpl}: unrecognized fields {unknown}")
+    entries = tpl_data.get("plugins") if tpl == "marketplace.template.json" else []
+    for entry in entries or []:
+        unknown = sorted(set(entry) - MKT_ENTRY_KEYS)
+        if unknown:
+            fail(f"templates/{tpl}: plugin entry has unrecognized fields {unknown}")
 
 # HARD RULE: a SKILL.md may exist ONLY inside plugins/<plugin>/skills/<skill>/.
 # Anywhere else (templates/, docs/, examples/) the skills CLI picks it up and

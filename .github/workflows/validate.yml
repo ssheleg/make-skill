@@ -97,6 +97,41 @@ jobs:
             echo "OK: validator rejects spec violation '$case'"
           done
 
+      - name: Negative self-test (Claude Code manifest violations must fail)
+        run: |
+          set -eu
+          for case in mktfield mktschema plgschema srcpath buried; do
+            rm -rf "/tmp/cc-$case"
+            cp -R . "/tmp/cc-$case"
+            CASE="$case" python3 - <<'PY'
+          import json, os, pathlib
+          case = os.environ["CASE"]
+          root = pathlib.Path(f"/tmp/cc-{case}")
+          mkt_p = root / ".claude-plugin/marketplace.json"
+          plg_p = root / "plugins/make-skill/.claude-plugin/plugin.json"
+          mkt = json.loads(mkt_p.read_text(encoding="utf-8"))
+          plg = json.loads(plg_p.read_text(encoding="utf-8"))
+          if case == "mktfield":    # plugin-entry field used at marketplace level
+              mkt["homepage"] = "https://example.com"
+          elif case == "mktschema":  # $schema dropped from the marketplace manifest
+              mkt.pop("$schema", None)
+          elif case == "plgschema":  # $schema dropped from the plugin manifest
+              plg.pop("$schema", None)
+          elif case == "srcpath":    # source must start with "./"
+              mkt["plugins"][0]["source"] = "plugins/make-skill"
+          elif case == "buried":     # components inside .claude-plugin/ load as nothing
+              d = root / "plugins/make-skill/.claude-plugin/commands"
+              d.mkdir(parents=True, exist_ok=True)
+              (d / "buried.md").write_text("---\ndescription: x\n---\n")
+          mkt_p.write_text(json.dumps(mkt, indent=2) + "\n", encoding="utf-8")
+          plg_p.write_text(json.dumps(plg, indent=2) + "\n", encoding="utf-8")
+          PY
+            if python3 "/tmp/cc-$case/test/validate.py"; then
+              echo "ERROR: validator passed on Claude Code violation '$case'"; exit 1
+            fi
+            echo "OK: validator rejects Claude Code violation '$case'"
+          done
+
       - name: install.sh syntax check
         run: bash -n install.sh
 
@@ -117,7 +152,7 @@ jobs:
           test -f "$HOME/.claude/skills/make-skill/SKILL.md"
           test -f "$HOME/.claude/commands/make-skill.md"
           # references must travel with the skill — relative links break otherwise
-          for r in agent-skills-spec distribution mcp a2a; do
+          for r in agent-skills-spec claude-code-plugin distribution mcp a2a; do
             test -f "$HOME/.claude/skills/make-skill/references/$r.md"
           done
           node bin/make-skill.js | grep -q '^skip:'
@@ -131,12 +166,25 @@ jobs:
         run: |
           python3 -m pip install --quiet pyyaml
           python3 -c "import yaml; yaml.safe_load(open('.github/workflows/release.yml')); yaml.safe_load(open('.github/workflows/validate.yml')); print('workflows parse OK')"
-      - name: Official Claude Code conformance (plugin + marketplace, strict)
+
+  # Anthropic's own checker, in its own job: an upstream CLI outage must not be
+  # able to mask a house-validator failure. `plugin validate` is offline and
+  # needs no auth.
+  claude-plugin-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: claude plugin validate (plugin + marketplace, --strict)
         run: |
           set -eu
-          # The repo's own validator enforces house rules; this one is the
-          # upstream spec. --strict fails on unrecognized manifest fields and on
-          # front matter that silently drops at runtime -- both were real here.
-          npm install -g @anthropic-ai/claude-code
+          claude --version
+          claude plugin validate ./plugins/make-skill --strict
           claude plugin validate . --strict
-          claude plugin validate plugins/make-skill --strict

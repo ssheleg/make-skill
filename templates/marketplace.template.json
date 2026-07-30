@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "<marketplace-name>",
+  "owner": {
+    "name": "<you>",
+    "url": "https://github.com/<owner>/<repo>"
+  },
+  "description": "<what this catalogue distributes>",
+  "plugins": [
+    {
+      "name": "<plugin-name>",
+      "source": "./plugins/<plugin-name>",
+      "description": "<what the plugin gives an agent>",
+      "version": "0.1.0",
+      "author": {
+        "name": "<you>"
+      },
+      "homepage": "https://github.com/<owner>/<repo>",
+      "repository": "https://github.com/<owner>/<repo>",
+      "license": "MIT",
+      "keywords": [
+        "<topic>"
+      ],
+      "category": "development"
+    }
+  ]
+}

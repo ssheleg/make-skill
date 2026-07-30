@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "<plugin-name>",
+  "description": "<what the plugin gives an agent, in one sentence>",
+  "version": "0.1.0",
+  "author": {
+    "name": "<you>"
+  },
+  "homepage": "https://github.com/<owner>/<repo>",
+  "repository": "https://github.com/<owner>/<repo>",
+  "license": "MIT",
+  "keywords": [
+    "<topic>",
+    "claude-code"
+  ]
+}

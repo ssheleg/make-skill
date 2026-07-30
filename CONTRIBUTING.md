@@ -63,8 +63,15 @@ Fail these and CI stops you, so check them before pushing:
   `package.json` and the top `## vX.Y.Z` entry in `CHANGELOG.md` carry the same
   semver, bumped together.
 - **Spec-legal front-matter.** `name` matches its directory and the standard's
-  charset; `description` ≤ 1024 chars; only spec fields present; `SKILL.md` under
-  500 lines.
+  charset; `description` ≤ 1024 chars; only fields from the spec or the Claude
+  Code extension set present; `SKILL.md` under 500 lines.
+- **Manifest conformance.** Both manifests carry `$schema` and only fields Claude
+  Code recognizes, component paths are `./`-relative and stay inside the plugin,
+  the marketplace name is not reserved, and nothing but the manifest sits in
+  `.claude-plugin/`. A second CI job runs Anthropic's own checker —
+  `claude plugin validate ./plugins/make-skill --strict` and
+  `claude plugin validate . --strict` — which you can run locally if you have the
+  `claude` CLI.
 - **No stray `SKILL.md`.** One may exist only under `plugins/*/skills/*/` — the
   skills CLI installs every other one it finds as a real skill on every agent.
   Skeletons are named `SKILL.template.md`.
