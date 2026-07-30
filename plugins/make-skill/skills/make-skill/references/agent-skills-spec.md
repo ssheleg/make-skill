@@ -46,7 +46,9 @@ Notes that bite:
   block. Adding `license`/`metadata` does not eat the description budget.
 - `metadata` values are **strings** — quote versions (`version: "1.0"`), or YAML
   turns `1.0` into a float.
-- `allowed-tools` is a single space-separated **string**, not a YAML list.
+- `allowed-tools` is a single space-separated **string**, not a YAML list. Claude
+  Code additionally accepts a comma-separated string or a YAML list — write the
+  spec form anyway, since it is the only one every host reads.
 - Nothing in the spec versions a skill. If you want the version visible to agents
   that never see `plugin.json`, put it in `metadata.version` — then it joins the
   version-sync rule.

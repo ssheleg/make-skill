@@ -35,6 +35,12 @@ Both must exit 0. Rules that decide the outcome:
 - Wrong **types** always fail (`keywords` as a string, not an array).
 - It runs offline and needs no auth, so it belongs in CI:
   `npm i -g @anthropic-ai/claude-code && claude plugin validate … --strict`.
+- **It validates the MANIFEST, whatever the docs promise.** The troubleshooting
+  table says the command checks "`plugin.json`, skill/agent/command frontmatter,
+  and `hooks/hooks.json`"; on 2.1.212 a `SKILL.md` carrying an invented
+  front-matter key passed `--strict` untouched, and the output names only the
+  manifest it read. Keep front-matter rules in your own validator — this gate
+  does not cover them.
 
 ## `plugin.json` — `.claude-plugin/plugin.json`
 
@@ -50,7 +56,7 @@ nothing to validate. **`name` is the only required field.**
 | `version` | string | semver. **Set it and you must bump it** — CC uses the version as the cache key, so new commits under an unchanged version never reach users. Omit it entirely and the git SHA is the version (every commit ships) |
 | `description`, `author{name,email,url}`, `homepage`, `repository`, `license`, `keywords[]` | | metadata |
 | `defaultEnabled` | boolean | `false` = installs disabled until the user opts in (CC ≥ 2.1.154). The marketplace entry's copy wins over this one; an existing `enabledPlugins` entry wins over both |
-| `skills` | string\|array | extra skill dirs — **adds to** the default `skills/` scan |
+| `skills` | string\|array | extra skill dirs — **adds to** the default `skills/` scan. One exception: in a marketplace entry whose `source` resolves to the marketplace ROOT, the listed subdirectories REPLACE that scan (if none of them exist, the default scan runs after all) |
 | `commands`, `agents`, `workflows`, `outputStyles` | string\|array | **replace** the default folder. To keep it, list it: `["./commands/", "./extras/"]` |
 | `hooks`, `mcpServers`, `lspServers` | string\|array\|object | path(s) or inline config; own merge rules |
 | `experimental.themes`, `experimental.monitors` | string\|array | still moving; top level warns today, will be required under `experimental` |
@@ -106,7 +112,7 @@ marketplace-only `source`, `category`, `tags`, `strict`, `relevance`,
 | `github` | `{"source":"github","repo":"owner/repo","ref?":"main","sha?":"…"}` |
 | `url` | `{"source":"url","url":"https://…​.git","ref?":…,"sha?":…}` |
 | `git-subdir` | `{"source":"git-subdir","url":"…","path":"packages/x","ref?":…,"sha?":…}` — sparse clone |
-| `npm` | `{"source":"npm","package":"@scope/pkg","version?":…,"registry?":…}` — version resolves to `unknown`, so no update detection |
+| `npm` | `{"source":"npm","package":"@scope/pkg","version?":…,"registry?":…}` — no git SHA to fall back on, so set `version` in the manifest or the entry, else it resolves to `unknown` and updates never fire |
 
 `sha` beats `ref` when both are set. **Marketplace source ≠ plugin source**: the
 first says where `marketplace.json` lives (supports `ref` only), the second where
@@ -133,12 +139,17 @@ Version resolution order: `plugin.json` → marketplace entry → git SHA →
 | MCP | `.mcp.json` |
 | LSP | `.lsp.json` |
 | monitors | `monitors/monitors.json` |
+| themes | `themes/*.json` — `base` preset + sparse `overrides` |
 | executables | `bin/` — on the Bash tool's PATH while enabled |
 | defaults | `settings.json` (only `agent` and `subagentStatusLine` keys) |
 
-**Only `plugin.json` goes inside `.claude-plugin/`.** Every component directory
-sits at the plugin root; components buried in `.claude-plugin/` load as nothing
-and the plugin still "works", which is why this one costs an afternoon.
+**Only `plugin.json` goes inside `.claude-plugin/`.** Those are the DEFAULT
+locations, all at the plugin root — a manifest path field may point anywhere
+else inside the plugin (`"commands": ["./specialized/deploy.md"]`), and from
+2.1.140 Claude Code warns in `claude plugin list` when a manifest key leaves a
+default folder unscanned. What never works is burying components in
+`.claude-plugin/`: they load as nothing while the plugin still "works", which is
+why that one costs an afternoon.
 
 A plugin-root `CLAUDE.md` is **not** loaded as context. Ship instructions as a
 skill.
@@ -151,7 +162,11 @@ string that changes on every update.
 ## Skill frontmatter — host extensions
 
 Portable floor (`name`, `description`, `license`, `compatibility`, `metadata`,
-`allowed-tools`) is in `references/agent-skills-spec.md`. Claude Code also reads:
+`allowed-tools`) is in `references/agent-skills-spec.md`. **`allowed-tools` is
+looser here than in the spec**: Claude Code takes a space- OR comma-separated
+string OR a YAML list, the spec takes only the space-separated string. Write the
+spec form — a list works here and breaks everywhere else. Claude Code also
+reads:
 
 | Field | Effect |
 |---|---|
@@ -193,6 +208,39 @@ there.
   matcher/`if` take `mcp__plugin_<plugin>_<server>__<tool>`, and an `mcp_tool`
   hook's `server` takes `plugin:<plugin>:<server>`. A matcher on the bare server
   key never fires.
+
+## LSP servers and monitors
+
+The load condition above promises both; here is the whole of each.
+
+**LSP** — `.lsp.json` at the plugin root, or `lspServers` inline. Required per
+server: `command` (binary must be on PATH — the plugin does NOT ship it) and
+`extensionToLanguage`. Optional: `args`, `transport` (`stdio` default or
+`socket`), `env`, `initializationOptions`, `settings`, `workspaceFolder`,
+`startupTimeout`, `shutdownTimeout`, `restartOnCrash` (default `true`),
+`maxRestarts`, `diagnostics` (default `true`). `restartOnCrash` and
+`shutdownTimeout` need CC ≥ 2.1.205 — before that, setting either made Claude
+Code skip the server silently, visible only under `claude --debug`. When two
+enabled servers claim the same extension, the first registered wins and the
+other never starts; an invalid server is skipped and no longer blocks a valid
+one (also 2.1.205).
+
+```json
+{ "go": { "command": "gopls", "args": ["serve"],
+          "extensionToLanguage": { ".go": "go" } } }
+```
+
+**Monitors** — `monitors/monitors.json`, or `experimental.monitors` inline (a
+path string there loads from a custom location). Array of `{name, command,
+description, when?}`; `when` is `"always"` (default) or
+`"on-skill-invoke:<skill>"`. Each runs as a background process for the session
+and every stdout line reaches Claude as a notification. Interactive CLI only,
+unsandboxed at hook trust level, skipped where the Monitor tool is unavailable,
+and never loaded from a project-scope `@skills-dir` plugin. `${CLAUDE_PLUGIN_ROOT}`,
+`${CLAUDE_PLUGIN_DATA}`, `${CLAUDE_PROJECT_DIR}` and `${ENV_VAR}` substitute;
+`${user_config.*}` is rejected outright (it would reach a shell), and monitor
+processes get no `CLAUDE_PLUGIN_OPTION_*` either — read the value from a config
+file. Disabling a plugin mid-session does not stop a running monitor.
 
 ## Path variables
 
@@ -248,7 +296,7 @@ need `/reload-plugins`. Disable with `claude plugin disable <name>@skills-dir`.
 | `claude plugin validate <path> [--strict]` | the conformance gate, offline |
 | `claude plugin init <name> [--with …]` | scaffold a `@skills-dir` plugin |
 | `claude plugin install <name>@<marketplace> [-s user\|project\|local] [--config k=v]` | install |
-| `claude plugin update <name>@<marketplace>` | update — the **full `name@marketplace` form is mandatory** |
+| `claude plugin update <name>@<marketplace>` | update. Docs accept a bare `<name>`; **2.1.212 does not** — `claude plugin update make-skill` answers `Plugin "make-skill" not found`, exits 0, changes nothing. Always pass `name@marketplace` |
 | `claude plugin enable\|disable <name>@<marketplace>` | toggle without uninstalling |
 | `claude plugin uninstall <name>@<marketplace> [--keep-data] [--prune]` | remove (deletes the data dir unless `--keep-data`) |
 | `claude plugin list [--json]` | installed plugins, versions, source, state |

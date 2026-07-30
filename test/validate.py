@@ -250,7 +250,9 @@ else:
         if "license" in fm and not isinstance(fm["license"], str):
             fail("SKILL.md: license must be a string")
         if "allowed-tools" in fm and not isinstance(fm["allowed-tools"], str):
-            fail("SKILL.md: allowed-tools must be a space-separated string, not a map/list")
+            fail("SKILL.md: allowed-tools must be a space-separated string. Claude "
+                 "Code also accepts a comma-list or a YAML list; no other host does, "
+                 "so the spec form is the one that travels")
         skill_meta = fm.get("metadata") or {}
         if "metadata" in fm:
             if not isinstance(skill_meta, dict):
@@ -440,6 +442,9 @@ for dirpath, dirnames, filenames in os.walk(ROOT):
         continue
     rel = os.path.relpath(os.path.join(dirpath, "SKILL.md"), ROOT)
     if not re.match(r"^plugins/[^/]+/skills/[^/]+/SKILL\.md$", rel):
+        # A plugin-root SKILL.md is a legal single-skill plugin in Claude Code —
+        # but in THIS multi-channel layout the skills CLI would ship every one of
+        # them as a separate skill on every agent.
         fail(f"stray SKILL.md at {rel} — the skills CLI would ship it as a skill; "
              f"rename it (e.g. SKILL.template.md) or move it under plugins/<p>/skills/<s>/")
 

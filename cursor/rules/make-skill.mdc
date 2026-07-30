@@ -17,7 +17,8 @@ every contract inline and uses **absolute URLs only — never a relative link**
 - `description`: ≤1024 chars (that cap is on the field, not the whole front-matter).
 - Portable front-matter keys: `name`, `description`, `license`,
   `compatibility` (≤500), `metadata` (string→string map), `allowed-tools`
-  (space-separated string, experimental). Claude Code additionally reads
+  (space-separated string — Claude Code also takes a comma-list or YAML list, but
+  only the space form is portable). Claude Code additionally reads
   `when_to_use`, `argument-hint`, `arguments`, `disable-model-invocation`,
   `user-invocable`, `disallowed-tools`, `model`, `effort`, `context`, `agent`,
   `background`, `hooks`, `paths`, `shell` — legal, ignored elsewhere, never

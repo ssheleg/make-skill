@@ -8,15 +8,15 @@ license: MIT
 
 Copy from a working repo (usually `~/DATA/<name>`): **`ssheleg/super-ux`**
 (multi-skill suite, Cursor rules, templates) or **`ssheleg/task-pipeline`**
-(single-skill orchestrator, JSON config-contract + jsonschema in the validator,
-release automation). **make-skill itself** is built to this canon.
+(single-skill orchestrator, JSON config-contract, release automation).
+**make-skill itself** is built to this canon.
 
 ## References — load on demand
 
 | Read | When |
 |---|---|
 | `references/agent-skills-spec.md` | authoring or auditing ANY `SKILL.md` — the open standard's hard limits, optional fields, budgets, description-eval loop |
-| `references/claude-code-plugin.md` | anything shipping as a **Claude Code plugin/marketplace** — `plugin.json` + `marketplace.json` schemas, component layout, path variables, `claude plugin validate` failures |
+| `references/claude-code-plugin.md` | anything shipping as a **Claude Code plugin/marketplace** — both manifest schemas, component layout, LSP/monitors, path variables, `claude plugin validate` failures |
 | `references/distribution.md` | publishing, adding a channel, or auditing distribution |
 | `references/mcp.md` | the skill calls/wraps/documents an **MCP** server, or you're choosing skill vs server |
 | `references/a2a.md` | the skill spans two autonomous agents (**A2A**): Agent Cards, task lifecycle, delegation |
@@ -42,8 +42,8 @@ detect, ask in one line what to create.
 
 Distributable work is a real project: brainstorm → spec
 (`docs/superpowers/specs/`) → plan → build → validate → publish. The spec locks
-target-project file contracts (paths, formats, statuses) FIRST; skills and rules
-are written against that contract, never ad hoc.
+target-project file contracts FIRST; skills and rules are written against that
+contract, never ad hoc.
 
 ## Authoring rules (every workflow)
 
@@ -294,12 +294,14 @@ Non-negotiables for any such skill:
   CLI discovers every one in the tree, so `templates/SKILL.md` lands in every
   agent as a placeholder (seen live: a skill named `<skill-name>`). Name
   skeletons `SKILL.template.md`, have the validator reject any `SKILL.md`
-  outside `plugins/*/skills/*/`, verify with `npx skills add <repo> --list`.
-- **Writing the npx installer or the validator?** Four more traps (piped-stdin
-  readline, raw-mode pickers, ANSI literals, python 3.9 drift) are in
+  outside the skill dirs, verify with `npx skills add <repo> --list`. (A
+  plugin-root `SKILL.md` is legal in Claude Code alone; multi-channel makes the
+  rule.)
+- **Writing the installer or validator?** Four more traps (piped-stdin readline,
+  raw-mode pickers, ANSI literals, python 3.9 drift) are in
   `references/distribution.md` → *Installer implementation traps*.
-- **gh auth status may lie** (invalid-token report while git+ssh path
-  works): attempt the operation before declaring it blocked.
+- **gh auth status may lie** (invalid-token report while git+ssh works): attempt
+  the operation before declaring it blocked.
 - **Duplicate-shadow: one channel per agent — and the shadow regrows.** A plugin
   install AND a plain `~/.claude/skills/<name>` copy = two listings, and the
   plain (usually STALE) one wins. Not just `install.sh`: `npx skills
@@ -311,7 +313,8 @@ Non-negotiables for any such skill:
   <name>@<name>`. Same for install.
 - **A pinned `version` you forget to bump freezes every user.** The version is
   the update cache key: twenty commits under `0.6.1` and `/plugin update` still
-  says "already at the latest version".
+  says "already at the latest version". (Omitting `version` from both manifests
+  is legal — then the git SHA drives updates. This canon pins and bumps.)
 
 ## Release checklist (every version)
 
@@ -321,7 +324,7 @@ Non-negotiables for any such skill:
    `claude plugin validate ./plugins/<name> --strict` and
    `claude plugin validate . --strict` → both exit 0.
 3. Functional tests: installer against a scratch dir (fresh / rerun-skip /
-   `--force`), `node --check` on the CLI, pipe-driven menu tests.
+   `--force`), `node --check` on the CLI, piped-menu tests.
 4. Conventional commit; push; confirm CI `success`; tag `v<ver>` + push tag;
    `gh release create` from the CHANGELOG section (or let the release workflow
    below do it).

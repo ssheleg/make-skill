@@ -1,5 +1,56 @@
 # Changelog
 
+## v0.7.1 — 2026-07-31
+
+Re-read the plugin reference against what the canon actually says, and against
+what Claude Code 2.1.212 actually does. Six corrections, two of them places
+where the docs and the binary disagree.
+
+### Fixed
+- **`claude plugin validate` validates the manifest, not front matter.** The
+  docs' troubleshooting table says it checks "`plugin.json`, skill/agent/command
+  frontmatter, and `hooks/hooks.json`"; a `SKILL.md` carrying an invented
+  front-matter key passes `--strict` untouched. The canon said this gate
+  "catches a class your validator cannot see" — true for manifests, misleading
+  for front matter, which is exactly where the house validator earns its place.
+- **`claude plugin update <bare-name>` does not work**, though the docs list a
+  bare name as accepted: it answers `Plugin "make-skill" not found` **and exits
+  0**, so a release script sees success and ships nothing. The reference now
+  records both the documented form and the observed one.
+- **`skills` adds to the default scan — except at a marketplace root.** When a
+  plugin entry's `source` resolves to the marketplace root, the listed
+  subdirectories replace the default `skills/` scan (and if none exist, the
+  default runs after all). The reference stated the rule without its exception.
+- **"Every component directory sits at the plugin root" was too absolute.** That
+  is the default; a manifest path field may point anywhere inside the plugin,
+  and since 2.1.140 Claude Code warns when a manifest key leaves a default
+  folder unscanned. Only `.claude-plugin/` is genuinely off-limits.
+- **`allowed-tools`: Claude Code is looser than the spec.** It accepts a
+  space- or comma-separated string or a YAML list; the open standard accepts
+  only the space-separated string. Canon, Cursor rule and the validator's own
+  error message now say which form travels and why, instead of calling a legal
+  Claude Code skill invalid.
+- **npm plugin sources** resolve to `unknown` only when no `version` is set
+  anywhere — the entry or manifest version still wins.
+
+### Changed
+- The stray-`SKILL.md` rule is scoped honestly: a plugin-root `SKILL.md` is a
+  legal single-skill plugin in Claude Code (2.1.142+). It is multi-channel
+  distribution — the skills CLI shipping every `SKILL.md` in the tree — that
+  makes the rule, and the validator says so.
+- Version pinning: omitting `version` from both manifests is legal and hands
+  updates to the git SHA. This canon pins and bumps by choice, which the gotcha
+  now states rather than implies.
+
+### Added
+- **LSP and monitor fields in `references/claude-code-plugin.md`.** Its own load
+  condition promised "adding agents / hooks / MCP / LSP / monitors", and the
+  file had a table row for each and nothing else: now the required and optional
+  LSP keys with the 2.1.205 `restartOnCrash` / `shutdownTimeout` trap and the
+  same-extension race, and the monitor entry schema with its trust,
+  `${user_config.*}` rejection and session-lifetime rules. Plus the missing
+  `themes/` row.
+
 ## v0.7.0 — 2026-07-30
 
 Conformance to Anthropic's own plugin reference
