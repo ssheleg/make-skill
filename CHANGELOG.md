@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.6.2 — 2026-07-30
+
+A family member's release did not end where the skill said it ended. Publishing
+to npm left the umbrella pin pointing at the previous version, so the launcher
+kept advertising — and `update` kept installing — the release before it, with
+nothing in either repo to reveal the gap.
+
+### Added
+- **First-publish step 10** (`SKILL.md`): a skill that belongs to a family is
+  not released until the umbrella's `skills.json` pin moves and the umbrella is
+  released, verified with `npx --yes sshlg-skills@latest list`.
+- **`references/distribution.md` §5** — the same rule with the incident that
+  produced it (`agent-sync` 1.3.4 on npm while `list` still said 1.3.3).
+
+### Changed
+- README — family list and the three family commands; `CONTRIBUTING.md`.
+
 ## v0.6.1 — 2026-07-28
 
 Open-source hygiene pass — the repo is public, so the files a first-time
