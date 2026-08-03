@@ -1,7 +1,23 @@
 # Distribution matrix — every channel, with the flags that actually work
 
 **Load this when:** publishing a skill for the first time, adding a channel, or
-auditing an existing repo's distribution in a Retrofit.
+auditing an existing repo's distribution in a Retrofit. Uploading to the Claude
+API or claude.ai instead is `references/surfaces.md`.
+
+## Contents
+
+- The shadow rule (one channel per agent)
+- The distributable repo layout (tree, public-repo floor, version sync, gates)
+- 1. Claude Code plugin
+- 2. vercel-labs skills CLI
+- 3. npx installer — npm gotchas, installer implementation traps
+- First publish — the 11-step sequence
+- 4. Cursor
+- 5. Ship a FAMILY via an umbrella repo
+- Platforms
+- Live-check set (Retrofit)
+- Release checklist (every version)
+- Toggleable release automation
 
 Hard rule across all channels: **one channel per agent.** Two installs of the same
 skill on one agent = two listings, and the stale copy shadows the fresh one.
@@ -19,6 +35,68 @@ npx skills update <name> --global --yes && rm -f ~/.claude/skills/<name>
 Put that prune inside whatever script performs the update, so the supported path
 can't leave a shadow behind. A symlink shadows exactly as a directory does — check
 with `ls -ld`, and remember `find -type f` will not see through it.
+
+## The distributable repo layout
+
+Every rule here exists because the repo ships through more than one channel. Copy
+the shape from `ssheleg/super-ux`:
+
+```
+<repo>/
+├── .claude-plugin/marketplace.json     # root manifest, plugins[0].source: ./plugins/<name>
+├── plugins/<name>/
+│   ├── .claude-plugin/plugin.json      # ONLY the manifest lives in .claude-plugin/
+│   └── skills/<skill>/SKILL.md  +  references/*.md (+ scripts/, assets/)
+│       (commands/*.md too — but never named after a skill)
+├── cursor/rules/*.mdc                  # if agent-rules make sense for Cursor
+├── templates/*.md                      # skeletons (NEVER name one SKILL.md)
+├── bin/<name>.js + package.json        # npx installer (zero-dep Node)
+├── test/validate.py                    # consistency validator (stdlib only)
+├── .github/workflows/validate.yml      # validator on push+PR (+ release.yml, off by default)
+├── install.sh                          # POSIX fallback
+├── README.md (English-first), CHANGELOG.md, LICENSE (MIT)
+├── CONTRIBUTING.md + SECURITY.md       # public repo: how to check work, where to report
+└── docs/superpowers/{specs,plans}/
+```
+
+**Public-repo floor** (validator-enforced): a README saying what it does before
+how to install it, **English-first** — Russian belongs in trigger phrases, where
+it changes whether the skill fires; `CONTRIBUTING.md` with the offline commands
+that verify a change; `SECURITY.md` naming a private reporting channel and what
+the installers touch. A skill is text an agent executes, so "review before
+installing" belongs in writing.
+
+**Version sync (hard rule):** `marketplace.json`, `plugin.json`, `package.json`
+and the top CHANGELOG entry carry the SAME semver, bumped together; the validator
+enforces it. An optional `SKILL.md` `metadata.version` — spec-legal, and the only
+version an agent outside Claude Code ever sees — joins as a 5th point.
+
+**Two Claude Code checks, both mandatory** (field tables, sources, reserved
+names: `references/claude-code-plugin.md`):
+
+- **`claude plugin validate <path> --strict` on BOTH manifests, wired into CI**
+  — offline, no auth (`npm i -g @anthropic-ai/claude-code`). Ship `$schema` and
+  `displayName` in both, keep component paths `./`-relative. Unrecognized fields
+  are warnings the runtime tolerates and only `--strict` shows — that is how
+  `homepage`/`repository`, plugin-ENTRY fields, sat at the marketplace root of
+  this repo unnoticed. It reads the MANIFEST only: front-matter rules stay in
+  your own validator, whatever the troubleshooting table promises.
+- **`claude plugin details <name>@<marketplace>`** — the only view of what Claude
+  Code *thinks* the plugin contains and what it costs every session. Catches a
+  component listed twice and a description worth trimming.
+
+**The house validator** (adapt super-ux `test/validate.py`, stdlib only) enforces
+what neither upstream gate sees: both conformance checklists
+(`agent-skills-spec.md`, `claude-code-plugin.md`), the house description rules
+(starts "Use when", EN+RU triggers), version sync, references reachable / one
+level deep / `## Contents` past 100 lines, no command colliding with a skill
+name, `.mdc` free of relative links, **no stray `SKILL.md` outside
+`plugins/*/skills/*/`**, links that resolve and never escape the skill dir. Plus
+a negative self-test — corrupt a copy, expect FAIL — because a validator nobody
+has watched fail is decoration. Run `claude plugin validate --strict` as its OWN
+CI job so an upstream outage cannot mask a house failure, and treat `skills-ref
+validate <skill dir>` (from `agentskills/agentskills`) as the tie-breaker on the
+open standard.
 
 ## 1. Claude Code plugin
 
@@ -201,3 +279,41 @@ npx skills add <owner>/<repo> --list          # lists ONLY real skills
 npx <name>                                     # from a NON-repo cwd
 claude plugin update <name>@<name>             # full id required
 ```
+
+## Release checklist (every version)
+
+1. Bump the four versions together (`package.json` only if npm-distributed — else
+   it is a 3-way sync); write the CHANGELOG entry.
+2. `python3 test/validate.py` → exit 0 (`PASS: …`), then
+   `claude plugin validate ./plugins/<name> --strict` and
+   `claude plugin validate . --strict` → both exit 0.
+3. Functional tests: installer against a scratch `HOME` (fresh / rerun-skip /
+   `--force`), `node --check` on the CLI, piped-menu tests.
+4. Conventional commit; push; confirm CI `success`; tag `v<ver>` and push the tag;
+   `gh release create` from the CHANGELOG section (or let the release workflow
+   below do it).
+5. npm publish if applicable (human 2FA the first time); e2e `npx <name>@<ver>`
+   from a non-repo cwd.
+6. **Refresh THIS machine's global installs — always, as Definition of Done:**
+   `claude plugin marketplace update <name>` → `claude plugin update
+   <name>@<name>` → `npx skills update <name> --global --yes && rm -f
+   ~/.claude/skills/<name>`; then remind the user to restart the agent.
+7. Family member? Bump its pin in the umbrella `skills.json` and release the
+   umbrella (§5) — until that lands, `list` advertises the old version.
+8. Global `~/.claude/CLAUDE.md` — only for rules that must fire even without the
+   skill installed.
+
+## Toggleable release automation
+
+Set it up; don't leave it optional (reference impl: `ssheleg/task-pipeline`
+`.github/workflows/release.yml`). A `v*`-tag workflow, **off by default**, armed
+per repo by two variables so a fork inherits nothing — `RELEASE_ENABLED` for the
+GitHub release, `PUBLISH_NPMJS` for the registry. It checks tag ↔ manifest
+version, cuts the release from the CHANGELOG section, smoke-tests
+`npx github:<owner>/<repo>#<tag>` from a clean cwd, then publishes with
+provenance (auth per §3 above). That turns steps 2/4/5 into CI; step 6 stays
+manual.
+
+**A release nobody has to attend is the point:** manual publishing is how a
+registry ends up versions behind its own tags with nothing showing the gap — six
+of this family's seven packages, 2026-07-30.

@@ -9,6 +9,16 @@ build against and re-verify method names before locking a contract — MCP versi
 by date and the negotiated `protocolVersion` string is part of the handshake.
 *Read from the spec on 2026-07-28.*
 
+## Contents
+
+- Skill vs MCP server — pick the right one
+- Architecture, lifecycle
+- Server primitives and methods
+- Client primitives (sampling, elicitation, roots)
+- Transports
+- Security — the parts a skill must respect
+- Gotchas when writing an MCP-adjacent skill
+
 ## Skill vs MCP server — pick the right one
 
 | Need | Build |
@@ -108,10 +118,13 @@ The spec is explicit that MCP grants arbitrary data access and execution:
 
 ## Gotchas when writing an MCP-adjacent skill
 
-- **Name tools, don't guess them.** Tool names are server-namespaced and hosts
-  often prefix them (`mcp__<server>__<tool>`). Hardcoding a bare name in a skill
-  breaks on half the hosts — tell the agent to list tools and match, and give the
-  exact name only as a hint.
+- **Name tools, don't guess them — and never bare.** A bare `create_issue` is the
+  documented cause of "tool not found" once two servers are connected. Qualify it:
+  Anthropic's authoring guidance writes `ServerName:tool_name` (`GitHub:create_issue`),
+  while Claude Code's own runtime names are `mcp__<server>__<tool>` and a
+  plugin's own server is `mcp__plugin_<plugin>_<server>__<tool>`. Since the form
+  differs per host, tell the agent to **list tools and match**, and give the exact
+  string only as a hint.
 - **The tool list is dynamic.** Never assert a tool exists; instruct a fallback
   when it is missing (the server may be unauthenticated, disconnected, or gated).
 - **Remote servers need auth the agent cannot do**: OAuth flows are interactive.

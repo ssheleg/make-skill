@@ -19,6 +19,21 @@ host layer on top of it**: everything here is Claude-Code-specific and is
 ignored by other agents — so nothing here may be load-bearing for a skill that
 must also run on Cursor, Codex, or the skills CLI.
 
+## Contents
+
+- The gate: `claude plugin validate`
+- `plugin.json` fields
+- `marketplace.json` fields, reserved names, plugin entries
+- Component locations
+- Skill frontmatter — host extensions
+- Agents, hooks, MCP inside a plugin
+- LSP servers and monitors
+- Path variables
+- Caching, symlinks, path traversal
+- Skills-directory plugins
+- CLI
+- Conformance checklist
+
 ## The gate: `claude plugin validate`
 
 ```bash

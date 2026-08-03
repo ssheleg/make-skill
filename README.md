@@ -53,11 +53,15 @@ resolvable install — not "should work now".
 
 ## What you get
 
-**Conformance to the open standard, not just a house style.** The
+**Conformance to both rulebooks, not just a house style.** The
 [Agent Skills specification](https://agentskills.io/specification) sets hard
 limits — `name` is 1–64 chars of `a-z0-9` and single hyphens and must match its
 directory, `description` caps at 1024 characters, the body should stay under 500
-lines and 5000 tokens. Local conventions that merely *feel* right drift from those
+lines and 5000 tokens. [Anthropic's platform docs](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview)
+add rules the open standard is silent about and only the Skills API enforces —
+no XML tags in `name`/`description`, and no `anthropic`/`claude` anywhere in the
+name, so `claude-helper` loads fine in Claude Code and is rejected the day
+someone uploads it. Local conventions that merely *feel* right drift from both
 without anyone noticing; here they're checked.
 
 **Plugins Anthropic's own tooling accepts.** The
@@ -71,15 +75,19 @@ both manifests, in CI as its own job. That check is what caught this repo's own
 Code ignores them.
 
 **A validator that can fail.** `test/validate.py` (Python stdlib only, no deps)
-checks spec rules, version sync across every manifest, front-matter on commands
-and Cursor rules, link integrity, and the traps below. CI runs it plus **negative
-self-tests** — deliberately broken copies that must make it exit non-zero. A
-validator nobody has seen fail is decoration.
+checks both rulebooks' front-matter rules, the 500-line **and** 5000-token body
+budgets, a `## Contents` list on every reference past 100 lines, version sync
+across every manifest, front-matter on commands and Cursor rules, link
+integrity, and the traps below. CI runs it plus **negative self-tests** —
+deliberately broken copies that must make it exit non-zero, each asserted to
+fail for the right reason. A validator nobody has seen fail is decoration.
 
 **Every distribution channel, with the flags that actually work.** Claude Code
 plugin, the [vercel `skills` CLI](https://github.com/vercel-labs/skills) (70+
 agents), `npx`, Cursor rules, and umbrella-repo families — including the
-one-channel-per-agent rule that stops them from shadowing each other.
+one-channel-per-agent rule that stops them from shadowing each other — plus
+Anthropic's own surfaces (Skills API upload, claude.ai zip), which sync with
+none of the above and impose their own limits on what a skill may do at runtime.
 
 **The gotchas that each cost a debugging round**, so your first publish works
 instead of your fourth:
@@ -104,9 +112,12 @@ agent opens only when the situation calls for them:
 
 | Reference | Covers |
 |---|---|
-| `agent-skills-spec.md` | the open standard — field limits, optional front-matter, token budgets, the description trigger-eval loop |
+| `agent-skills-spec.md` | the hard rules from both authorities — field limits, where the open standard and Anthropic's platform differ, budgets, which checker says no |
+| `authoring.md` | the craft — naming, third-person descriptions, degrees of freedom, workflows and feedback loops, script rules, evaluation-driven development |
+| `surfaces.md` | Claude Code vs the Claude API vs claude.ai — the Skills API (upload, versions, 8 per request), and the no-network / no-package-install limits that break scripts moved between surfaces |
+| `enterprise.md` | installing a skill you didn't write, and running a fleet — risk tiers, the review checklist, the five approval gates, lifecycle, recall limits, rollback |
 | `claude-code-plugin.md` | the [Claude Code layer](https://code.claude.com/docs/en/plugins-reference) — `plugin.json` / `marketplace.json` schemas, plugin sources, component locations, host-only front-matter, path variables, cache and symlink rules, the `claude plugin` CLI |
-| `distribution.md` | every install channel, exact CLI flags, npm publishing traps |
+| `distribution.md` | the repo layout, every install channel, exact CLI flags, npm publishing traps, the release checklist |
 | `mcp.md` | [MCP](https://modelcontextprotocol.io) — skill vs server, primitives and methods, transports, consent and untrusted-output rules |
 | `a2a.md` | [A2A](https://a2a-protocol.org) — Agent Cards, task lifecycle, method mapping, v0.x→1.0 wire drift |
 

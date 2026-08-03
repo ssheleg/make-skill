@@ -1,28 +1,52 @@
-# Agent Skills open standard — conformance reference
+# Agent Skills — the hard rules, from both authorities
 
 **Load this when:** authoring or retrofitting any `SKILL.md`, or when a skill must
-install cleanly on agents outside Claude Code.
+install cleanly outside Claude Code. Craft (descriptions, freedom, scripts, evals)
+is `references/authoring.md`; surfaces and the Skills API are
+`references/surfaces.md`.
 
-Upstream sources (verify before locking anything — the spec moves):
-- Spec — <https://agentskills.io/specification>
-- Repo + reference validator — <https://github.com/agentskills/agentskills>
-  (`skills-ref validate ./my-skill`; Python, installed from source out of that
-  repo — it is not on npm or PyPI)
-- Best practices — <https://agentskills.io/skill-creation/best-practices>
-- Description tuning — <https://agentskills.io/skill-creation/optimizing-descriptions>
+## Contents
 
-*Field limits and budgets below were read from the spec on 2026-07-28. Re-read
-before trusting them in a new quarter.*
+- Two authorities, one floor
+- Frontmatter — the whole field set
+- Notes that bite
+- Directory layout
+- Progressive disclosure — the budgets
+- Validation — who says no
+- Conformance checklist
 
-The ssheleg canon in `SKILL.md` is a **superset** of this spec. It may add rules
+## Two authorities, one floor
+
+| Source | What it governs | Where |
+|---|---|---|
+| **Agent Skills open standard** | the portable format every agent reads | <https://agentskills.io/specification> |
+| **Anthropic platform docs** | what Anthropic's own surfaces accept and enforce | <https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview> |
+| Claude Code plugin reference | host extensions and packaging | `references/claude-code-plugin.md` |
+
+They agree on the shape and differ on enforcement — **write to the intersection**,
+because the strictest reader is the one that rejects you:
+
+| Rule | agentskills.io | Anthropic platform | Claude Code |
+|---|---|---|---|
+| `name` ≤64, `[a-z0-9-]` | yes | yes | yes |
+| no leading/trailing/double hyphen, `name` == parent dir | **required** | dir must match `name` on upload (case/underscore-insensitive) | `name` overrides the dir for the `/command` |
+| `name` must not contain `anthropic` / `claude` | silent | **enforced** — the Skills API rejects the upload | not enforced |
+| no XML tags in `name` / `description` | silent | **enforced** | not enforced |
+| `description` ≤1024, non-empty | yes | yes | listing truncates `description` + `when_to_use` at 1536 |
+| `license`, `compatibility`, `metadata`, `allowed-tools` | defined | undocumented — don't depend on them there | read, plus ~14 host-only fields |
+| body <500 lines / <5000 tokens | recommended | recommended (level-2 budget) | same |
+
+*Read from both on 2026-08-03. Re-read before trusting a limit in a new quarter.*
+
+The ssheleg canon in `SKILL.md` is a **superset** of all three. It may add rules
 (RU triggers, version sync, marketplace layout); it must never violate one.
 
 ## Frontmatter — the whole field set
 
 | Field | Required | Constraint |
 |---|---|---|
-| `name` | yes | 1–64 chars, `a-z0-9-` only, no leading/trailing `-`, no `--`, MUST equal the parent directory name |
-| `description` | yes | 1–1024 chars, non-empty; says what it does AND when to use it |
+| `name` | yes | 1–64 chars, `a-z0-9-` only, no leading/trailing `-`, no `--`, MUST equal the parent directory name, no XML tags, must not contain `anthropic` or `claude` |
+| `description` | yes | 1–1024 chars, non-empty, no XML tags; says what it does AND when to use it; third person |
 | `license` | no | license name or the name of a bundled license file |
 | `compatibility` | no | ≤500 chars; environment requirements (product, system packages, network) |
 | `metadata` | no | map of string→string; arbitrary client-defined keys (use unique key names) |
@@ -41,9 +65,15 @@ allowed-tools: Bash(git:*) Read
 ---
 ```
 
-Notes that bite:
+## Notes that bite
+
 - The **1024-char cap is on `description` alone**, not on the whole frontmatter
   block. Adding `license`/`metadata` does not eat the description budget.
+- **Reserved words are a substring rule.** `claude-tools`, `anthropic-helper` and
+  `my-claude-thing` are all rejected on upload — legal in Claude Code, so the
+  failure only appears the day someone ships the skill to the API.
+- **"No XML tags" bites templates.** A placeholder like `name: <skill-name>` reads
+  as a tag; seed skeletons with plain placeholders (`skill-name-here`).
 - `metadata` values are **strings** — quote versions (`version: "1.0"`), or YAML
   turns `1.0` into a float.
 - `allowed-tools` is a single space-separated **string**, not a YAML list. Claude
@@ -52,6 +82,8 @@ Notes that bite:
 - Nothing in the spec versions a skill. If you want the version visible to agents
   that never see `plugin.json`, put it in `metadata.version` — then it joins the
   version-sync rule.
+- The 500-line / 5000-token budget is on the body an agent loads on activation,
+  not on the bundle. Bundled files cost nothing until read.
 
 ## Directory layout
 
@@ -71,6 +103,7 @@ Notes that bite:
   dir), never in a sibling directory: the skills CLI ships only the skill's own
   folder.
 - `assets/` — output templates too long for `SKILL.md`, schemas, lookup tables.
+- Paths are relative to the skill root and always use **forward slashes**.
 
 ## Progressive disclosure — the budgets
 
@@ -81,67 +114,44 @@ Notes that bite:
 | `scripts/` `references/` `assets/` | only when the body sends the agent there | no cap, keep files focused |
 
 Rules:
-- Relative paths from the skill root; keep references **one level deep**
-  (`references/mcp.md`, not `references/proto/v1/mcp.md`). No reference chains.
-- State **when** to load each file — "read `references/a2a.md` before designing
-  an agent-to-agent contract" beats "see references/ for details". An unconditional
+- Keep references **one level deep** (`references/mcp.md`, not
+  `references/proto/v1/mcp.md`) and link every one of them from `SKILL.md`
+  itself. A file reachable only through another file gets previewed with `head`
+  and half-read.
+- Give every reference a **load condition** — "read `references/a2a.md` before
+  designing an agent-to-agent contract" beats "see references/". An unconditional
   pointer gets loaded always or never.
+- Reference files over **100 lines carry a `## Contents` list** — that is what a
+  partial read sees.
 - Keep gotchas in `SKILL.md` itself. The agent can't know to load a file about a
   trap it doesn't know exists.
+- Scripts are executed, not read: their code never enters context, only output
+  does. Say which you mean.
 
-## Description — the whole triggering budget
+## Validation — who says no
 
-The description is the ONLY thing the agent sees before deciding to load the
-skill. Spec-aligned rules:
+| Checker | Covers | Note |
+|---|---|---|
+| `skills-ref validate ./<skill dir>` | the open standard's frontmatter rules | Python, installed from source out of `github.com/agentskills/agentskills`; not on npm or PyPI |
+| Skills API upload | Anthropic's extra rules (reserved words, XML tags, dir name, 30 MB) | the only place they are enforced — see `references/surfaces.md` |
+| `claude plugin validate … --strict` | plugin/marketplace **manifests only**, not SKILL.md frontmatter | `references/claude-code-plugin.md` |
+| your `test/validate.py` | house rules + everything the three above miss | the only one that runs on every commit |
 
-- **Imperative**: "Use when …", not "This skill does …".
-- **User intent, not mechanics** — match what the user asked for.
-- **Be pushy**: name the contexts where it applies, including ones where the user
-  never says the domain word ("even if they don't mention 'CSV'").
-- **Concise**: a few sentences. Descriptions grow during tuning — re-check the
-  1024 cap after every edit.
-- Agents skip skills for tasks they can already do in one step. Descriptions earn
-  their keep on specialized/multi-step work.
+## Conformance checklist
 
-### Trigger eval loop (use when a skill fires too rarely or too often)
-
-1. Write ~20 realistic queries: 8–10 `should_trigger: true`, 8–10 `false`. The
-   valuable negatives are **near-misses** that share keywords but need something
-   else.
-2. Run each 3× against the agent with the skill installed → trigger rate;
-   pass threshold 0.5.
-3. Split 60% train / 40% validation, fixed across iterations. Tune only on train
-   failures.
-4. Too narrow → broaden scope/context. False-firing → add what it does NOT do.
-   Never paste keywords from a failed query — that's overfitting; address the
-   category instead.
-5. ≤5 iterations; pick the iteration with the best **validation** pass rate (not
-   necessarily the last).
-
-## Body patterns worth copying
-
-- **Gotchas section** — concrete environment facts that defy assumption. Highest
-  value content in most skills. Every correction you make by hand becomes a line.
-- **Templates** for output format — agents pattern-match structures better than
-  prose descriptions. Long ones → `assets/`.
-- **Checklists** for multi-step workflows with dependencies.
-- **Validation loops** — do work → run validator → fix → repeat until green.
-- **Plan-validate-execute** for batch/destructive work: emit a plan file, validate
-  it against a source-of-truth file, only then execute.
-- **Defaults, not menus** — one recommended tool + a one-line escape hatch.
-- **Add what the agent lacks**; cut anything it already knows. Test: "would the
-  agent get this wrong without this line?" No → delete it.
-- **Procedures over answers** — teach the method, not one instance's result.
-
-## Conformance checklist (run in every Retrofit audit)
-
-- [ ] `name`: matches dir, ≤64 chars, `[a-z0-9-]`, no leading/trailing/double hyphen
-- [ ] `description`: 1–1024 chars, imperative "Use when …", triggers listed
+- [ ] `name`: matches dir, ≤64 chars, `[a-z0-9-]`, no leading/trailing/double
+      hyphen, no `anthropic`/`claude`, no angle brackets
+- [ ] `description`: 1–1024 chars, no angle brackets, third person, says what it
+      does AND when to use it, concrete triggers listed
 - [ ] optional fields legal: `compatibility` ≤500, `metadata` all-string map,
       `allowed-tools` a space-separated string
+- [ ] no frontmatter key outside spec ∪ documented host extensions
 - [ ] `SKILL.md` < 500 lines and < 5000 tokens
-- [ ] heavy material lives in `references/` / `scripts/` / `assets/` INSIDE the
-      skill dir, one level deep, each with a stated load trigger
-- [ ] no relative link escapes the skill directory (`../`)
+- [ ] heavy material in `references/` / `scripts/` / `assets/` INSIDE the skill
+      dir, one level deep, each linked from the body with a stated load trigger
+- [ ] reference files >100 lines have a `## Contents` list
+- [ ] forward slashes everywhere; no relative link escapes the skill dir (`../`)
+- [ ] runtime needs (network, packages) declared in `compatibility` —
+      `references/surfaces.md`
 - [ ] `skills-ref validate ./<skill dir>` passes (upstream truth), in addition to
       `test/validate.py` (house rules)

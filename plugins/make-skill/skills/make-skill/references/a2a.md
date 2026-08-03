@@ -10,6 +10,16 @@ names against the version you target before locking a contract** — v0.x → v1
 renamed the wire surface (examples below), and plenty of SDKs and blog posts still
 document v0.3. *Read from the spec on 2026-07-28.*
 
+## Contents
+
+- A2A vs MCP — not competitors
+- Discovery — the Agent Card
+- Core objects, task lifecycle
+- Transports and methods (+ v0.x drift)
+- Getting updates back
+- Security
+- Writing an A2A-flavored skill
+
 ## A2A vs MCP — not competitors
 
 | | MCP | A2A |

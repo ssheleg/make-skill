@@ -1,5 +1,77 @@
 # Changelog
 
+## v0.8.0 — 2026-08-03
+
+Read Anthropic's four Agent Skills pages end to end (overview, authoring best
+practices, enterprise, the API skills guide) and audited the canon against them.
+The canon had been written against the open standard and the Claude Code plugin
+reference only — so it was correct about the format and blind to everything
+Anthropic's own surfaces enforce, recommend, or forbid. Three new references,
+six new validator rules, and one self-violation fixed.
+
+### Added
+- **`references/surfaces.md`** — the surface a skill runs on is a portability
+  contract, and it was undocumented here. Claude Code has full network and local
+  installs; the **Claude API container has neither**; claude.ai varies. A skill
+  whose script `pip install`s or curls works on one surface and silently fails
+  on the next. Also the whole Skills API — beta headers, `container.skills[]`,
+  **max 8 skills per request**, upload rules (top-level dir must match `name`,
+  `display_title` uniqueness, **< 30 MB**), epoch-timestamp versions,
+  delete-all-versions-before-delete — the claude.ai zip channel (per user, no
+  admin push), and the fact that **nothing syncs between surfaces**.
+- **`references/enterprise.md`** — installing a skill you did not write is
+  installing software, and the canon said so without saying how to check.
+  Anthropic's risk-tier table, the 8-step review checklist, the five approval
+  gates (triggering accuracy, isolation, **coexistence**, instruction following,
+  output quality), lifecycle with separation of duties, registry fields, recall
+  limits, and the production versioning/rollback/integrity rules.
+- **`references/authoring.md`** — the craft that the spec reference had only
+  hinted at: naming conventions (gerund; never `helper`/`utils`/`tools`),
+  **degrees of freedom** matched to task fragility, workflow checklists and
+  feedback loops, the script rules (solve-don't-defer, no voodoo constants,
+  execute-vs-read intent, declare packages), content guidelines, and
+  **evaluation-driven development** — evals before prose, ≥3 scenarios, a
+  no-skill baseline, the Claude-A/Claude-B loop, testing on every target model.
+  The trigger-eval loop moved here from the spec reference.
+- Six validator rules with negative self-tests that assert the *reason* for the
+  failure, not just a non-zero exit: reserved words in `name`, XML tags in
+  `name`/`description`, first/second person in `description`, the body token
+  budget, a `## Contents` list on references past 100 lines, and angle-bracket
+  placeholders in the SKILL template.
+
+### Fixed
+- **`name` may not contain `anthropic` or `claude`, and neither field may
+  contain XML tags.** The open standard is silent on both; Anthropic's platform
+  enforces them at upload. So `claude-helper` loads happily in Claude Code and
+  is rejected the day someone ships it to the API — a failure that only ever
+  appears on someone else's machine. Canon, spec reference, Cursor rule, README
+  and validator now carry the rule.
+- **Descriptions must be third person.** They are injected into the system
+  prompt, where "I can help you…" / "You can use this to…" measurably degrades
+  selection. Stated in the canon and checked by the validator.
+- **This skill was over its own token budget.** `SKILL.md` was ~5.2k estimated
+  tokens against a stated `< 5000` — a rule the repo enforced on everyone but
+  itself, because only the 500-line half was ever checked. The body budget is
+  now measured (chars/4, frontmatter excluded as level-1 metadata) and the body
+  was cut to ~4.6k by moving the repo layout, the two Claude Code gates, the
+  validator spec and the release checklist into `references/distribution.md`.
+- **Reference files longer than 100 lines now open with a `## Contents` list.**
+  Agents preview long files with `head`; without a table of contents they act on
+  the first hundred lines and never learn the rest exists. All eight references
+  gained one — five were in violation.
+- **The SKILL template seeded an invalid skill.** Its `name: <skill-name>` and
+  `<angle-bracket>` description placeholders are XML tags in exactly the two
+  fields where Anthropic rejects them. Replaced with plain placeholders, and the
+  validator now checks the skeleton it ships.
+- **MCP tool names: two conventions, both real.** Anthropic's authoring guidance
+  writes `ServerName:tool_name`; Claude Code's runtime names are
+  `mcp__<server>__<tool>`. The canon documented only the second, which reads as
+  wrong against the docs — both are recorded now, with "list and match" still
+  the rule.
+- Retrofit audit gained surface honesty (item 3) and evaluations (item 8);
+  authoring rules gained naming style, prescriptiveness-to-fragility, and the
+  no-time-branching rule with the "Old patterns" escape hatch.
+
 ## v0.7.1 — 2026-07-31
 
 Re-read the plugin reference against what the canon actually says, and against

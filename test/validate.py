@@ -144,8 +144,20 @@ plg_name = plg.get("name") if plg else None
 plg_ver = plg.get("version") if plg else None
 
 # --- SKILL.md: Agent Skills spec rules + house canon -------------------------
-# Spec: https://agentskills.io/specification
+# Two authorities, both enforced:
+#   https://agentskills.io/specification                      (portable format)
+#   https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview
+# The Anthropic layer adds rules the open standard is silent about — reserved
+# words and XML tags in name/description — and the Skills API is the only place
+# they are enforced, i.e. on someone else's machine. Read 2026-08-03.
 SPEC_KEYS = {"name", "description", "license", "compatibility", "metadata", "allowed-tools"}
+RESERVED_NAME_WORDS = ("anthropic", "claude")
+XML_TAG_RE = re.compile(r"<[^<>]+>")
+# "Always write in third person" — the description is injected into the system
+# prompt, and first/second person degrades skill selection.
+PERSON_RE = re.compile(
+    r"\b(?:I can|I will|I'll|I help|I'm|you can use|you should use|you may use|"
+    r"this skill (?:lets|allows|helps) you)\b", re.I)
 # Claude Code host extensions (https://code.claude.com/docs/en/skills). Legal in a
 # SKILL.md and ignored by every other agent — so they may tune behavior here, but
 # nothing portable may depend on one. Anything outside both sets is a typo.
@@ -156,6 +168,10 @@ CC_SKILL_KEYS = {
 }
 NAME_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 BODY_MAX_LINES = 500
+BODY_MAX_TOKENS = 5000
+# Anthropic best practices: a reference longer than this gets a table of contents,
+# because a partial `head` read is what the agent often sees.
+REF_TOC_MIN_LINES = 100
 
 
 def strip_quotes(v):
@@ -227,6 +243,14 @@ else:
             if fm_name != os.path.basename(SKILL_DIR):
                 fail(f"SKILL.md: name {fm_name!r} != directory "
                      f"{os.path.basename(SKILL_DIR)!r} (spec)")
+            for word in RESERVED_NAME_WORDS:
+                if word in fm_name.lower():
+                    fail(f"SKILL.md: name {fm_name!r} contains the reserved word "
+                         f"{word!r} — Claude Code loads it, the Skills API rejects "
+                         "the upload (platform.claude.com Agent Skills overview)")
+            if XML_TAG_RE.search(fm_name):
+                fail(f"SKILL.md: name {fm_name!r} contains an XML tag — rejected by "
+                     "Anthropic's platform; a leftover <placeholder> is the usual cause")
 
         # description — spec: 1-1024 chars; canon: "Use when …" + EN/RU triggers
         desc = fm.get("description")
@@ -239,6 +263,14 @@ else:
                 fail("SKILL.md: description must start with 'Use when …' (canon)")
             if not re.search(r"[а-яё]", desc, re.I):
                 fail("SKILL.md: description must include Russian trigger phrases too (canon)")
+            if XML_TAG_RE.search(desc):
+                fail("SKILL.md: description contains an XML tag — rejected by "
+                     "Anthropic's platform. Write the placeholder without angle brackets")
+            person = PERSON_RE.search(desc)
+            if person:
+                fail(f"SKILL.md: description is not third person ({person.group(0)!r}) — "
+                     "it is injected into the system prompt, where first/second person "
+                     "degrades skill selection")
 
         # optional spec fields
         compat = fm.get("compatibility")
@@ -264,11 +296,21 @@ else:
                         fail(f"SKILL.md: metadata.{k} must be a non-empty string "
                              "(quote versions: version: \"1.0\")")
 
-    # progressive disclosure — spec recommends < 500 lines
-    n_lines = skill_txt.count("\n") + 1
+    # progressive disclosure — both authorities budget the BODY an agent loads on
+    # activation (frontmatter is level-1 metadata, loaded for every skill anyway):
+    # < 500 lines AND < 5000 tokens. No tokenizer in the stdlib, so estimate
+    # conservatively at 4 chars/token — dense markdown with paths and backticks
+    # runs closer to 3.7, so this under-reports rather than over.
+    body = re.sub(r"^---\n.*?\n---\n", "", skill_txt, count=1, flags=re.S)
+    n_lines = body.count("\n") + 1
     if n_lines >= BODY_MAX_LINES:
-        fail(f"SKILL.md is {n_lines} lines, spec recommends < {BODY_MAX_LINES} "
+        fail(f"SKILL.md body is {n_lines} lines, spec recommends < {BODY_MAX_LINES} "
              "— move detail into references/")
+    est_tokens = len(body) // 4
+    if est_tokens >= BODY_MAX_TOKENS:
+        fail(f"SKILL.md body is ~{est_tokens} tokens ({len(body)} chars / 4), budget "
+             f"is < {BODY_MAX_TOKENS} — every token competes with the user's actual "
+             "task. Move a section into references/ with a stated load trigger")
 
 # references/ must exist, stay one level deep, and each file must be reachable
 refs_dir = os.path.join(SKILL_DIR, "references")
@@ -283,10 +325,15 @@ else:
             if f"references/{entry}" not in skill_txt:
                 fail(f"references/{entry} is never referenced from SKILL.md — "
                      "an unreachable file is dead context")
-            head = open(full, encoding="utf-8").read(600)
-            if "Load this when" not in head:
+            ref_txt = open(full, encoding="utf-8").read()
+            if "Load this when" not in ref_txt[:600]:
                 fail(f"references/{entry} has no '**Load this when:**' line near the "
                      "top — progressive disclosure needs a condition, not a pointer")
+            ref_lines = ref_txt.count("\n") + 1
+            if ref_lines > REF_TOC_MIN_LINES and "\n## Contents" not in ref_txt:
+                fail(f"references/{entry} is {ref_lines} lines with no '## Contents' "
+                     f"list — past {REF_TOC_MIN_LINES} lines an agent previews with "
+                     "head and never learns what the rest of the file holds")
 
 # no relative link may escape the skill directory (the skills CLI ships only it)
 for target in re.findall(r"\[[^\]]*\]\(([^)\s]+)\)", skill_txt):
@@ -399,10 +446,32 @@ for f in mdcs:
 # templates/: the skeleton must NOT be named SKILL.md — the skills CLI discovers
 # every SKILL.md in the repo and would ship the placeholder as a real skill.
 tpl_dir = os.path.join(ROOT, "templates")
+skill_tpl = os.path.join(tpl_dir, "SKILL.template.md")
 if not os.path.isdir(tpl_dir):
     fail("missing templates/ directory")
-elif not os.path.isfile(os.path.join(tpl_dir, "SKILL.template.md")):
+elif not os.path.isfile(skill_tpl):
     fail("missing template: templates/SKILL.template.md")
+else:
+    # the skeleton seeds a real skill: its name/description placeholders must
+    # already be legal, and <angle-bracket> placeholders read as XML tags, which
+    # Anthropic's platform rejects in exactly those two fields
+    ttxt = open(skill_tpl, encoding="utf-8").read()
+    tm = re.match(r"^---\n(.*?)\n---\n", ttxt, re.S)
+    if not tm:
+        fail("templates/SKILL.template.md: no frontmatter — it seeds a SKILL.md")
+    else:
+        tfm = parse_frontmatter(tm.group(1))
+        for field in ("name", "description"):
+            val = tfm.get(field)
+            if not isinstance(val, str) or not val.strip():
+                fail(f"templates/SKILL.template.md: empty/missing {field}")
+            elif XML_TAG_RE.search(val):
+                fail(f"templates/SKILL.template.md: {field} placeholder uses angle "
+                     "brackets, which read as an XML tag and are rejected on upload — "
+                     "seed a plain placeholder instead")
+        if isinstance(tfm.get("name"), str) and any(
+                w in tfm["name"].lower() for w in RESERVED_NAME_WORDS):
+            fail("templates/SKILL.template.md: name placeholder contains a reserved word")
 
 # manifest skeletons: must parse, carry $schema, and stay inside the recognized
 # field sets — a template that fails `claude plugin validate --strict` seeds a

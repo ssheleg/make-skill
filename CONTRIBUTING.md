@@ -16,9 +16,11 @@ Especially welcome:
 - **Gotchas** from shipping skills on any agent — a concrete symptom, the cause,
   the fix.
 - **Spec drift**: the [Agent Skills standard](https://agentskills.io/specification),
-  MCP, and A2A all move. If a limit, field, or method name in
+  [Anthropic's platform docs](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview),
+  the Claude Code plugin reference, MCP, and A2A all move — and they sometimes
+  disagree. If a limit, field, or method name in
   `plugins/make-skill/skills/make-skill/references/` no longer matches upstream,
-  a correction with a link to the current spec is the most valuable PR there is.
+  a correction with a link to the current source is the most valuable PR there is.
 - Support for a distribution channel that behaves differently from the documented
   four.
 
@@ -62,9 +64,15 @@ Fail these and CI stops you, so check them before pushing:
 - **Version sync.** `.claude-plugin/marketplace.json`, `plugins/make-skill/.claude-plugin/plugin.json`,
   `package.json` and the top `## vX.Y.Z` entry in `CHANGELOG.md` carry the same
   semver, bumped together.
-- **Spec-legal front-matter.** `name` matches its directory and the standard's
-  charset; `description` ≤ 1024 chars; only fields from the spec or the Claude
-  Code extension set present; `SKILL.md` under 500 lines.
+- **Spec-legal front-matter, by both rulebooks.** `name` matches its directory
+  and the standard's charset, carries no angle brackets and no `anthropic`/
+  `claude` (Anthropic's Skills API rejects those on upload); `description`
+  ≤ 1024 chars, third person, no angle brackets; only fields from the spec or
+  the Claude Code extension set present; the `SKILL.md` **body** under 500 lines
+  and under 5000 estimated tokens (chars/4 — no tokenizer in the stdlib).
+- **Reference files stay navigable.** Each one is linked from `SKILL.md`, opens
+  with a `**Load this when:**` condition, and — past 100 lines — a `## Contents`
+  list, because a partial `head` read is what an agent often gets.
 - **Manifest conformance.** Both manifests carry `$schema` and only fields Claude
   Code recognizes, component paths are `./`-relative and stay inside the plugin,
   the marketplace name is not reserved, and nothing but the manifest sits in

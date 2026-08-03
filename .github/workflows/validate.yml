@@ -97,6 +97,50 @@ jobs:
             echo "OK: validator rejects spec violation '$case'"
           done
 
+      - name: Negative self-test (Anthropic platform rules must fail)
+        run: |
+          set -eu
+          # Rules the open standard is silent about and only the Skills API
+          # enforces — i.e. on someone else's machine — plus the two budgets a
+          # house validator is the only place to check.
+          for case in reserved:'reserved word' xmltag:'XML tag' person:'third person' \
+                      toc:'Contents' tokens:'tokens' tplxml:'angle brackets'; do
+            name="${case%%:*}"; expect="${case#*:}"
+            rm -rf "/tmp/ap-$name"
+            cp -R . "/tmp/ap-$name"
+            CASE="$name" python3 - <<'PY'
+          import os, pathlib, re
+          case = os.environ["CASE"]
+          root = pathlib.Path(f"/tmp/ap-{case}")
+          skill = root / "plugins/make-skill/skills/make-skill/SKILL.md"
+          t = skill.read_text(encoding="utf-8")
+          if case == "reserved":    # "anthropic"/"claude" in name → rejected on upload
+              t = re.sub(r"^name: make-skill$", "name: make-claude-skill", t, count=1, flags=re.M)
+          elif case == "xmltag":    # angle brackets in description → rejected on upload
+              t = re.sub(r"^description: Use when ", "description: Use when <trigger> ", t, count=1, flags=re.M)
+          elif case == "person":    # first/second person degrades skill selection
+              t = re.sub(r"^(description: .*)$", r"\1 I can help you ship skills.", t, count=1, flags=re.M)
+          elif case == "tokens":    # body budget: < 5000 tokens
+              t += "\n" + ("padding text that costs tokens. " * 400) + "\n"
+          skill.write_text(t, encoding="utf-8")
+          if case == "toc":         # a long reference with no table of contents
+              r = root / "plugins/make-skill/skills/make-skill/references/surfaces.md"
+              r.write_text(r.read_text(encoding="utf-8").replace("## Contents", "## Sections", 1), encoding="utf-8")
+          if case == "tplxml":      # a skeleton that seeds an invalid skill
+              p = root / "templates/SKILL.template.md"
+              p.write_text(p.read_text(encoding="utf-8").replace(
+                  "name: skill-name-here", "name: <skill-name>", 1), encoding="utf-8")
+          PY
+            if out=$(python3 "/tmp/ap-$name/test/validate.py" 2>&1); then
+              echo "ERROR: validator passed on platform violation '$name'"; exit 1
+            fi
+            if ! echo "$out" | grep -qi -- "$expect"; then
+              echo "ERROR: '$name' failed for the wrong reason (no '$expect'):"
+              echo "$out"; exit 1
+            fi
+            echo "OK: validator rejects '$name' with the right message"
+          done
+
       - name: Negative self-test (Claude Code manifest violations must fail)
         run: |
           set -eu
@@ -158,7 +202,7 @@ jobs:
           # name registers /make-skill twice (see `claude plugin details`)
           test ! -e "$HOME/.claude/commands/make-skill.md"
           # references must travel with the skill — relative links break otherwise
-          for r in agent-skills-spec claude-code-plugin distribution mcp a2a; do
+          for r in agent-skills-spec authoring surfaces enterprise claude-code-plugin distribution mcp a2a; do
             test -f "$HOME/.claude/skills/make-skill/references/$r.md"
           done
           node bin/make-skill.js | grep -q '^skip:'

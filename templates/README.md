@@ -5,13 +5,13 @@ is absent; never overwrite existing files.
 
 | Template | Seeds | Used by |
 |---|---|---|
-| `SKILL.template.md` | a new `skills/<name>/SKILL.md` — spec-legal front-matter (required + optional fields, limits stated inline) and section stubs incl. References and Gotchas | Create / Promote |
+| `SKILL.template.md` | a new `skills/<name>/SKILL.md` — front-matter legal under BOTH rulebooks (limits stated inline, plain placeholders instead of `<angle brackets>`, which count as XML tags and are rejected on upload) and section stubs incl. References and Gotchas | Create / Promote |
 | `plugin.template.json` | `plugins/<name>/.claude-plugin/plugin.json` | Create (distributable) / Promote |
 | `marketplace.template.json` | `.claude-plugin/marketplace.json` at the repo root | Create (distributable) / Promote |
 
 The two JSON skeletons carry only fields Claude Code recognizes, so
 `claude plugin validate <path> --strict` passes on the seeded repo. Replace every
-`<placeholder>`, keep the `$schema` lines (editor autocomplete), and keep all
+placeholder, keep the `$schema` lines (editor autocomplete), and keep all
 four versions in sync. Marketplace level takes `name`, `owner`, `plugins`,
 `$schema`, `description`, `version`, `metadata`,
 `allowCrossMarketplaceDependenciesOn`, `renames` and nothing else —

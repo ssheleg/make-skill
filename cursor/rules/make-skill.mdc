@@ -1,5 +1,5 @@
 ---
-description: "make-skill: create, retrofit, audit, or publish an agent skill / plugin the proven ssheleg way — the Agent Skills open standard (front-matter limits, progressive-disclosure budgets), the Claude Code plugin reference (manifest schemas, component layout, claude plugin validate --strict), marketplace repo layout, four-way version sync, validator + CI, multi-channel distribution (Claude Code plugin, skills CLI, npx, Cursor), npm gotchas, and the MCP / A2A rules for protocol-connected skills. Apply when creating a new skill, upgrading one to standard, checking one against the spec, or wrapping one into a plugin."
+description: "make-skill: create, retrofit, audit, or publish an agent skill / plugin the proven ssheleg way — the Agent Skills open standard AND Anthropic's platform rules (front-matter limits, disclosure budgets, per-surface runtime limits, evals), the Claude Code plugin reference (manifest schemas, component layout, claude plugin validate --strict), marketplace repo layout, four-way version sync, validator + CI, multi-channel distribution (Claude Code plugin, skills CLI, npx, Cursor, Skills API), npm gotchas, the review checklist for installing someone else's skill, and the MCP / A2A rules for protocol-connected skills. Apply when creating a new skill, upgrading one to standard, checking one against the spec, or wrapping one into a plugin."
 alwaysApply: false
 ---
 
@@ -9,12 +9,20 @@ Self-contained rule: Cursor copies this file into foreign projects, so it carrie
 every contract inline and uses **absolute URLs only — never a relative link**
 (a relative link dangles the moment the file is copied).
 
-## Spec floor — the Agent Skills open standard (non-negotiable)
+## Spec floor — two authorities, both non-negotiable
 
-<https://agentskills.io/specification> — the house canon below only ADDS to it.
+<https://agentskills.io/specification> (the portable format) and
+<https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview>
+(what Anthropic's own surfaces enforce). Write to the intersection; the house
+canon below only ADDS to it.
 
-- `name`: 1–64 chars, `a-z0-9` + single internal hyphens, == directory name.
-- `description`: ≤1024 chars (that cap is on the field, not the whole front-matter).
+- `name`: 1–64 chars, `a-z0-9` + single internal hyphens, == directory name,
+  **no angle brackets and never containing `anthropic`/`claude`** — reserved
+  substrings Claude Code loads happily and the Skills API rejects on upload.
+- `description`: ≤1024 chars (the cap is on the field, not the whole
+  front-matter), no angle brackets, **third person** (it goes into the system
+  prompt; "I can help you…" degrades selection), stating WHAT it does and WHEN
+  to use it.
 - Portable front-matter keys: `name`, `description`, `license`,
   `compatibility` (≤500), `metadata` (string→string map), `allowed-tools`
   (space-separated string — Claude Code also takes a comma-list or YAML list, but
@@ -25,7 +33,14 @@ every contract inline and uses **absolute URLs only — never a relative link**
   load-bearing. Anything outside both sets is a typo.
 - Body < 500 lines and < 5000 tokens. Overflow goes to `references/` (docs),
   `scripts/` (code), `assets/` (templates) INSIDE the skill dir, one level deep,
-  each with a stated load trigger ("read X when Y"). Gotchas stay in SKILL.md.
+  each linked from the body with a stated load trigger ("read X when Y"), and
+  any reference over 100 lines opens with a `## Contents` list (a partial `head`
+  read is what the agent often gets). Gotchas stay in SKILL.md.
+- **Surfaces differ and nothing syncs between them:** the Claude API container
+  has NO network and NO runtime package install, claude.ai varies, only Claude
+  Code has both. A script that `pip install`s or curls is a Claude Code skill —
+  declare it in `compatibility` or drop the dependency. Skills API also caps a
+  request at 8 skills and an upload at 30 MB.
 - Upstream checker: `skills-ref validate <skill dir>` (Python, from the
   `agentskills/agentskills` repo).
 
@@ -33,8 +48,20 @@ every contract inline and uses **absolute URLs only — never a relative link**
 
 - `description` starts "Use when …" with concrete trigger phrases in English AND
   Russian. A skill nobody triggers is dead weight.
+- One naming pattern, preferably gerund (`processing-pdfs`); never `helper`,
+  `utils`, `tools`, `data`.
 - One skill = one job. Multiple concerns → multiple skills + a shared contract file.
-- Body: imperative, procedural, checklists over prose. State non-negotiables as such.
+- Body: imperative, procedural, checklists over prose. State non-negotiables as
+  such. Match prescriptiveness to fragility — exact commands for destructive or
+  order-dependent work, direction only where context decides.
+- **Evals before prose:** run the task with NO skill, record the failures, write
+  ≥3 evaluations (including should-NOT-trigger cases), then write the minimum
+  that passes; re-run on every model you claim. Adding to an existing set → test
+  coexistence, a broad description steals other skills' triggers.
+- Scripts: handle their own errors, justify every constant, declare packages,
+  and say whether the agent should RUN or READ each one.
+- No time-branching text ("before August, use the old API") — superseded
+  material goes under `## Old patterns`; forward slashes in every path.
 - Commands are thin wrappers: front-matter `description` (+ `argument-hint`), body =
   "invoke skill X in mode Y", pass `$ARGUMENTS`.
 - Never overwrite user data: seed only when absent; overwrite only behind `--force`.
@@ -105,6 +132,11 @@ checker, not a house opinion:
 - **Cursor .mdc:** embed contracts inline (files get copied into foreign projects).
 - **e2e npx from a NON-repo cwd** (inside the repo it resolves the local package →
   false "command not found").
+- **Installing a skill you did not write is installing software.** Read every
+  file, run scripts sandboxed, grep for network calls and credentials, and check
+  the instructions for "ignore previous rules", hidden actions, or data routed
+  outward. A skill that fetches its instructions from a URL can change after the
+  review that approved it.
 
 ## Protocol-connected skills (MCP / A2A)
 
@@ -132,3 +164,8 @@ Claude Code plugin (`claude plugin marketplace add` → `install <name>@<name>`)
 vercel skills CLI (`npx skills add <owner>/<repo>`, discovers via marketplace.json),
 npx (`npx github:<owner>/<repo>`, or the registry after publish), Cursor (global via
 `npx skills add … --agent cursor --global`, or per-project `.cursor/rules/*.mdc`).
+Anthropic's own surfaces are separate deployments that sync with nothing: the
+Skills API (`POST /v1/skills`, beta headers `skills-2025-10-02` +
+`code-execution-2025-08-25`, workspace-wide, ≤8 skills per request, <30 MB, the
+uploaded top-level directory must match `name`) and claude.ai (zip upload in
+Settings → Features, per user, no admin push).
