@@ -77,6 +77,7 @@ cursor/rules/*.mdc                         # self-contained, NO relative links
 templates/*.md                             # skeletons — NEVER name one SKILL.md
 bin/<name>.js + package.json               # zero-dep npx installer
 test/validate.py                           # stdlib-only consistency validator
+test/evals/                                # triggers.json + scenarios.json (data, run by a human)
 .github/workflows/validate.yml (+ release.yml, off by default)
 install.sh, README.md (English-first), CHANGELOG.md, LICENSE (MIT)
 CONTRIBUTING.md + SECURITY.md              # required once the repo is public
@@ -132,6 +133,10 @@ checker, not a house opinion:
 - **Cursor .mdc:** embed contracts inline (files get copied into foreign projects).
 - **e2e npx from a NON-repo cwd** (inside the repo it resolves the local package →
   false "command not found").
+- **Two token counters, ~40% apart:** `claude plugin details` assumes ~2.8
+  chars/token and shows a far bigger on-invoke cost than a real tokenizer
+  (3.8–4.5 chars/token). Budget the body against a tokenizer; expect the CLI to
+  look alarming for a file that is genuinely inside 5000 tokens.
 - **Installing a skill you did not write is installing software.** Read every
   file, run scripts sandboxed, grep for network calls and credentials, and check
   the instructions for "ignore previous rules", hidden actions, or data routed

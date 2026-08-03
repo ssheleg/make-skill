@@ -101,6 +101,10 @@ if mkt:
             fail(f"marketplace.json: plugin entry has unrecognized fields {unknown}")
         mkt_name = p0.get("name")
         mkt_ver = p0.get("version")
+        if not p0.get("displayName"):
+            fail("marketplace.json: plugin entry has no displayName — the UI label "
+                 "the user actually reads (displayName is a plugin-ENTRY field; the "
+                 "marketplace root does not take one)")
         src = p0.get("source", "")
         if not isinstance(src, str):
             fail("marketplace.json: this repo ships its plugin in-tree — source must be "
@@ -125,6 +129,9 @@ if plg:
     if unknown:
         fail(f"plugin.json: fields Claude Code does not recognize: {unknown} — "
              "'claude plugin validate <dir> --strict' fails on these")
+    if not plg.get("displayName"):
+        fail("plugin.json: no displayName — canon requires the UI label in both "
+             "the manifest and the marketplace entry")
     check_paths("plugin.json", plg)
 
 # only the manifest may live in .claude-plugin/ — components buried there load as
@@ -169,6 +176,7 @@ CC_SKILL_KEYS = {
 NAME_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 BODY_MAX_LINES = 500
 BODY_MAX_TOKENS = 5000
+CHARS_PER_TOKEN = 3.9  # measured, not assumed — see the comment at the budget check
 # Anthropic best practices: a reference longer than this gets a table of contents,
 # because a partial `head` read is what the agent often sees.
 REF_TOC_MIN_LINES = 100
@@ -298,19 +306,23 @@ else:
 
     # progressive disclosure — both authorities budget the BODY an agent loads on
     # activation (frontmatter is level-1 metadata, loaded for every skill anyway):
-    # < 500 lines AND < 5000 tokens. No tokenizer in the stdlib, so estimate
-    # conservatively at 4 chars/token — dense markdown with paths and backticks
-    # runs closer to 3.7, so this under-reports rather than over.
+    # < 500 lines AND < 5000 tokens. No tokenizer in the stdlib, so estimate at
+    # CHARS_PER_TOKEN, measured rather than assumed: tokenizing this bundle
+    # (2026-08-03, cl100k) gives 3.78-4.47 chars/token, 3.9 for SKILL.md itself.
+    # `claude plugin details` reports ~2.8 chars/token for the same files — its
+    # estimator is deliberately pessimistic, so it always shows a bigger number
+    # than this check. Treat it as the upper bound and keep headroom.
     body = re.sub(r"^---\n.*?\n---\n", "", skill_txt, count=1, flags=re.S)
     n_lines = body.count("\n") + 1
     if n_lines >= BODY_MAX_LINES:
         fail(f"SKILL.md body is {n_lines} lines, spec recommends < {BODY_MAX_LINES} "
              "— move detail into references/")
-    est_tokens = len(body) // 4
+    est_tokens = int(len(body) / CHARS_PER_TOKEN)
     if est_tokens >= BODY_MAX_TOKENS:
-        fail(f"SKILL.md body is ~{est_tokens} tokens ({len(body)} chars / 4), budget "
-             f"is < {BODY_MAX_TOKENS} — every token competes with the user's actual "
-             "task. Move a section into references/ with a stated load trigger")
+        fail(f"SKILL.md body is ~{est_tokens} tokens ({len(body)} chars / "
+             f"{CHARS_PER_TOKEN}), budget is < {BODY_MAX_TOKENS} — every token "
+             "competes with the user's actual task. Move a section into "
+             "references/ with a stated load trigger")
 
 # references/ must exist, stay one level deep, and each file must be reachable
 refs_dir = os.path.join(SKILL_DIR, "references")
@@ -496,11 +508,17 @@ for tpl, allowed, schema_url in (
     unknown = sorted(set(tpl_data) - allowed)
     if unknown:
         fail(f"templates/{tpl}: unrecognized fields {unknown}")
+    if tpl == "plugin.template.json" and not tpl_data.get("displayName"):
+        fail("templates/plugin.template.json: no displayName — the canon requires "
+             "one in the manifest and in the marketplace entry, so the skeleton "
+             "must seed it")
     entries = tpl_data.get("plugins") if tpl == "marketplace.template.json" else []
     for entry in entries or []:
         unknown = sorted(set(entry) - MKT_ENTRY_KEYS)
         if unknown:
             fail(f"templates/{tpl}: plugin entry has unrecognized fields {unknown}")
+        if not entry.get("displayName"):
+            fail(f"templates/{tpl}: plugin entry has no displayName")
 
 # HARD RULE: a SKILL.md may exist ONLY inside plugins/<plugin>/skills/<skill>/.
 # Anywhere else (templates/, docs/, examples/) the skills CLI picks it up and
@@ -520,7 +538,6 @@ for dirpath, dirnames, filenames in os.walk(ROOT):
 # evaluations — the canon requires >=3 behavioral scenarios and a trigger set
 # with near-miss negatives for every skill, so this repo owes its own. They are
 # data, not unit tests: the runner is a human with an agent (test/evals/README.md).
-EVAL_DIR = os.path.join(ROOT, "test", "evals")
 trig = load_json("test/evals/triggers.json")
 if trig is not None:
     qs = trig.get("queries") or []
@@ -539,6 +556,23 @@ if trig is not None:
     if pos < 6 or neg < 6:
         fail(f"test/evals/triggers.json: {pos} positive / {neg} negative — the "
              "negatives are what catch a description that steals other skills' turns")
+    # both classes must appear on both sides of the split, or the validation half
+    # can only measure one failure mode
+    split = trig.get("split") or {}
+    by_id = {q.get("id"): q for q in qs}
+    for half in ("train", "validation"):
+        got = split.get(half)
+        if not isinstance(got, list) or not got:
+            fail(f"test/evals/triggers.json: split.{half} must list query ids")
+            continue
+        unknown = [i for i in got if i not in by_id]
+        if unknown:
+            fail(f"test/evals/triggers.json: split.{half} names unknown ids {unknown}")
+        classes = {by_id[i]["should_trigger"] for i in got if i in by_id}
+        if classes != {True, False}:
+            fail(f"test/evals/triggers.json: split.{half} holds only "
+                 f"{'positives' if True in classes else 'negatives'} — a half without "
+                 "both classes measures one failure mode and misses the other")
 
 scen = load_json("test/evals/scenarios.json")
 if scen is not None:

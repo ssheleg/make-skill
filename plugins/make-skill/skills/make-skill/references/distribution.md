@@ -19,6 +19,8 @@ API or claude.ai instead is `references/surfaces.md`.
 - Release checklist (every version)
 - Toggleable release automation
 
+## The shadow rule (one channel per agent)
+
 Hard rule across all channels: **one channel per agent.** Two installs of the same
 skill on one agent = two listings, and the stale copy shadows the fresh one.
 

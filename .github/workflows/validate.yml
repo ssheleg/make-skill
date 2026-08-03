@@ -146,7 +146,8 @@ jobs:
           set -eu
           # Evaluations are data a human runs, so nothing else proves they exist
           # or that the near-miss negatives survived an edit.
-          for case in evalneg:'negative' evalfew:'scenarios' evalfile:'missing file'; do
+          for case in evalneg:'negative' evalfew:'scenarios' evalfile:'missing file' \
+                      evalsplit:'both classes'; do
             name="${case%%:*}"; expect="${case#*:}"
             rm -rf "/tmp/ev-$name"
             cp -R . "/tmp/ev-$name"
@@ -158,6 +159,13 @@ jobs:
           if case == "evalneg":     # a trigger set with no near-misses proves nothing
               t = json.loads(trig_p.read_text(encoding="utf-8"))
               t["queries"] = [q for q in t["queries"] if q["should_trigger"]]
+              trig_p.write_text(json.dumps(t, indent=2), encoding="utf-8")
+          elif case == "evalsplit": # every positive in train = validation measures one thing
+              t = json.loads(trig_p.read_text(encoding="utf-8"))
+              pos = [q["id"] for q in t["queries"] if q["should_trigger"]]
+              neg = [q["id"] for q in t["queries"] if not q["should_trigger"]]
+              t["split"]["train"] = pos + neg[:2]
+              t["split"]["validation"] = neg[2:]
               trig_p.write_text(json.dumps(t, indent=2), encoding="utf-8")
           else:
               s = json.loads(scen_p.read_text(encoding="utf-8"))
@@ -180,7 +188,7 @@ jobs:
       - name: Negative self-test (Claude Code manifest violations must fail)
         run: |
           set -eu
-          for case in mktfield mktschema plgschema srcpath buried dupcmd; do
+          for case in mktfield mktschema plgschema srcpath buried dupcmd plgdisplay mktdisplay; do
             rm -rf "/tmp/cc-$case"
             cp -R . "/tmp/cc-$case"
             CASE="$case" python3 - <<'PY'
@@ -207,6 +215,10 @@ jobs:
               d = root / "plugins/make-skill/commands"
               d.mkdir(parents=True, exist_ok=True)
               (d / "make-skill.md").write_text("---\ndescription: x\n---\nbody\n")
+          elif case == "plgdisplay":  # the UI label the canon requires in the manifest
+              plg.pop("displayName", None)
+          elif case == "mktdisplay":  # ...and in the marketplace entry
+              mkt["plugins"][0].pop("displayName", None)
           mkt_p.write_text(json.dumps(mkt, indent=2) + "\n", encoding="utf-8")
           plg_p.write_text(json.dumps(plg, indent=2) + "\n", encoding="utf-8")
           PY
@@ -238,7 +250,7 @@ jobs:
           # name registers /make-skill twice (see `claude plugin details`)
           test ! -e "$HOME/.claude/commands/make-skill.md"
           # references must travel with the skill — relative links break otherwise
-          for r in agent-skills-spec authoring surfaces enterprise claude-code-plugin distribution mcp a2a; do
+          for r in agent-skills-spec authoring surfaces enterprise retrofit claude-code-plugin distribution mcp a2a; do
             test -f "$HOME/.claude/skills/make-skill/references/$r.md"
           done
           node bin/make-skill.js | grep -q '^skip:'

@@ -1,6 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "<plugin-name>",
+  "displayName": "<Plugin Name>",
   "description": "<what the plugin gives an agent, in one sentence>",
   "version": "0.1.0",
   "author": {

@@ -38,9 +38,9 @@ python3 test/validate.py
 
 Exit 0 prints `PASS: …`. Every failure names the file and the rule.
 
-To run the entire CI suite locally exactly as GitHub does — validator, four
-negative self-tests, installer functional tests against a throwaway `HOME`, and
-YAML parsing:
+To run the entire CI suite locally exactly as GitHub does — validator, six
+negative self-test groups, installer functional tests against a throwaway `HOME`,
+and YAML parsing:
 
 ```bash
 python3 - <<'PY'

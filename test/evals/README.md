@@ -22,8 +22,10 @@ model's behavior with the skill installed, which no unit test can stand in for.
    the same requests.
 2. Ask each query in a **fresh session**, three times, and record whether the
    skill loaded. Trigger rate = fired / 3.
-3. Pass threshold is 0.5 per query. Split the file 60% train / 40% validation,
-   fixed across iterations, and tune only on train failures.
+3. Pass threshold is 0.5 per query. Use the `split` block in the file — 60%
+   train / 40% validation, fixed across iterations, with positives AND negatives
+   on both sides. Tune only on train failures. A split that leaves all the
+   positives in train measures nothing but false-firing.
 4. When tuning the description: too narrow → broaden the scope or context;
    false-firing → state what the skill does NOT do. Never paste keywords from a
    failed query — that overfits; address the category instead.

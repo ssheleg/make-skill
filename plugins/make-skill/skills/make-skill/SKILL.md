@@ -19,6 +19,7 @@ Copy from a working repo (usually `~/DATA/<name>`): **`ssheleg/super-ux`**
 | `references/authoring.md` | writing or tuning a body/description — naming, third-person rule, degrees of freedom, script rules, eval loops |
 | `references/surfaces.md` | shipping anywhere but Claude Code — Skills API upload/versions/8-per-request, claude.ai zip, the no-network / no-install limits |
 | `references/enterprise.md` | installing someone else's skill, or governing a fleet — risk tiers, review checklist, approval gates, lifecycle, recall limits |
+| `references/retrofit.md` | auditing an existing skill/repo — the 13-item checklist, the evidence rules, the short form for personal skills |
 | `references/claude-code-plugin.md` | anything shipping as a **Claude Code plugin/marketplace** — manifest schemas, component layout, LSP/monitors, path variables, `validate` failures |
 | `references/distribution.md` | the repo layout, publishing, channels, releases |
 | `references/mcp.md` | the skill calls/wraps/documents an **MCP** server, or you're choosing skill vs server |
@@ -109,11 +110,14 @@ House additions on top of the spec:
   passes; a skill built without a baseline documents imagined problems. Adding a
   member to an existing family → test **coexistence**: a broad description
   steals the triggers of the skills already installed.
-- Ship a one-command entry point `/<name>`: idempotent — inspect state → repair
-  missing pieces → status report → exactly ONE suggested next action. Detect
-  mode, never ask. (Pattern: super-ux `/ux`.) **The skill IS that command** —
-  a `commands/<name>.md` beside `skills/<name>/` registers `/<name>` twice; add
-  a `commands/*.md` only under a DIFFERENT name, with a quoted `argument-hint`.
+- Ship a one-command entry point: idempotent — inspect state → repair missing
+  pieces → status report → exactly ONE suggested next action. Detect mode, never
+  ask. (Pattern: super-ux `/ux`.) **The skill IS that command** — a
+  `commands/<name>.md` beside `skills/<name>/` registers the same command twice;
+  add a `commands/*.md` only under a DIFFERENT name, with a quoted
+  `argument-hint`. The invocation differs by channel: `/<skill>` from a skills
+  directory, `/<plugin>:<skill>` once it is installed as a plugin — write both
+  in the README rather than promising one.
 - Never overwrite user data: seed only when absent; overwrite only behind
   `--force`.
 
@@ -145,6 +149,8 @@ writing the first file.** What holds regardless:
 - **Both `--strict` runs green, in CI, as their own job** — and they read
   MANIFESTS only, so front-matter rules live in your own `test/validate.py`,
   which needs a negative self-test: a validator that can't fail is decoration.
+  Ship `$schema` and `displayName` in `plugin.json` AND in the marketplace
+  ENTRY (the marketplace root takes neither `displayName` nor `homepage`).
 - A public repo owes a reader an English-first README, `CONTRIBUTING.md` with
   the offline commands that verify a change, and `SECURITY.md` naming a private
   channel and what the installers touch.
@@ -163,46 +169,19 @@ next tag publishing without a human.
 ## Retrofit (bring an existing skill/repo up to standard)
 
 Audit first, fix second, in the same session. Verdict per item: PASS / GAP with
-evidence (`file:line` or command output) — never "looks fine".
+evidence — a `file:line` or the output of the command you actually ran. "Looks
+fine" is not a verdict, and neither is a PASS on a check that was reasoned about
+instead of executed.
 
-1. **Spec floor** (`references/agent-skills-spec.md`): name charset + ≤64 +
-   ==dir + no reserved word or angle bracket; description ≤1024, "Use when…",
-   third person, EN and RU triggers; no front-matter key outside spec ∪ host
-   extensions; body <500 lines / <5000 tokens; every bundled file one level
-   deep, linked from the body with a load trigger, `## Contents` past 100 lines.
-2. **Anthropic floor** if it ships as a plugin
-   (`references/claude-code-plugin.md`): both `claude plugin validate <plugin
-   dir|.> --strict` runs exit 0; `$schema` present; components at the plugin
-   root, never inside `.claude-plugin/`; `claude plugin details <name>` token
-   cost worth paying.
-3. **Surface honesty** (`references/surfaces.md`): every runtime need (network,
-   packages, MCP server) declared in `compatibility`; no script assuming an
-   install the target surface forbids.
-4. One-job check; shared contracts INSIDE the skill dir — verify by installing
-   via the skills CLI and checking the files actually arrived.
-5. Entry-point command exists, idempotent (inspect → repair → status → one next
-   action).
-6. Layout matches the tree; manifests complete; version sync ×4 (×5 with
-   `metadata.version`).
-7. Validator present, green, and able to fail (run the negative test); CI
-   present, last run `success`.
-8. **Evals exist** in `test/evals/` (`references/authoring.md`): ≥3 scenarios
-   plus should-NOT-trigger queries, coexistence checked against the installed
-   set, re-run on every model the skill claims.
-9. README: badges (npm/CI/license), install + update matrix, English-first,
-   bundled `references/` listed so a reader sees what ships.
-10. Distribution live-checks (`references/distribution.md`): `npx --yes skills
-    add <repo> --list` lists ONLY real skills; `npx <name>` works from a
-    non-repo cwd (if npm published); `.mdc` rules valid, no relative links.
-11. Repo meta: homepage + description + topics on the forge; LICENSE; CHANGELOG
-    current; public repos also CONTRIBUTING.md + SECURITY.md.
-12. Gotcha compliance: the list below, plus the installer traps in
-    `references/distribution.md` if the repo ships a CLI or validator.
-13. MCP or A2A involved: see Protocol-connected skills below.
+**The 13-item checklist is in `references/retrofit.md` — open it before
+auditing.** It covers, in order: the spec floor, the Anthropic plugin floor,
+surface honesty, one-job, entry point, layout and version sync, validator and
+CI, evaluations, README, distribution live-checks, repo meta, gotcha compliance,
+protocol dependencies. For a PERSONAL skill only three of them apply (spec
+floor, one-job, entry point) — that file says which.
 
 **Then:** report the gap table, fix everything fixable now, bump a minor/patch
-version, run the release checklist. For a PERSONAL skill, retrofit = items 1, 4,
-5 only.
+version, run the release checklist.
 
 ## Promote (personal → distributable)
 
@@ -301,6 +280,12 @@ Non-negotiables for any such skill:
 - **Time-branching text rots.** "Before August, use the old API" is wrong the day
   it ships — superseded material goes under `## Old patterns`, and a dated
   provenance line ("*read from the spec on 2026-08-03*") ages well.
+- **Two token counters, ~40% apart.** `claude plugin details` reported ~7.2k
+  on-invoke for a SKILL.md that a real tokenizer puts at ~5.0k (measured across
+  six installed skills: the CLI assumes ~2.8 chars/token, cl100k gives 3.8–4.5).
+  Its estimator is the pessimistic one — budget against a tokenizer, then expect
+  the CLI to show a bigger number, and never "fix" a body that is already
+  inside 5000 real tokens because the CLI looked alarming.
 
 ## Release (every version)
 

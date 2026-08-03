@@ -16,12 +16,16 @@ unless you'd prefer otherwise.
 `make-skill` ships Markdown plus two small installers. Knowing exactly what runs
 where is most of the threat model:
 
-- **`bin/make-skill.js`** (run via `npx`) and **`install.sh`** copy files into
-  `~/.claude/skills/make-skill` and `~/.claude/commands/`. They create and
-  overwrite only those paths, never elsewhere in `$HOME`, and overwrite only with
-  `--force`. Both are zero-dependency: no network calls, no postinstall script.
+- **`bin/make-skill.js`** (run via `npx`) and **`install.sh`** copy the skill
+  directory into `~/.claude/skills/make-skill` and nothing else — no command file,
+  no other path in `$HOME` — and overwrite only with `--force`. Both are
+  zero-dependency: no network calls, no postinstall script. CI asserts the
+  absence of `~/.claude/commands/make-skill.md` on every run.
 - **`test/validate.py`** reads repository files and exits with a status. It writes
-  nothing.
+  nothing. `test/evals/` is inert data — text a human feeds to an agent — and
+  `test/evals/fixtures/untrusted-skill.md` is a deliberately malicious *sample*
+  used to score a review; it is never installed or executed, and its endpoints
+  are `example.com` placeholders.
 - The Claude Code plugin and the `skills` CLI channels are handled by those tools,
   not by code in this repo.
 

@@ -35,7 +35,8 @@
         "Flags 'author:' as a frontmatter key outside the spec and the Claude Code extension set",
         "Flags 'See references/' as a pointer with no load condition",
         "Flags the '../shared/contract.md' link as escaping the skill directory — it never arrives on agents that install only the skill folder",
-        "Flags the Windows-style path 'scripts\\parse.py' and the time-branching 'Before October / after that' sentence",
+        "Flags the Windows-style path 'scripts\\parse.py' — forward slashes travel, backslashes do not",
+        "Flags the time-branching 'Before October / after that' sentence, which is wrong the day it ships",
         "Ends with exactly ONE proposed next action, not a menu"
       ]
     },

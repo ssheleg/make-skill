@@ -1,5 +1,55 @@
 # Changelog
 
+## v0.8.1 — 2026-08-03
+
+A file-by-file re-read of everything 0.8.0 touched, and of everything it didn't.
+Fourteen findings, all fixed. The two that would have misled a reader:
+
+### Fixed
+- **The token estimate was asserted, not measured.** The validator's comment
+  claimed dense markdown runs "closer to 3.7 chars/token, so this under-reports";
+  nothing had ever been counted. Tokenizing the bundle gives **3.78–4.47**
+  chars/token (3.9 for `SKILL.md`), so the divisor is now 3.9, measured — and
+  the recalibration immediately failed the body it was checking, which is what a
+  calibrated rule is for. The audit checklist moved to a new
+  **`references/retrofit.md`**, bringing the body to ~4.6k tokens with headroom.
+- **`claude plugin details` and a real tokenizer disagree by ~40%** — the CLI
+  reported ~7.2k on-invoke for a `SKILL.md` that tokenizes at ~5.0k, because its
+  estimator assumes ~2.8 chars/token. Measured across six installed skills and
+  recorded as a gotcha: budget against a tokenizer, expect the CLI to look
+  alarming, and never gut a body that is genuinely inside the budget.
+- **`SECURITY.md` described paths the installers do not write.** It claimed
+  `bin/make-skill.js` and `install.sh` copy into `~/.claude/commands/`; that
+  command file was deleted in 0.6.x and CI asserts its absence on every run. The
+  threat model now matches the code, and states what `test/evals/fixtures/` is —
+  including that the malicious sample is inert data, never installed.
+- **The trigger split could not measure what it claimed.** `train: q01-q12` /
+  `validation: q13-q20` put all ten positives in train and left validation with
+  nothing but negatives, so the held-out half could only detect false-firing.
+  Split is now explicit ids with both classes on both sides, and the validator
+  rejects a half that holds only one class.
+- **`displayName` was required by the canon and absent from the skeletons.**
+  Both manifest templates now seed it, and the validator enforces it in the
+  templates, in `plugin.json`, and in the marketplace entry — where it belongs
+  (the marketplace root takes neither `displayName` nor `homepage`).
+- **`/make-skill` is only half the truth.** As a plugin the command is
+  `/make-skill:make-skill`; the bare form is what a skills-directory install
+  gets. README and canon now state both, and the canon says to write both rather
+  than promise one.
+- `distribution.md`'s table of contents listed a "shadow rule" section that did
+  not exist as a heading — the exact failure a table of contents prevents. It is
+  a real section now.
+- Counts that had drifted: CONTRIBUTING said CI runs "four negative self-tests"
+  (six groups), the issue-template contact link said "the other four skills"
+  (five), the retrofit fixture header claimed eight planted defects (nine, now
+  scored one per line).
+- Dead `EVAL_DIR` variable removed; `test/evals/` added to the Cursor rule's
+  layout tree and to the templates README, both of which still described a repo
+  without it; the PR template now asks for the two `--strict` runs and for an
+  eval re-run when the description changes.
+- Three more negative self-tests (split classes, `displayName` ×2), keeping the
+  rule that no validator rule ships without one.
+
 ## v0.8.0 — 2026-08-03
 
 Read Anthropic's four Agent Skills pages end to end (overview, authoring best
@@ -63,9 +113,10 @@ six new validator rules, and one self-violation fixed.
 - **This skill was over its own token budget.** `SKILL.md` was ~5.2k estimated
   tokens against a stated `< 5000` — a rule the repo enforced on everyone but
   itself, because only the 500-line half was ever checked. The body budget is
-  now measured (chars/4, frontmatter excluded as level-1 metadata) and the body
-  was cut to ~4.6k by moving the repo layout, the two Claude Code gates, the
-  validator spec and the release checklist into `references/distribution.md`.
+  now measured (frontmatter excluded as level-1 metadata) and the body was cut
+  by moving the repo layout, the two Claude Code gates, the validator spec and
+  the release checklist into `references/distribution.md`. (The divisor used
+  here was a guess; v0.8.1 measured it and cut further.)
 - **Reference files longer than 100 lines now open with a `## Contents` list.**
   Agents preview long files with `head`; without a table of contents they act on
   the first hundred lines and never learn the rest exists. All eight references

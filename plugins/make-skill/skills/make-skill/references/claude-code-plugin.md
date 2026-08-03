@@ -22,8 +22,8 @@ must also run on Cursor, Codex, or the skills CLI.
 ## Contents
 
 - The gate: `claude plugin validate`
-- `plugin.json` fields
-- `marketplace.json` fields, reserved names, plugin entries
+- `plugin.json` — `.claude-plugin/plugin.json` (field table)
+- `marketplace.json` — `.claude-plugin/marketplace.json` (fields, reserved names, plugin entries)
 - Component locations
 - Skill frontmatter — host extensions
 - Agents, hooks, MCP inside a plugin

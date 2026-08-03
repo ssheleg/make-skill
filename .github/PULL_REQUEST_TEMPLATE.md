@@ -9,6 +9,8 @@
 ```
 python3 test/validate.py
 bash -n install.sh
+claude plugin validate ./plugins/make-skill --strict   # if you have the CLI
+claude plugin validate . --strict
 ```
 
 ## Checklist
@@ -18,3 +20,5 @@ bash -n install.sh
 - [ ] `CHANGELOG.md` has an entry for this change
 - [ ] If versions moved: `marketplace.json`, `plugin.json`, `package.json` and the top `CHANGELOG.md` entry all agree
 - [ ] No relative links added to `cursor/rules/*.mdc` (those files get copied standalone)
+- [ ] New validator rule? It comes with a negative self-test in `.github/workflows/validate.yml`
+- [ ] Touched the `description` or a reference file? Re-ran `test/evals/` and said what changed

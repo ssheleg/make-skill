@@ -9,6 +9,7 @@
   "plugins": [
     {
       "name": "<plugin-name>",
+      "displayName": "<Plugin Name>",
       "source": "./plugins/<plugin-name>",
       "description": "<what the plugin gives an agent>",
       "version": "0.1.0",

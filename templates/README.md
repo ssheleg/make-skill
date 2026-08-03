@@ -27,5 +27,8 @@ level deep, each with a stated load trigger in the body. A sibling directory
 reaches Claude Code plugins but arrives broken on every other agent.
 
 Distributable repos also get the full tree (manifests, `bin/`, `test/validate.py`,
-workflows, `install.sh`, README/CHANGELOG/LICENSE) — copy those from a reference
-impl (`ssheleg/task-pipeline` or `ssheleg/super-ux`) per the SKILL.md layout.
+`test/evals/`, workflows, `install.sh`, README/CHANGELOG/LICENSE) — copy those
+from a reference impl (`ssheleg/task-pipeline` or `ssheleg/super-ux`) per the
+layout in `references/distribution.md`. The evaluation suite is not optional
+scaffolding: the canon requires ≥3 behavioral scenarios and a trigger set with
+near-miss negatives before a skill ships.
