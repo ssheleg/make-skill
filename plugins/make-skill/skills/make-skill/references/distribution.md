@@ -52,6 +52,7 @@ the shape from `ssheleg/super-ux`:
 ├── templates/*.md                      # skeletons (NEVER name one SKILL.md)
 ├── bin/<name>.js + package.json        # npx installer (zero-dep Node)
 ├── test/validate.py                    # consistency validator (stdlib only)
+├── test/evals/                         # triggers.json + scenarios.json (data, run by a human)
 ├── .github/workflows/validate.yml      # validator on push+PR (+ release.yml, off by default)
 ├── install.sh                          # POSIX fallback
 ├── README.md (English-first), CHANGELOG.md, LICENSE (MIT)

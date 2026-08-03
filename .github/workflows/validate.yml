@@ -141,6 +141,42 @@ jobs:
             echo "OK: validator rejects '$name' with the right message"
           done
 
+      - name: Negative self-test (evaluation suite must stay real)
+        run: |
+          set -eu
+          # Evaluations are data a human runs, so nothing else proves they exist
+          # or that the near-miss negatives survived an edit.
+          for case in evalneg:'negative' evalfew:'scenarios' evalfile:'missing file'; do
+            name="${case%%:*}"; expect="${case#*:}"
+            rm -rf "/tmp/ev-$name"
+            cp -R . "/tmp/ev-$name"
+            CASE="$name" python3 - <<'PY'
+          import json, os, pathlib
+          case = os.environ["CASE"]
+          root = pathlib.Path(f"/tmp/ev-{case}")
+          trig_p, scen_p = root / "test/evals/triggers.json", root / "test/evals/scenarios.json"
+          if case == "evalneg":     # a trigger set with no near-misses proves nothing
+              t = json.loads(trig_p.read_text(encoding="utf-8"))
+              t["queries"] = [q for q in t["queries"] if q["should_trigger"]]
+              trig_p.write_text(json.dumps(t, indent=2), encoding="utf-8")
+          else:
+              s = json.loads(scen_p.read_text(encoding="utf-8"))
+              if case == "evalfew":   # canon requires >= 3 behavioral scenarios
+                  s["scenarios"] = s["scenarios"][:2]
+              else:                   # a scenario pointing at a fixture that isn't there
+                  s["scenarios"][1]["files"] = ["test/evals/fixtures/gone.md"]
+              scen_p.write_text(json.dumps(s, indent=2), encoding="utf-8")
+          PY
+            if out=$(python3 "/tmp/ev-$name/test/validate.py" 2>&1); then
+              echo "ERROR: validator passed on eval violation '$name'"; exit 1
+            fi
+            if ! echo "$out" | grep -qi -- "$expect"; then
+              echo "ERROR: '$name' failed for the wrong reason (no '$expect'):"
+              echo "$out"; exit 1
+            fi
+            echo "OK: validator rejects '$name' with the right message"
+          done
+
       - name: Negative self-test (Claude Code manifest violations must fail)
         run: |
           set -eu

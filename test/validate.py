@@ -517,6 +517,49 @@ for dirpath, dirnames, filenames in os.walk(ROOT):
         fail(f"stray SKILL.md at {rel} — the skills CLI would ship it as a skill; "
              f"rename it (e.g. SKILL.template.md) or move it under plugins/<p>/skills/<s>/")
 
+# evaluations — the canon requires >=3 behavioral scenarios and a trigger set
+# with near-miss negatives for every skill, so this repo owes its own. They are
+# data, not unit tests: the runner is a human with an agent (test/evals/README.md).
+EVAL_DIR = os.path.join(ROOT, "test", "evals")
+trig = load_json("test/evals/triggers.json")
+if trig is not None:
+    qs = trig.get("queries") or []
+    if len(qs) < 16:
+        fail(f"test/evals/triggers.json: {len(qs)} queries, the loop needs ~20 "
+             "(8-10 true, 8-10 near-miss negatives)")
+    ids = [q.get("id") for q in qs]
+    if len(set(ids)) != len(ids):
+        fail("test/evals/triggers.json: duplicate query ids")
+    for q in qs:
+        if not q.get("query") or not isinstance(q.get("should_trigger"), bool):
+            fail(f"test/evals/triggers.json: query {q.get('id')!r} needs a non-empty "
+                 "'query' and a boolean 'should_trigger'")
+    pos = sum(1 for q in qs if q.get("should_trigger") is True)
+    neg = sum(1 for q in qs if q.get("should_trigger") is False)
+    if pos < 6 or neg < 6:
+        fail(f"test/evals/triggers.json: {pos} positive / {neg} negative — the "
+             "negatives are what catch a description that steals other skills' turns")
+
+scen = load_json("test/evals/scenarios.json")
+if scen is not None:
+    scenarios = scen.get("scenarios") or []
+    if len(scenarios) < 3:
+        fail(f"test/evals/scenarios.json: {len(scenarios)} scenarios, canon requires >= 3")
+    for s in scenarios:
+        sid = s.get("id", "?")
+        for field in ("skills", "query", "files", "expected_behavior"):
+            if field not in s:
+                fail(f"test/evals/scenarios.json: scenario {sid!r} missing {field!r} "
+                     "(Anthropic's evaluation shape)")
+        beh = s.get("expected_behavior") or []
+        if not isinstance(beh, list) or len(beh) < 3:
+            fail(f"test/evals/scenarios.json: scenario {sid!r} needs at least 3 "
+                 "expected_behavior lines — they are scored individually")
+        for rel in s.get("files") or []:
+            if not os.path.isfile(os.path.join(ROOT, rel)):
+                fail(f"test/evals/scenarios.json: scenario {sid!r} points at missing "
+                     f"file {rel!r}")
+
 # required root files — a public repo also owes contributors an entry point and
 # a place to report something exploitable privately
 for r in ("README.md", "LICENSE", "CHANGELOG.md", "CONTRIBUTING.md", "SECURITY.md"):
@@ -527,6 +570,10 @@ for r in ("README.md", "LICENSE", "CHANGELOG.md", "CONTRIBUTING.md", "SECURITY.m
 LINK_RE = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
 for dirpath, dirnames, filenames in os.walk(ROOT):
     dirnames[:] = [d for d in dirnames if d not in (".git", "node_modules")]
+    # evaluation fixtures are deliberately broken samples — their dangling links
+    # and escaping paths are the defects a scenario is scored on finding
+    if os.path.relpath(dirpath, ROOT).startswith(os.path.join("test", "evals", "fixtures")):
+        continue
     for fn in filenames:
         if not fn.endswith(".md"):
             continue

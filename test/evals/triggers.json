@@ -1,0 +1,147 @@
+{
+  "skill": "make-skill",
+  "note": "20 queries, 10 should fire and 10 near-misses that share keywords. Run each 3x in a fresh session; pass threshold 0.5. See README.md.",
+  "split": { "train": "q01-q12", "validation": "q13-q20" },
+  "queries": [
+    {
+      "id": "q01",
+      "lang": "en",
+      "query": "make a skill that turns our incident runbooks into a triage workflow",
+      "should_trigger": true,
+      "why": "canonical create request, names no artifact of the standard"
+    },
+    {
+      "id": "q02",
+      "lang": "ru",
+      "query": "сделай скилл для проверки договоров перед подписанием",
+      "should_trigger": true,
+      "why": "same request in Russian — the RU trigger phrases exist for this"
+    },
+    {
+      "id": "q03",
+      "lang": "en",
+      "query": "does ./skills/report-writer match the Agent Skills spec?",
+      "should_trigger": true,
+      "why": "audit against the standard — Retrofit workflow"
+    },
+    {
+      "id": "q04",
+      "lang": "ru",
+      "query": "приведи этот скилл к стандарту и опубликуй его",
+      "should_trigger": true,
+      "why": "retrofit + publish, the full pipeline"
+    },
+    {
+      "id": "q05",
+      "lang": "en",
+      "query": "claude plugin validate --strict fails on my marketplace.json and I can't see why",
+      "should_trigger": true,
+      "why": "manifest conformance — claude-code-plugin.md exists for this"
+    },
+    {
+      "id": "q06",
+      "lang": "ru",
+      "query": "мой скилл установлен, но агент его не вызывает — почему?",
+      "should_trigger": true,
+      "why": "description/trigger tuning, the eval loop in authoring.md"
+    },
+    {
+      "id": "q07",
+      "lang": "en",
+      "query": "wrap these three skills into a Claude Code plugin with a marketplace so the team can install them",
+      "should_trigger": true,
+      "why": "packaging + distribution"
+    },
+    {
+      "id": "q08",
+      "lang": "en",
+      "query": "can I upload this skill through the Claude API? what are the limits?",
+      "should_trigger": true,
+      "why": "surfaces.md — 8 per request, 30 MB, dir name must match, no network in the container"
+    },
+    {
+      "id": "q09",
+      "lang": "ru",
+      "query": "безопасно ли ставить вот этот скилл из чужого репозитория?",
+      "should_trigger": true,
+      "why": "third-party review checklist in enterprise.md"
+    },
+    {
+      "id": "q10",
+      "lang": "ru",
+      "query": "какие поля легальны во фронтматтере SKILL.md и сколько символов можно в description",
+      "should_trigger": true,
+      "why": "field limits from both authorities"
+    },
+    {
+      "id": "q11",
+      "lang": "en",
+      "query": "review my pull request for bugs before I merge it",
+      "should_trigger": false,
+      "why": "code review, no skill artifact anywhere in the request"
+    },
+    {
+      "id": "q12",
+      "lang": "en",
+      "query": "add a skills section to my CV listing what I know",
+      "should_trigger": false,
+      "why": "shares the word 'skill' in the human sense — the classic false positive"
+    },
+    {
+      "id": "q13",
+      "lang": "ru",
+      "query": "напиши README для этой библиотеки",
+      "should_trigger": false,
+      "why": "documentation, no skill or plugin involved"
+    },
+    {
+      "id": "q14",
+      "lang": "en",
+      "query": "set up GitHub Actions to run our Jest tests on every PR",
+      "should_trigger": false,
+      "why": "shares CI keywords; the canon's CI rules are about validating a skill repo"
+    },
+    {
+      "id": "q15",
+      "lang": "en",
+      "query": "publish this React component library to npm",
+      "should_trigger": false,
+      "why": "shares every npm-publishing keyword and is not a skill release"
+    },
+    {
+      "id": "q16",
+      "lang": "en",
+      "query": "implement an MCP server for our Postgres database",
+      "should_trigger": false,
+      "why": "shares MCP; make-skill decides the skill-vs-server boundary, it does not build servers"
+    },
+    {
+      "id": "q17",
+      "lang": "en",
+      "query": "write a Cursor rule for our React conventions",
+      "should_trigger": false,
+      "why": "shares the .mdc channel; authoring a project rule is not authoring a skill"
+    },
+    {
+      "id": "q18",
+      "lang": "ru",
+      "query": "обнови версию пакета в package.json до 2.0.0",
+      "should_trigger": false,
+      "why": "shares the version-bump vocabulary of the release checklist"
+    },
+    {
+      "id": "q19",
+      "lang": "en",
+      "query": "explain what Agent Skills are and why people use them",
+      "should_trigger": false,
+      "why": "informational — nothing is being created, audited or shipped"
+    },
+    {
+      "id": "q20",
+      "lang": "ru",
+      "query": "почини CI, он падает на линтере",
+      "should_trigger": false,
+      "why": "shares CI failure vocabulary, unrelated repo"
+    }
+  ]
+}

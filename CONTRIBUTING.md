@@ -88,6 +88,23 @@ Fail these and CI stops you, so check them before pushing:
 - **No relative links in `cursor/rules/*.mdc`** — those files get copied into
   other people's projects, where a relative link dangles.
 
+- **The evaluation suite stays real.** `test/evals/triggers.json` keeps ~20
+  queries with at least six near-miss negatives, and `test/evals/scenarios.json`
+  keeps at least three behavioral scenarios whose `files` all exist. Fixtures
+  live in `test/evals/fixtures/` and are never named `SKILL.md`.
+
+## Evaluations
+
+`test/validate.py` proves the evaluations exist and are well-formed; it cannot
+run them. They are data, and the runner is you with an agent — see
+[test/evals/README.md](test/evals/README.md) for the procedure, the 0.5 trigger
+threshold, and the train/validation split. Run them before any release that
+touches `SKILL.md` or a reference file, on every model you claim support for.
+
+Changing the `description` without re-running `triggers.json` is the one edit
+that silently degrades the skill: it can start firing on "review my pull
+request" and stealing turns from every other skill installed.
+
 ## Adding a rule to the validator
 
 Any new rule needs a **negative test**: a deliberately broken copy that must make

@@ -74,6 +74,12 @@ both manifests, in CI as its own job. That check is what caught this repo's own
 `marketplace.json` shipping `homepage` and `repository` at a level where Claude
 Code ignores them.
 
+**Evaluations, not vibes.** The canon requires every skill to carry at least
+three behavioral scenarios and a trigger set whose negatives are *near-misses* —
+queries that share the keywords and need something else. make-skill ships its
+own in [`test/evals/`](test/evals/), because a description that also fires on
+"review my pull request" steals turns from every other skill you have installed.
+
 **A validator that can fail.** `test/validate.py` (Python stdlib only, no deps)
 checks both rulebooks' front-matter rules, the 500-line **and** 5000-token body
 budgets, a `## Contents` list on every reference past 100 lines, version sync
@@ -208,6 +214,7 @@ cursor/rules/make-skill.mdc           # self-contained Cursor rule
 templates/                            # SKILL.template.md + the two manifest skeletons
 bin/make-skill.js + package.json      # zero-dep npx installer
 test/validate.py                      # structural validator
+test/evals/                           # trigger set + behavioral scenarios (data)
 .github/workflows/{validate,release}.yml
 install.sh  README.md  CHANGELOG.md  CONTRIBUTING.md  SECURITY.md  LICENSE
 docs/superpowers/{specs,plans}/       # historical design records

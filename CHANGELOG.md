@@ -38,6 +38,17 @@ six new validator rules, and one self-violation fixed.
   `name`/`description`, first/second person in `description`, the body token
   budget, a `## Contents` list on references past 100 lines, and angle-bracket
   placeholders in the SKILL template.
+- **`test/evals/`** — make-skill's own evaluation suite, because the canon now
+  requires one from every skill and shipping the rule without obeying it is how
+  a standard becomes decoration. `triggers.json`: 20 queries, 10 that must fire
+  (EN + RU) and 10 near-misses that share the keywords — "add a skills section
+  to my CV", "publish this React library to npm", "implement an MCP server for
+  Postgres". `scenarios.json`: four behavioral evaluations in Anthropic's shape
+  (create, retrofit-with-evidence, surface portability, third-party review),
+  scored line by line, with fixtures under `test/evals/fixtures/` — deliberately
+  broken and deliberately not named `SKILL.md`. The validator proves they exist
+  and are well-formed and cannot run them: that part is a human with an agent
+  (`test/evals/README.md`).
 
 ### Fixed
 - **`name` may not contain `anthropic` or `claude`, and neither field may

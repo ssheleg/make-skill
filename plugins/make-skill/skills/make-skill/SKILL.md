@@ -186,9 +186,9 @@ evidence (`file:line` or command output) — never "looks fine".
    `metadata.version`).
 7. Validator present, green, and able to fail (run the negative test); CI
    present, last run `success`.
-8. **Evals exist** (`references/authoring.md`): ≥3 recorded scenarios plus
-   should-NOT-trigger cases, coexistence checked against the installed set,
-   re-run on every model the skill claims.
+8. **Evals exist** in `test/evals/` (`references/authoring.md`): ≥3 scenarios
+   plus should-NOT-trigger queries, coexistence checked against the installed
+   set, re-run on every model the skill claims.
 9. README: badges (npm/CI/license), install + update matrix, English-first,
    bundled `references/` listed so a reader sees what ships.
 10. Distribution live-checks (`references/distribution.md`): `npx --yes skills

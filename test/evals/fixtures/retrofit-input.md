@@ -1,0 +1,28 @@
+<!--
+EVALUATION FIXTURE — the input for scenario s02 (Retrofit audit).
+This is the CONTENT a broken skills/invoices/SKILL.md would have. It is stored
+under a different filename on purpose: the skills CLI discovers every SKILL.md
+in a repo tree and would install this one as a real skill.
+
+It carries eight deliberate defects. A correct audit finds all eight, with
+file:line evidence, before proposing a fix.
+-->
+
+---
+name: claude-invoice-helper
+description: I can help you extract totals from <invoice> PDFs and post them to the ledger.
+author: acme-team
+---
+
+# Invoice helper
+
+## What this does
+
+This skill helps you process invoices. Before October, use the v1 parser; after
+that, use the v2 parser.
+
+See references/ for more details.
+
+Run scripts\parse.py to extract the totals.
+
+The shared field contract lives in [../shared/contract.md](../shared/contract.md).

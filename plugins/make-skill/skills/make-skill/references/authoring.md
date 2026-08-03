@@ -192,8 +192,11 @@ skill documents imagined problems.
 4. **Write the minimum** that fixes the gaps.
 5. **Iterate** — re-run, compare to baseline, refine.
 
-Evaluation record (there is no built-in runner; keep them in the repo and run
-them yourself):
+Evaluation record — there is no built-in runner, so keep them in the repo as
+data and run them yourself. House layout: `test/evals/triggers.json` (~20
+queries, half near-miss negatives) and `test/evals/scenarios.json` (≥3, the
+shape below), with any input under `test/evals/fixtures/` — **never named
+`SKILL.md`**, which would ship as a real skill:
 
 ```json
 {
