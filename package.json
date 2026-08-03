@@ -22,7 +22,10 @@
   },
   "repository": "github:ssheleg/make-skill",
   "license": "MIT",
-  "author": "ssheleg",
+  "author": {
+    "name": "ssheleg",
+    "url": "https://x.com/sshlg93"
+  },
   "bin": {
     "make-skill": "bin/make-skill.js"
   },
