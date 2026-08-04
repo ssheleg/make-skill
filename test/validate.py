@@ -282,6 +282,10 @@ else:
 
         # optional spec fields
         compat = fm.get("compatibility")
+        if compat is None:
+            fail("SKILL.md: no compatibility — this skill needs python3, git, gh, "
+                 "node, npm and the claude CLI at different steps, and the canon's "
+                 "own audit requires every runtime need declared")
         if compat is not None:
             if not isinstance(compat, str) or not compat.strip():
                 fail("SKILL.md: compatibility must be a non-empty string")
@@ -421,6 +425,89 @@ for plugin_dir in sorted(glob.glob(os.path.join(ROOT, "plugins", "*"))):
             fail(f"{rel}: argument-hint must be quoted — bare [a | b] is a YAML "
                  "list and silently drops the whole frontmatter block")
 
+# --- shipped host capabilities: hooks, agents, scripts -----------------------
+# Every one of these is Claude-Code-only, so the canon requires a written
+# fallback; and each has a failure mode that is invisible until a user hits it.
+PLUGIN_DIR = os.path.join(ROOT, "plugins", NAME)
+
+# The degradation contract must be in the body, in the words the agent reads at
+# the moment something is missing — not only in a reference file.
+for phrase in ("Degradation contract", "Not Claude Code", "absent"):
+    if phrase not in skill_txt:
+        fail(f"SKILL.md: no {phrase!r} — a plugin that ships hooks/agents/commands "
+             "owes a written fallback for hosts that have none")
+
+scripts_dir = os.path.join(SKILL_DIR, "scripts")
+if not os.path.isdir(scripts_dir):
+    fail("missing skills/make-skill/scripts/ — the deterministic half of an audit "
+         "belongs in a script that travels with the skill")
+else:
+    import py_compile, tempfile
+    for entry in sorted(os.listdir(scripts_dir)):
+        if not entry.endswith(".py"):
+            continue
+        full = os.path.join(scripts_dir, entry)
+        # compile into a throwaway file: /dev/null is rejected as a cfile, and a
+        # __pycache__ next to a shipped script would land in the package
+        with tempfile.NamedTemporaryFile(suffix=".pyc") as tmp:
+            try:
+                py_compile.compile(full, doraise=True, cfile=tmp.name)
+            except Exception as e:
+                fail(f"scripts/{entry}: does not compile: {e}")
+        head = open(full, encoding="utf-8").readline()
+        if not head.startswith("#!"):
+            fail(f"scripts/{entry}: no shebang — it is executed, not imported")
+        if not os.access(full, os.X_OK):
+            fail(f"scripts/{entry}: not executable (chmod +x)")
+
+hooks_json = os.path.join(PLUGIN_DIR, "hooks", "hooks.json")
+if os.path.isfile(hooks_json):
+    hk = load_json(f"plugins/{NAME}/hooks/hooks.json")
+    if hk is not None:
+        if not (hk.get("description") or "").strip():
+            fail("hooks/hooks.json: no description — a reviewer reads it to learn "
+                 "when these hooks no-op, which is the whole trust question")
+        for event, groups in (hk.get("hooks") or {}).items():
+            for group in groups:
+                for h in group.get("hooks") or []:
+                    cmd = h.get("command", "")
+                    if h.get("type") == "command":
+                        if "${CLAUDE_PLUGIN_ROOT}" not in cmd:
+                            fail(f"hooks/hooks.json ({event}): command {cmd!r} does not "
+                                 "resolve through ${CLAUDE_PLUGIN_ROOT} — the install "
+                                 "path changes on every update")
+                        if '"' not in cmd:
+                            fail(f"hooks/hooks.json ({event}): quote the path — a space "
+                                 "in the install directory splits the command")
+                        if not h.get("timeout"):
+                            fail(f"hooks/hooks.json ({event}): no timeout")
+                        m = re.search(r"\$\{CLAUDE_PLUGIN_ROOT\}/([^\"']+)", cmd)
+                        if m:
+                            target = os.path.join(PLUGIN_DIR, m.group(1))
+                            if not os.path.isfile(target):
+                                fail(f"hooks/hooks.json ({event}): script {m.group(1)} missing")
+                            elif not os.access(target, os.X_OK):
+                                fail(f"hooks/{m.group(1)}: not executable (chmod +x)")
+                            elif not open(target, encoding="utf-8").readline().startswith("#!"):
+                                fail(f"hooks/{m.group(1)}: no shebang")
+
+# plugin-shipped agents: Claude Code REJECTS these three keys
+AGENT_FORBIDDEN = ("hooks", "mcpServers", "permissionMode")
+for agent_path in sorted(glob.glob(os.path.join(PLUGIN_DIR, "agents", "*.md"))):
+    rel = os.path.relpath(agent_path, ROOT)
+    atxt = open(agent_path, encoding="utf-8").read()
+    am = re.match(r"^---\n(.*?)\n---\n", atxt, re.S)
+    if not am:
+        fail(f"{rel}: no frontmatter")
+        continue
+    afm = am.group(1)
+    for field in ("name", "description"):
+        if not re.search(rf"^{field}:\s*\S", afm, re.M):
+            fail(f"{rel}: empty/missing {field}")
+    for key in AGENT_FORBIDDEN:
+        if re.search(rf"^{key}:", afm, re.M):
+            fail(f"{rel}: {key!r} is rejected for plugin-shipped agents")
+
 # npm package: bin resolves, files whitelist ships the sources
 if pkg:
     bin_map = pkg.get("bin") or {}
@@ -455,14 +542,18 @@ for f in mdcs:
         if not target.startswith(("http://", "https://", "mailto:", "#")):
             fail(f"cursor/rules/{f}: relative link {target!r} — .mdc must embed contracts inline")
 
-# templates/: the skeleton must NOT be named SKILL.md — the skills CLI discovers
+# assets/: the skeletons must NOT be named SKILL.md — the skills CLI discovers
 # every SKILL.md in the repo and would ship the placeholder as a real skill.
-tpl_dir = os.path.join(ROOT, "templates")
+tpl_dir = os.path.join(SKILL_DIR, "assets")
 skill_tpl = os.path.join(tpl_dir, "SKILL.template.md")
+if os.path.isdir(os.path.join(ROOT, "templates")):
+    fail("templates/ at the repo root reaches no agent — the plugin ships "
+         "plugins/<name>/ and the skills CLI ships the skill dir; skeletons live "
+         "in skills/<skill>/assets/")
 if not os.path.isdir(tpl_dir):
-    fail("missing templates/ directory")
+    fail("missing skills/make-skill/assets/ — skeletons must travel with the skill")
 elif not os.path.isfile(skill_tpl):
-    fail("missing template: templates/SKILL.template.md")
+    fail("missing template: assets/SKILL.template.md")
 else:
     # the skeleton seeds a real skill: its name/description placeholders must
     # already be legal, and <angle-bracket> placeholders read as XML tags, which
@@ -470,20 +561,20 @@ else:
     ttxt = open(skill_tpl, encoding="utf-8").read()
     tm = re.match(r"^---\n(.*?)\n---\n", ttxt, re.S)
     if not tm:
-        fail("templates/SKILL.template.md: no frontmatter — it seeds a SKILL.md")
+        fail("assets/SKILL.template.md: no frontmatter — it seeds a SKILL.md")
     else:
         tfm = parse_frontmatter(tm.group(1))
         for field in ("name", "description"):
             val = tfm.get(field)
             if not isinstance(val, str) or not val.strip():
-                fail(f"templates/SKILL.template.md: empty/missing {field}")
+                fail(f"assets/SKILL.template.md: empty/missing {field}")
             elif XML_TAG_RE.search(val):
-                fail(f"templates/SKILL.template.md: {field} placeholder uses angle "
+                fail(f"assets/SKILL.template.md: {field} placeholder uses angle "
                      "brackets, which read as an XML tag and are rejected on upload — "
                      "seed a plain placeholder instead")
         if isinstance(tfm.get("name"), str) and any(
                 w in tfm["name"].lower() for w in RESERVED_NAME_WORDS):
-            fail("templates/SKILL.template.md: name placeholder contains a reserved word")
+            fail("assets/SKILL.template.md: name placeholder contains a reserved word")
 
 # manifest skeletons: must parse, carry $schema, and stay inside the recognized
 # field sets — a template that fails `claude plugin validate --strict` seeds a
@@ -496,29 +587,29 @@ for tpl, allowed, schema_url in (
 ):
     tpl_path = os.path.join(tpl_dir, tpl)
     if not os.path.isfile(tpl_path):
-        fail(f"missing template: templates/{tpl}")
+        fail(f"missing template: assets/{tpl}")
         continue
     try:
         tpl_data = json.load(open(tpl_path, encoding="utf-8"))
     except Exception as e:
-        fail(f"templates/{tpl}: invalid JSON: {e}")
+        fail(f"assets/{tpl}: invalid JSON: {e}")
         continue
     if tpl_data.get("$schema") != schema_url:
-        fail(f"templates/{tpl}: missing/wrong $schema ({schema_url})")
+        fail(f"assets/{tpl}: missing/wrong $schema ({schema_url})")
     unknown = sorted(set(tpl_data) - allowed)
     if unknown:
-        fail(f"templates/{tpl}: unrecognized fields {unknown}")
+        fail(f"assets/{tpl}: unrecognized fields {unknown}")
     if tpl == "plugin.template.json" and not tpl_data.get("displayName"):
-        fail("templates/plugin.template.json: no displayName — the canon requires "
+        fail("assets/plugin.template.json: no displayName — the canon requires "
              "one in the manifest and in the marketplace entry, so the skeleton "
              "must seed it")
     entries = tpl_data.get("plugins") if tpl == "marketplace.template.json" else []
     for entry in entries or []:
         unknown = sorted(set(entry) - MKT_ENTRY_KEYS)
         if unknown:
-            fail(f"templates/{tpl}: plugin entry has unrecognized fields {unknown}")
+            fail(f"assets/{tpl}: plugin entry has unrecognized fields {unknown}")
         if not entry.get("displayName"):
-            fail(f"templates/{tpl}: plugin entry has no displayName")
+            fail(f"assets/{tpl}: plugin entry has no displayName")
 
 # HARD RULE: a SKILL.md may exist ONLY inside plugins/<plugin>/skills/<skill>/.
 # Anywhere else (templates/, docs/, examples/) the skills CLI picks it up and
@@ -596,7 +687,8 @@ if scen is not None:
 
 # required root files — a public repo also owes contributors an entry point and
 # a place to report something exploitable privately
-for r in ("README.md", "LICENSE", "CHANGELOG.md", "CONTRIBUTING.md", "SECURITY.md"):
+for r in ("README.md", "LICENSE", "CHANGELOG.md", "CONTRIBUTING.md", "SECURITY.md",
+          "SKILL-CARD.md"):
     if not os.path.isfile(os.path.join(ROOT, r)):
         fail(f"missing root file: {r}")
 

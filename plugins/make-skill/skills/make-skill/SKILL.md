@@ -2,6 +2,11 @@
 name: make-skill
 description: Use when creating, upgrading, auditing, or publishing agent skills and Claude Code plugins - "make a skill" / "сделай скилл", "new skill" / "новый скилл", "wrap it in a plugin" / "заверни в плагин", "publish a skill" / "опубликуй скилл", "retrofit a skill to the standard" / "приведи скилл к стандарту", "does this skill match the spec" / "соответствует ли скилл стандарту", "plugin.json / marketplace.json" / "claude plugin validate fails" / "проверь плагин по документации Anthropic", "is this skill safe to install" / "безопасно ли ставить этот скилл" - or when a skill must reach an MCP server or another agent over A2A. Encodes the Agent Skills open standard AND Anthropic's platform rules (front-matter limits, disclosure budgets, Skills API surfaces, evals), the Claude Code plugin reference (manifest schemas, component layout, validate --strict), plus the proven ssheleg pipeline - marketplace layout, version sync, validator+CI, multi-agent distribution, npm gotchas, end-to-end first publish.
 license: MIT
+compatibility: Authoring works on any agent. The bundled scripts/ need python3. Publishing steps need git, gh, node and npm; the plugin gates need the claude CLI. Not usable on the Claude API surface, which has no network and no runtime package install.
+metadata:
+  author: ssheleg
+  version: "0.9.0"
+  homepage: https://github.com/ssheleg/make-skill
 ---
 
 # make-skill — Create, Retrofit, and Ship Skills the Proven Way
@@ -20,6 +25,7 @@ Copy from a working repo (usually `~/DATA/<name>`): **`ssheleg/super-ux`**
 | `references/surfaces.md` | shipping anywhere but Claude Code — Skills API upload/versions/8-per-request, claude.ai zip, the no-network / no-install limits |
 | `references/enterprise.md` | installing someone else's skill, or governing a fleet — risk tiers, review checklist, approval gates, lifecycle, recall limits |
 | `references/retrofit.md` | auditing an existing skill/repo — the 13-item checklist, the evidence rules, the short form for personal skills |
+| `references/host-capabilities.md` | shipping a **hook, subagent, command, script or MCP dependency** — what each buys and costs, hook events/exit codes, and the degradation clauses that keep the skill working without them |
 | `references/claude-code-plugin.md` | anything shipping as a **Claude Code plugin/marketplace** — manifest schemas, component layout, LSP/monitors, path variables, `validate` failures |
 | `references/distribution.md` | the repo layout, publishing, channels, releases |
 | `references/mcp.md` | the skill calls/wraps/documents an **MCP** server, or you're choosing skill vs server |
@@ -121,15 +127,45 @@ House additions on top of the spec:
 - Never overwrite user data: seed only when absent; overwrite only behind
   `--force`.
 
+### Degradation contract (every skill that touches a host capability)
+
+Hooks, subagents, `/commands`, `${CLAUDE_PLUGIN_ROOT}` and MCP servers exist only
+inside Claude Code — which is a minority of where skills run. **Each is an
+accelerator with a written fallback; the skill still finishes its job without
+it, more slowly.** Write the three cases into the body, in the agent's words, at
+the point it will need them (shapes and wording:
+`references/host-capabilities.md`):
+
+- **Not Claude Code** (Cursor, Codex, skills CLI, API): no hooks, no subagents,
+  no `/command`. Name the inline procedure. Bundled `scripts/` still travel —
+  they live inside the skill directory — so give the path for each channel.
+- **Recommended plugin/skill absent**: say once what is degraded, continue on
+  the manual path. A stage that refuses to start because an optional companion
+  is missing is broken, not strict.
+- **Tool, interpreter or MCP server absent**: state it once, fall back to the
+  by-hand procedure, never retry in a loop. Interactive auth is a human step.
+
+A fallback you know but did not write is not a fallback.
+
+### Working examples this skill ships — copy these, not your memory
+
+`scripts/audit_skill.py` audits ANY skill dir (stdlib; the mechanical half of a
+Retrofit). Beside it: `hooks/` (PostToolUse, exits 0 silently unless a `SKILL.md`
+was written), `commands/skill-audit.md` (deliberately NOT the skill's name),
+`agents/skill-auditor.md`, and six skeletons —
+`assets/SKILL.template.md`, `assets/plugin.template.json`,
+`assets/marketplace.template.json`, `assets/hooks.template.json`,
+`assets/agent.template.md`, `assets/command.template.md`.
+
 ## Create (personal)
 
-`~/.claude/skills/<name>/SKILL.md` following the authoring rules — done. No
-repo, no versioning; loads next session. Mention Promote as the upgrade path.
+`~/.claude/skills/<name>/SKILL.md` per the authoring rules — done. No repo, no
+versioning; loads next session. Mention Promote as the upgrade path.
 
 Needs hooks, an agent, or an MCP server too, still with no repo? Add
 `.claude-plugin/plugin.json` to that same folder — Claude Code loads it as
-`<name>@skills-dir` next session, no marketplace, no install
-(`claude plugin init <name> --with hooks mcp` scaffolds it).
+`<name>@skills-dir` next session (`claude plugin init <name> --with hooks mcp`
+scaffolds it).
 
 ## Create (distributable)
 
@@ -159,12 +195,11 @@ writing the first file.** What holds regardless:
 
 Take it ALL the way: GitHub + CI green + npm published + verified installs, no
 half-done handoffs. Only the first publish needs a human (npm 2FA); **arming CI
-publishing is part of shipping**, so the second one does not.
-
-**The 11-step sequence is in `references/distribution.md` → *First publish*.**
-Everything green BEFORE publishing, and done = five VERIFIED facts: repo + CI
-green, npm resolvable via npx, plugin installed, skills-CLI discovery working,
-next tag publishing without a human.
+publishing is part of shipping**, so the second one does not. **The 11-step
+sequence is in `references/distribution.md` → *First publish*.** Everything
+green BEFORE publishing; done = five VERIFIED facts: repo + CI green, npm
+resolvable via npx, plugin installed, skills-CLI discovery working, next tag
+publishing without a human.
 
 ## Retrofit (bring an existing skill/repo up to standard)
 
@@ -173,12 +208,13 @@ evidence — a `file:line` or the output of the command you actually ran. "Looks
 fine" is not a verdict, and neither is a PASS on a check that was reasoned about
 instead of executed.
 
-**The 13-item checklist is in `references/retrofit.md` — open it before
-auditing.** It covers, in order: the spec floor, the Anthropic plugin floor,
-surface honesty, one-job, entry point, layout and version sync, validator and
-CI, evaluations, README, distribution live-checks, repo meta, gotcha compliance,
-protocol dependencies. For a PERSONAL skill only three of them apply (spec
-floor, one-job, entry point) — that file says which.
+**Run `scripts/audit_skill.py <dir> --house` first** — it does the mechanical
+half deterministically — **then work the 14-item checklist in
+`references/retrofit.md`**, which covers the spec floor, the Anthropic plugin
+floor, surface honesty, one-job, entry point, layout and version sync, validator
+and CI, evaluations, README, distribution live-checks, repo meta, gotchas,
+protocol dependencies, and host capabilities with their fallbacks. For a
+PERSONAL skill only three items apply — that file says which.
 
 **Then:** report the gap table, fix everything fixable now, bump a minor/patch
 version, run the release checklist.
@@ -192,29 +228,25 @@ AFTER the plugin install is verified — duplicate listings confuse agents.
 
 ## Distribution matrix
 
-Five filesystem channels: **Claude Code plugin** (`marketplace add` → `install
-<name>@<name>`), **vercel skills CLI** (`npx skills add <owner>/<repo>`, 70+
-agents, reads `marketplace.json`), **npx** (`npx github:<owner>/<repo>`),
-**Cursor** (skills CLI `--agent cursor --global`, or `.cursor/rules/*.mdc`),
-**umbrella family repo** (`ssheleg/sshlg-skills`). Anthropic's own surfaces —
-Skills API upload (workspace-wide, 8 per request) and claude.ai zip (per user,
-no admin push) — are separate deployments syncing with nothing:
+Five filesystem channels — Claude Code plugin, vercel skills CLI (70+ agents,
+reads `marketplace.json`), npx, Cursor, umbrella family repo — with the exact
+flags in **`references/distribution.md`; read it before publishing, adding a
+channel, or auditing distribution.** Anthropic's own surfaces (Skills API
+upload, claude.ai zip) are separate deployments syncing with nothing:
 `references/surfaces.md`.
 
-**Read `references/distribution.md` before publishing, adding a channel, or
-auditing distribution.** Two rules survive without it: **one channel per agent**
-(never `claude-code` via the skills CLI when a plugin is installed), and **e2e
-`npx` from a non-repo cwd**.
+Two rules survive without opening either: **one channel per agent** (never
+`claude-code` via the skills CLI when a plugin is installed), and **e2e `npx`
+from a non-repo cwd**.
 
 ## Installing someone else's skill
 
 A skill is instructions an agent executes plus code it runs without reading —
 installing one is installing software. Anything not written here gets the
-`references/enterprise.md` review first: scripts read end to end, network calls
-and credentials grepped for, instructions checked for "ignore previous rules",
-hidden actions, or data routed outward. Highest-risk shape: a skill that fetches
-instructions from a URL — that content changes after your review. Same file for
-the fleet rules (approval gates, lifecycle, recall limits).
+`references/enterprise.md` review first: every file read, network calls and
+credentials grepped for, instructions checked for "ignore previous rules",
+hidden actions, or data routed outward. Highest-risk shape: a skill fetching
+instructions from a URL — that content changes after your review.
 
 ## Protocol-connected skills (MCP / A2A)
 
@@ -245,34 +277,31 @@ Non-negotiables for any such skill:
 
 ## Gotchas (each cost a debugging round)
 
-- **npm publishing has its own trap list** — 2FA/EOTP, the name-similarity 403
-  `npm view` can't predict, auth failures masked as 404 on PUT, read-replica lag
-  after a first scoped publish, `npx` resolving locally inside the package's own
-  repo. Fixes in `references/distribution.md` → **read it before any publish.**
+- **npm publishing has a five-trap list** — 2FA/EOTP, a name-similarity 403 that
+  `npm view` cannot predict, auth failures masked as 404, read-replica lag, and
+  `npx` resolving locally inside the package's own repo. Each with its fix in
+  `references/distribution.md` → **read it before any publish.**
 - **A stray `SKILL.md` anywhere in the repo ships as a REAL skill** — the skills
   CLI discovers every one in the tree, so `templates/SKILL.md` lands in every
   agent as a placeholder (seen live: a skill named `<skill-name>`). Name
   skeletons `SKILL.template.md`, have the validator reject any `SKILL.md`
   outside the skill dirs, verify with `npx skills add <repo> --list`.
-- **Quote every `argument-hint`.** Bare `[a | b]` is a YAML flow sequence — one
-  comma drops the whole front-matter block, leaving a command with no
-  description and no warning.
-- **Never name a `commands/<x>.md` after a `skills/<x>/`** — same name, two
-  components: the skill wins and the command is unreachable always-on cost
-  (~100 tok/session here). Check with `claude plugin details`.
+- **Commands: quote every `argument-hint`** (bare `[a | b]` is a YAML flow
+  sequence — one comma drops the whole front-matter block, silently) and **never
+  name one after a skill** in the same plugin (both claim `/<x>`, the skill wins,
+  the command is unreachable always-on cost). Details:
+  `references/host-capabilities.md`.
 - **Writing the installer or validator?** Four more traps (piped-stdin readline,
   raw-mode pickers, ANSI literals, python 3.9 drift) are in
   `references/distribution.md` → *Installer implementation traps*.
 - **gh auth status may lie** (invalid-token report while git+ssh works): attempt
   the operation before declaring it blocked.
-- **Duplicate-shadow: one channel per agent — and the shadow regrows.** A plugin
-  install AND a plain `~/.claude/skills/<name>` copy = two listings, and the
-  plain (usually STALE) one wins. `npx skills add|update … --global` recreates
-  that path **even when `claude-code` was never targeted**, so the prune belongs
-  in the update command: `npx skills update <name> --global --yes && rm -f
-  ~/.claude/skills/<name>`.
-- **Plugin commands need the full `<name>@<name>`:** `claude plugin update
-  <name>` → "Plugin not found". Same for install.
+- **Duplicate-shadow: the stale copy wins, and it regrows.** A plugin install
+  plus a plain `~/.claude/skills/<name>` copy = two listings; `npx skills
+  add|update … --global` recreates that path **even when `claude-code` was never
+  targeted**, so the prune belongs inside the update command: `npx skills update
+  <name> --global --yes && rm -f ~/.claude/skills/<name>`. Plugin commands also
+  need the full id — `claude plugin update <name>` answers "Plugin not found".
 - **A pinned `version` you forget to bump freezes every user.** The version is
   the update cache key: twenty commits under `0.6.1` and `/plugin update` still
   says "already at the latest version". (Omitting it from both manifests is

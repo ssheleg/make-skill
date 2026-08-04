@@ -6,10 +6,26 @@ standard — including the no-argument `/make-skill` path, where a `SKILL.md`,
 
 ## Contents
 
+- Run the script first
 - How to report (the only acceptable verdict format)
-- The 13-item audit checklist
+- The 14-item audit checklist
 - Personal skills — the short form
 - After the audit
+
+## Run the script first
+
+The mechanical half is deterministic — do not reason your way through it:
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/make-skill/scripts/audit_skill.py" <skill-dir> --house
+```
+
+`${CLAUDE_PLUGIN_ROOT}` is Claude Code's. On any other host the script sits at
+`scripts/audit_skill.py` inside the make-skill directory you are reading this
+from (`~/.agents/skills/make-skill/`, `~/.claude/skills/make-skill/`). No
+`python3` at all? Check items 1 and 9 below by hand against
+`references/agent-skills-spec.md` — the script implements that checklist and
+nothing more. Either way, the judgement items are yours.
 
 ## How to report
 
@@ -25,7 +41,7 @@ about rather than executed: `python3 test/validate.py`, `claude plugin validate
 … --strict`, `npx skills add <repo> --list` all produce output, and the output is
 the evidence. Report the gap table before changing anything, then fix.
 
-## The 13-item audit checklist
+## The 14-item audit checklist
 
 1. **Spec floor** (`references/agent-skills-spec.md`): `name` charset + ≤64 +
    equal to the directory + no `anthropic`/`claude` + no angle brackets;
@@ -77,6 +93,13 @@ the evidence. Report the gap table before changing anything, then fix.
     `references/a2a.md`): dependency and protocol version in `compatibility`,
     discovery instead of hardcoded tool names, the untrusted-output rule stated,
     interactive auth handled as a human step rather than a retry loop.
+14. **Host capabilities and their fallbacks**
+    (`references/host-capabilities.md`) if it ships a hook, subagent, command or
+    MCP server: the degradation contract written in the body for all three axes
+    (not Claude Code / recommended plugin absent / tool absent); hooks that
+    exit 0 silently when the event is not theirs; `PostToolUse` advising rather
+    than blocking; commands quoted and never named after a skill; plugin agents
+    free of `hooks`, `mcpServers` and `permissionMode`.
 
 ## Personal skills — the short form
 

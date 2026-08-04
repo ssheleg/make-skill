@@ -114,6 +114,30 @@ checker, not a house opinion:
   `${CLAUDE_PLUGIN_DATA}` — both Claude-Code-only, so keep relative paths as the
   portable contract.
 
+## Host capabilities and the degradation contract
+
+Hooks, subagents, `/commands`, `${CLAUDE_PLUGIN_ROOT}` and MCP servers exist only
+inside Claude Code — which is a minority of where skills run. **Each is an
+accelerator with a WRITTEN fallback; the skill still finishes its job without
+it.** Put all three cases in the body, in the words the agent reads when it hits
+them:
+
+- **Not Claude Code** (Cursor, Codex, skills CLI, API): no hooks, no subagents,
+  no `/command`. Name the inline procedure. Bundled `scripts/` still travel —
+  they live inside the skill dir — so give the path per channel.
+- **Recommended plugin/skill absent**: say once what is degraded, then continue
+  on the manual path. A stage that refuses to start because an optional
+  companion is missing is broken, not strict.
+- **Tool, interpreter or MCP server absent**: state it once, fall back to the
+  by-hand procedure, never retry in a loop; interactive auth is a human step.
+
+If you do ship them: `hooks/hooks.json` at the plugin root, commands resolved
+through a quoted `"${CLAUDE_PLUGIN_ROOT}/…"` with a `timeout`; hook scripts exit
+0 silently when the event is not theirs and when the interpreter is missing;
+`PreToolUse` blocks (exit 2 sends stderr to the model), `PostToolUse` advises via
+`systemMessage`; plugin agents may not carry `hooks`, `mcpServers` or
+`permissionMode`; a command is never named after a skill in the same plugin.
+
 ## Hard rules
 
 - **Version sync:** marketplace.json, plugin.json, package.json (if npm), and the

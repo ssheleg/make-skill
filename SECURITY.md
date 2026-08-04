@@ -13,9 +13,21 @@ unless you'd prefer otherwise.
 
 ## What this project touches
 
-`make-skill` ships Markdown plus two small installers. Knowing exactly what runs
-where is most of the threat model:
+`make-skill` ships Markdown, two small installers, one auditor script and one
+hook. Knowing exactly what runs where is most of the threat model — and the hook
+is the only thing that runs without you asking:
 
+- **`plugins/make-skill/hooks/skill-md-audit.sh`** runs on every `Write`,
+  `Edit` and `MultiEdit` **in every project** once the plugin is enabled. It
+  reads the hook's stdin JSON and **exits 0 immediately, printing nothing,
+  unless the written path ends in `SKILL.md`** — so in a project that does not
+  author skills it is a no-op you never see. When it is a `SKILL.md`, it runs
+  the bundled auditor on that directory and returns the report as advice
+  (`systemMessage`). It never blocks, never writes a file, never makes a network
+  call, and needs no `jq`. Thirty lines; read them before enabling the plugin.
+- **`skills/make-skill/scripts/audit_skill.py`** reads a skill directory and
+  prints a report. Standard library only. It writes nothing and is run by you,
+  the `/skill-audit` command, the subagent, or the hook above.
 - **`bin/make-skill.js`** (run via `npx`) and **`install.sh`** copy the skill
   directory into `~/.claude/skills/make-skill` and nothing else — no command file,
   no other path in `$HOME` — and overwrite only with `--force`. Both are

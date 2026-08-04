@@ -1,0 +1,32 @@
+{
+  "description": "PLUGIN_NAME — one sentence on what these hooks do, and the sentence that matters to a reviewer: when they no-op. A globally installed plugin must be invisible in projects that do not use it.",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "bash",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/HOOK_SCRIPT.sh\"",
+            "timeout": 20,
+            "statusMessage": "What the user sees while this runs"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "bash",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/SESSION_SCRIPT.sh\"",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}

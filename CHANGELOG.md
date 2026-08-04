@@ -1,5 +1,65 @@
 # Changelog
 
+## v0.9.0 — 2026-08-03
+
+The canon knew the Claude Code capability set and used none of it. This release
+uses it — and turns the missing half into a rule: **every host capability is an
+accelerator with a written fallback**, because hooks, subagents and `/commands`
+exist only inside Claude Code, which is a minority of where skills run.
+
+### Added
+- **`references/host-capabilities.md`** — hooks (events, handler types, matchers,
+  `if` rules, exit-code semantics, structured output, plugin-scoped MCP matchers),
+  subagents, commands, scripts, MCP and sibling-skill dependencies: what each
+  buys, what it costs in always-on tokens, and when it earns its place. Verified
+  against the hooks reference and against a working plugin, not from memory.
+- **The degradation contract**, in `SKILL.md` and enforced by the validator.
+  Three axes, each written in the body where the agent will read it: not Claude
+  Code (no hooks/subagents/commands — name the inline procedure), recommended
+  plugin absent (say what is degraded, continue), tool or MCP server absent
+  (state it once, fall back, never retry in a loop). *A fallback you know but did
+  not write is not a fallback.*
+- **`scripts/audit_skill.py`** — a stdlib auditor for ANY skill directory: name
+  charset/length/reserved words/XML tags/directory match, description limits and
+  third person, frontmatter keys, body budgets, bundled-file reachability and
+  nesting, tables of contents past 100 lines, link escapes, Windows paths,
+  time-branching prose, bare directory pointers. `--house` adds the ssheleg
+  rules. It finds all nine planted defects in the evaluation fixture and passes
+  clean on this skill; CI asserts both.
+- **A `PostToolUse` hook** that audits a `SKILL.md` the moment it is written, and
+  is otherwise invisible: it exits 0 with no output for any other path, for a
+  missing `python3`, for a missing script. It advises via `systemMessage` and
+  never blocks — `PostToolUse` fires after the write, so a veto costs a turn and
+  buys nothing.
+- **`commands/skill-audit.md`** (deliberately not named after the skill) and
+  **`agents/skill-auditor.md`** — a subagent for auditing a repo full of skills
+  without crowding the main thread, including the coexistence check that is
+  invisible per-skill.
+- **Six skeletons in `assets/`**, now *inside* the skill directory so they travel
+  on every channel: SKILL, plugin manifest, marketplace manifest, and new hooks,
+  agent and command templates, each carrying its degradation clause.
+- **`SKILL-CARD.md`** — the enterprise registry entry plus an honest pass over
+  the risk table, including the hook that runs automatically. **`test/evals/RESULTS.md`**
+  states plainly that the suite has never been executed against a model.
+- Frontmatter `compatibility` (what this skill needs and where it does not work)
+  and `metadata.version`, which is the only version an agent outside Claude Code
+  can see — now the fifth point of the version-sync rule.
+
+### Fixed
+- **The skeletons reached no agent.** `templates/` sat at the repo root, outside
+  the plugin directory and outside the skill directory, so neither the Claude
+  Code plugin nor the skills CLI ever shipped them. They are `assets/` now, and
+  the validator fails if a root `templates/` reappears.
+- The auditor's own first run flagged a false positive on this skill's
+  anti-pattern gotcha ("Before August, use the old API" — quoted as an example).
+  Quoted and backticked spans are now excluded: a linter that flags the document
+  warning about the thing it detects earns the habit of being ignored.
+- New validator rules, each with a negative self-test: hook commands must resolve
+  through a quoted `${CLAUDE_PLUGIN_ROOT}` and carry a timeout, hook scripts must
+  exist with a shebang and the executable bit, plugin agents must not carry
+  `hooks`/`mcpServers`/`permissionMode`, shipped scripts must compile, and the
+  degradation section must be present.
+
 ## v0.8.1 — 2026-08-03
 
 A file-by-file re-read of everything 0.8.0 touched, and of everything it didn't.

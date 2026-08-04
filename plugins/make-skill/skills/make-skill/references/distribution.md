@@ -48,10 +48,13 @@ the shape from `ssheleg/super-ux`:
 ├── .claude-plugin/marketplace.json     # root manifest, plugins[0].source: ./plugins/<name>
 ├── plugins/<name>/
 │   ├── .claude-plugin/plugin.json      # ONLY the manifest lives in .claude-plugin/
-│   └── skills/<skill>/SKILL.md  +  references/*.md (+ scripts/, assets/)
-│       (commands/*.md too — but never named after a skill)
+│   ├── skills/<skill>/SKILL.md  +  references/*.md  +  scripts/  +  assets/
+│   │                                   # skeletons live HERE, not at the repo root:
+│   │                                   # only the skill dir travels on every channel
+│   ├── hooks/hooks.json + *.sh         # Claude Code only — see host-capabilities.md
+│   ├── agents/*.md                     # Claude Code only
+│   └── commands/*.md                   # never named after a skill
 ├── cursor/rules/*.mdc                  # if agent-rules make sense for Cursor
-├── templates/*.md                      # skeletons (NEVER name one SKILL.md)
 ├── bin/<name>.js + package.json        # npx installer (zero-dep Node)
 ├── test/validate.py                    # consistency validator (stdlib only)
 ├── test/evals/                         # triggers.json + scenarios.json (data, run by a human)
@@ -59,15 +62,23 @@ the shape from `ssheleg/super-ux`:
 ├── install.sh                          # POSIX fallback
 ├── README.md (English-first), CHANGELOG.md, LICENSE (MIT)
 ├── CONTRIBUTING.md + SECURITY.md       # public repo: how to check work, where to report
+├── SKILL-CARD.md                       # the enterprise registry entry + risk-table pass
 └── docs/superpowers/{specs,plans}/
 ```
 
 **Public-repo floor** (validator-enforced): a README saying what it does before
 how to install it, **English-first** — Russian belongs in trigger phrases, where
 it changes whether the skill fires; `CONTRIBUTING.md` with the offline commands
-that verify a change; `SECURITY.md` naming a private reporting channel and what
-the installers touch. A skill is text an agent executes, so "review before
-installing" belongs in writing.
+that verify a change; `SECURITY.md` naming a private reporting channel and every
+path that executes, hooks first; `SKILL-CARD.md` answering the enterprise
+registry fields and the risk table honestly. A skill is text an agent executes,
+so "review before installing" belongs in writing — and anything that runs
+without being asked belongs at the top of it.
+
+**What travels where.** Only `skills/<skill>/` reaches non-Claude channels, so
+scripts and skeletons live inside it. `hooks/`, `agents/` and `commands/` reach
+Claude Code alone: they are accelerators, and the skill body owes each one a
+written fallback (`references/host-capabilities.md`).
 
 **Version sync (hard rule):** `marketplace.json`, `plugin.json`, `package.json`
 and the top CHANGELOG entry carry the SAME semver, bumped together; the validator

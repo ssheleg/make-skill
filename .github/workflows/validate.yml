@@ -39,9 +39,9 @@ jobs:
           set -eu
           rm -rf /tmp/notmpl-copy
           cp -R . /tmp/notmpl-copy
-          rm -f /tmp/notmpl-copy/templates/SKILL.template.md
+          rm -f /tmp/notmpl-copy/plugins/make-skill/skills/make-skill/assets/SKILL.template.md
           if python3 /tmp/notmpl-copy/test/validate.py; then
-            echo "ERROR: validator passed with templates/SKILL.template.md missing"
+            echo "ERROR: validator passed with assets/SKILL.template.md missing"
             exit 1
           else
             echo "OK: validator requires the template skeleton"
@@ -127,7 +127,7 @@ jobs:
               r = root / "plugins/make-skill/skills/make-skill/references/surfaces.md"
               r.write_text(r.read_text(encoding="utf-8").replace("## Contents", "## Sections", 1), encoding="utf-8")
           if case == "tplxml":      # a skeleton that seeds an invalid skill
-              p = root / "templates/SKILL.template.md"
+              p = root / "plugins/make-skill/skills/make-skill/assets/SKILL.template.md"
               p.write_text(p.read_text(encoding="utf-8").replace(
                   "name: skill-name-here", "name: <skill-name>", 1), encoding="utf-8")
           PY
@@ -185,6 +185,48 @@ jobs:
             echo "OK: validator rejects '$name' with the right message"
           done
 
+      - name: Negative self-test (host-capability rules must fail)
+        run: |
+          set -eu
+          # Everything here is Claude-Code-only and invisible until a user hits it.
+          for case in nodegrade:'Degradation' hookpath:'CLAUDE_PLUGIN_ROOT' \
+                      hookexec:'executable' agentkey:'rejected' \
+                      rootTemplates:'reaches no agent'; do
+            name="${case%%:*}"; expect="${case#*:}"
+            rm -rf "/tmp/hc-$name"
+            cp -R . "/tmp/hc-$name"
+            CASE="$name" python3 - <<'PY'
+          import json, os, pathlib, re
+          case = os.environ["CASE"]
+          root = pathlib.Path(f"/tmp/hc-{case}")
+          if case == "nodegrade":     # the fallback contract deleted from the body
+              p = root / "plugins/make-skill/skills/make-skill/SKILL.md"
+              p.write_text(p.read_text(encoding="utf-8").replace(
+                  "### Degradation contract", "### Notes", 1), encoding="utf-8")
+          elif case == "hookpath":    # a hook command that will not survive an update
+              p = root / "plugins/make-skill/hooks/hooks.json"
+              d = json.loads(p.read_text(encoding="utf-8"))
+              d["hooks"]["PostToolUse"][0]["hooks"][0]["command"] = "\"./hooks/skill-md-audit.sh\""
+              p.write_text(json.dumps(d, indent=2), encoding="utf-8")
+          elif case == "hookexec":    # the hook script without its executable bit
+              (root / "plugins/make-skill/hooks/skill-md-audit.sh").chmod(0o644)
+          elif case == "agentkey":    # a key Claude Code rejects for plugin agents
+              p = root / "plugins/make-skill/agents/skill-auditor.md"
+              p.write_text(p.read_text(encoding="utf-8").replace(
+                  "tools: Read", "permissionMode: acceptEdits\ntools: Read", 1), encoding="utf-8")
+          else:                       # skeletons back at the repo root, reaching nobody
+              (root / "templates").mkdir(exist_ok=True)
+              (root / "templates/SKILL.template.md").write_text("---\nname: x\ndescription: y\n---\n")
+          PY
+            if out=$(python3 "/tmp/hc-$name/test/validate.py" 2>&1); then
+              echo "ERROR: validator passed host-capability violation '$name'"; exit 1
+            fi
+            if ! echo "$out" | grep -qi -- "$expect"; then
+              echo "ERROR: '$name' failed for the wrong reason (no '$expect'):"; echo "$out"; exit 1
+            fi
+            echo "OK: validator rejects '$name' with the right message"
+          done
+
       - name: Negative self-test (Claude Code manifest violations must fail)
         run: |
           set -eu
@@ -228,6 +270,47 @@ jobs:
             echo "OK: validator rejects Claude Code violation '$case'"
           done
 
+      - name: Bundled auditor (clean on its own skill, finds every planted defect)
+        run: |
+          set -eu
+          S=plugins/make-skill/skills/make-skill
+          # 1. the skill that ships the auditor must pass it, house rules included
+          python3 "$S/scripts/audit_skill.py" "$S" --house
+          # 2. the evaluation fixture, materialised as a skill directory, must fail
+          #    with every one of its nine planted defects named
+          rm -rf /tmp/aud && mkdir -p /tmp/aud/invoices
+          python3 - <<'PY'
+          import pathlib, re
+          src = pathlib.Path("test/evals/fixtures/retrofit-input.md").read_text(encoding="utf-8")
+          pathlib.Path("/tmp/aud/invoices/SKILL.md").write_text(
+              re.sub(r"^<!--.*?-->\s*", "", src, count=1, flags=re.S), encoding="utf-8")
+          PY
+          if out=$(python3 "$S/scripts/audit_skill.py" /tmp/aud/invoices --house --json); then
+            echo "ERROR: auditor passed a fixture with nine planted defects"; exit 1
+          fi
+          for id in NAME_RESERVED NAME_DIR DESC_PERSON DESC_XML FM_UNKNOWN_KEY \
+                    REF_NO_TRIGGER LINK_ESCAPE WIN_PATH TIME_BRANCH; do
+            echo "$out" | grep -q "\"$id\"" || { echo "auditor missed $id"; exit 1; }
+          done
+          echo "OK: auditor clean on its own skill, nine defects found on the fixture"
+
+      - name: Hook is silent unless a SKILL.md was written
+        run: |
+          set -eu
+          export CLAUDE_PLUGIN_ROOT="$PWD/plugins/make-skill"
+          H="$CLAUDE_PLUGIN_ROOT/hooks/skill-md-audit.sh"
+          # not a SKILL.md → no output at all. A globally installed plugin must be
+          # invisible in projects that do not author skills.
+          out=$(echo '{"tool_name":"Write","tool_input":{"file_path":"/tmp/aud/notes.md"}}' | "$H")
+          test -z "$out" || { echo "ERROR: hook spoke about a non-SKILL.md write: $out"; exit 1; }
+          # a broken SKILL.md → advice, still exit 0 (PostToolUse must not block)
+          out=$(echo '{"tool_name":"Write","tool_input":{"file_path":"/tmp/aud/invoices/SKILL.md"}}' | "$H")
+          echo "$out" | grep -q '"systemMessage"' || { echo "ERROR: hook stayed silent on a broken SKILL.md"; exit 1; }
+          # a clean SKILL.md → silent again
+          out=$(echo "{\"tool_name\":\"Edit\",\"tool_input\":{\"file_path\":\"$PWD/plugins/make-skill/skills/make-skill/SKILL.md\"}}" | "$H")
+          test -z "$out" || { echo "ERROR: hook complained about a clean SKILL.md: $out"; exit 1; }
+          echo "OK: hook no-ops, advises, and never blocks"
+
       - name: install.sh syntax check
         run: bash -n install.sh
 
@@ -250,8 +333,15 @@ jobs:
           # name registers /make-skill twice (see `claude plugin details`)
           test ! -e "$HOME/.claude/commands/make-skill.md"
           # references must travel with the skill — relative links break otherwise
-          for r in agent-skills-spec authoring surfaces enterprise retrofit claude-code-plugin distribution mcp a2a; do
+          for r in agent-skills-spec authoring surfaces enterprise retrofit host-capabilities claude-code-plugin distribution mcp a2a; do
             test -f "$HOME/.claude/skills/make-skill/references/$r.md"
+          done
+          # scripts and skeletons must travel too — they are the half that works
+          # on agents with no hooks, no subagents and no /commands
+          test -x "$HOME/.claude/skills/make-skill/scripts/audit_skill.py"
+          for t in SKILL.template.md plugin.template.json marketplace.template.json \
+                   hooks.template.json agent.template.md command.template.md; do
+            test -f "$HOME/.claude/skills/make-skill/assets/$t"
           done
           node bin/make-skill.js | grep -q '^skip:'
           node bin/make-skill.js --force | grep -q '^Installed'

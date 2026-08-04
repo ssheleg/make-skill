@@ -82,7 +82,17 @@ Fail these and CI stops you, so check them before pushing:
   `claude` CLI.
 - **No stray `SKILL.md`.** One may exist only under `plugins/*/skills/*/` — the
   skills CLI installs every other one it finds as a real skill on every agent.
-  Skeletons are named `SKILL.template.md`.
+  Skeletons are named `*.template.*` and live in `skills/make-skill/assets/`,
+  inside the skill directory: a `templates/` at the repo root reaches no agent
+  through any channel, and the validator now says so.
+- **Shipped host capabilities carry their fallback.** `SKILL.md` must keep the
+  degradation contract; hook commands resolve through a quoted
+  `${CLAUDE_PLUGIN_ROOT}` and carry a timeout; hook scripts are executable with
+  a shebang; plugin agents may not declare `hooks`, `mcpServers` or
+  `permissionMode`; every shipped script compiles and is executable.
+- **The bundled auditor stays honest.** CI runs it against this skill (must be
+  clean, house rules included) and against the nine-defect evaluation fixture
+  (must name all nine).
 - **Reference files must be reachable** from `SKILL.md`, one level deep, and no
   link may escape the skill directory (packagers ship that directory alone).
 - **No relative links in `cursor/rules/*.mdc`** — those files get copied into

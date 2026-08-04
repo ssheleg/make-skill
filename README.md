@@ -34,9 +34,16 @@ make a skill that turns our incident runbooks into a triage workflow
 /make-skill:make-skill audit ./skills/my-skill against the spec
 ```
 
-With no argument it detects the situation — a `SKILL.md` or `.claude-plugin/` in
-the current directory means it runs the audit rather than asking you what you
-meant. The command is `/make-skill:make-skill` when installed as a plugin and
+…or run just the mechanical half against any skill directory, no agent turn
+required:
+
+```bash
+python3 ~/.claude/plugins/*/make-skill/*/skills/make-skill/scripts/audit_skill.py ./my-skill --house
+```
+
+With no argument the skill detects the situation — a `SKILL.md` or
+`.claude-plugin/` in the current directory means it runs the audit rather than
+asking you what you meant. The command is `/make-skill:make-skill` when installed as a plugin and
 `/make-skill` when it sits in a skills directory; both reach the same skill, and
 asking in plain language works either way.
 
@@ -76,6 +83,17 @@ checked with Anthropic's own gate — `claude plugin validate <path> --strict` o
 both manifests, in CI as its own job. That check is what caught this repo's own
 `marketplace.json` shipping `homepage` and `repository` at a level where Claude
 Code ignores them.
+
+**The Claude Code power set — with a fallback for everywhere else.** The skill
+ships what it teaches: a `PostToolUse` **hook** that audits a `SKILL.md` the
+moment you save one (and exits silently for every other write, in every other
+project), a **subagent** for auditing a repo full of skills without crowding the
+main thread, a `/skill-audit` **command**, and a stdlib **script** that does the
+mechanical half of an audit deterministically. Hooks, subagents and commands
+exist only inside Claude Code — so the canon makes the fallback a rule: **every
+host capability is an accelerator with a written fallback**, for three named
+cases (not Claude Code, recommended plugin absent, tool or MCP server absent).
+A fallback you know but did not write is not a fallback.
 
 **Evaluations, not vibes.** The canon requires every skill to carry at least
 three behavioral scenarios and a trigger set whose negatives are *near-misses* —
@@ -125,16 +143,19 @@ agent opens only when the situation calls for them:
 | `authoring.md` | the craft — naming, third-person descriptions, degrees of freedom, workflows and feedback loops, script rules, evaluation-driven development |
 | `surfaces.md` | Claude Code vs the Claude API vs claude.ai — the Skills API (upload, versions, 8 per request), and the no-network / no-package-install limits that break scripts moved between surfaces |
 | `enterprise.md` | installing a skill you didn't write, and running a fleet — risk tiers, the review checklist, the five approval gates, lifecycle, recall limits, rollback |
-| `retrofit.md` | the audit procedure — the 13-item checklist, what counts as evidence for a PASS, and the short form for a personal skill |
+| `retrofit.md` | the audit procedure — the 14-item checklist, what counts as evidence for a PASS, and the short form for a personal skill |
+| `host-capabilities.md` | hooks, subagents, commands, scripts and MCP dependencies — what each buys, what it costs in always-on tokens, hook events and exit-code semantics, and the degradation clauses that keep a skill working where none of them exist |
 | `claude-code-plugin.md` | the [Claude Code layer](https://code.claude.com/docs/en/plugins-reference) — `plugin.json` / `marketplace.json` schemas, plugin sources, component locations, host-only front-matter, path variables, cache and symlink rules, the `claude plugin` CLI |
 | `distribution.md` | the repo layout, every install channel, exact CLI flags, npm publishing traps, the release checklist |
 | `mcp.md` | [MCP](https://modelcontextprotocol.io) — skill vs server, primitives and methods, transports, consent and untrusted-output rules |
 | `a2a.md` | [A2A](https://a2a-protocol.org) — Agent Cards, task lifecycle, method mapping, v0.x→1.0 wire drift |
 
-Plus three skeletons in `templates/`: `SKILL.template.md` with the spec limits
-written into it, and `plugin.template.json` / `marketplace.template.json`, which
-carry only fields Claude Code recognizes so a seeded repo passes
-`claude plugin validate --strict` on day one.
+Plus six skeletons in `skills/make-skill/assets/` — inside the skill directory,
+so they reach every channel: `SKILL.template.md` with both rulebooks' limits
+written into it, `plugin.template.json` / `marketplace.template.json` carrying
+only fields Claude Code recognizes (a seeded repo passes `claude plugin validate
+--strict` on day one), and `hooks.template.json` / `agent.template.md` /
+`command.template.md`, each with its degradation clause already in place.
 
 ## Install
 
@@ -201,9 +222,14 @@ copy on every global update, even when Claude Code was never named.
 
 ### Requirements
 
-Node ≥ 16 for the `npx` installer; Python 3 only if you run the validator;
-`bash` for `install.sh` (Windows users: use `npx`, the plugin, or the skills CLI).
-The skill itself is plain Markdown and needs nothing.
+Node ≥ 16 for the `npx` installer; **Python 3 for the bundled auditor and the
+validator** (without it the skill falls back to the same checks by hand, and
+says so); `bash` for `install.sh` and the hook (Windows users: use `npx`, the
+plugin, or the skills CLI). The canon itself is plain Markdown and needs nothing.
+
+What runs on its own: one `PostToolUse` hook, which exits silently unless the
+file you just wrote is a `SKILL.md`. It is 30 lines and is described in
+[SECURITY.md](SECURITY.md) and [SKILL-CARD.md](SKILL-CARD.md).
 
 ## Repo layout
 
@@ -211,16 +237,20 @@ The skill itself is plain Markdown and needs nothing.
 .claude-plugin/marketplace.json
 plugins/make-skill/
 ├── .claude-plugin/plugin.json
-└── skills/make-skill/                # the skill IS /make-skill — no command file
-    ├── SKILL.md                      # the canon, < 500 lines by rule
-    └── references/*.md               # loaded on demand
+├── skills/make-skill/                # everything here travels to every agent
+│   ├── SKILL.md                      # the canon, < 500 lines and < 5000 tokens by rule
+│   ├── references/*.md               # loaded on demand
+│   ├── scripts/audit_skill.py        # audits any skill dir, stdlib only
+│   └── assets/*.template.*           # six skeletons: skill, manifests, hooks, agent, command
+├── hooks/                            # Claude Code only — PostToolUse SKILL.md audit
+├── agents/skill-auditor.md           # Claude Code only
+└── commands/skill-audit.md           # Claude Code only, never named after a skill
 cursor/rules/make-skill.mdc           # self-contained Cursor rule
-templates/                            # SKILL.template.md + the two manifest skeletons
 bin/make-skill.js + package.json      # zero-dep npx installer
 test/validate.py                      # structural validator
 test/evals/                           # trigger set + behavioral scenarios (data)
 .github/workflows/{validate,release}.yml
-install.sh  README.md  CHANGELOG.md  CONTRIBUTING.md  SECURITY.md  LICENSE
+install.sh  README.md  CHANGELOG.md  CONTRIBUTING.md  SECURITY.md  SKILL-CARD.md  LICENSE
 docs/superpowers/{specs,plans}/       # historical design records
 ```
 

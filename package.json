@@ -1,7 +1,7 @@
 {
   "name": "@ssheleg/make-skill",
-  "version": "0.8.1",
-  "description": "Create, retrofit, audit, and ship agent skills & Claude Code plugins the proven ssheleg way — conformance to the Agent Skills open standard AND Anthropic's platform rules (front-matter limits, disclosure budgets, per-surface runtime limits, the Skills API, evals) plus the Claude Code plugin reference (manifest schemas, component layout, claude plugin validate --strict), marketplace repo layout, version sync, validator + CI, multi-channel distribution (plugin, vercel skills CLI, npx, Cursor), npm gotchas, the review checklist for third-party skills, and MCP / A2A rules for protocol-connected skills. This package is the installer CLI.",
+  "version": "0.9.0",
+  "description": "Create, retrofit, audit, and ship agent skills & Claude Code plugins the proven ssheleg way \u2014 conformance to the Agent Skills open standard AND Anthropic's platform rules (front-matter limits, disclosure budgets, per-surface runtime limits, the Skills API, evals) plus the Claude Code plugin reference (manifest schemas, component layout, claude plugin validate --strict), marketplace repo layout, version sync, validator + CI, multi-channel distribution (plugin, vercel skills CLI, npx, Cursor), npm gotchas, the review checklist for third-party skills, and MCP / A2A rules for protocol-connected skills. This package is the installer CLI.",
   "keywords": [
     "skill",
     "plugin",
@@ -33,7 +33,6 @@
     "bin",
     "plugins",
     "cursor",
-    "templates",
     "README.md",
     "LICENSE",
     "CHANGELOG.md",

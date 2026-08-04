@@ -180,6 +180,13 @@ if written carelessly.
 - **Vision is available**: rendering an input to images and letting the agent look
   at it beats describing a layout in prose.
 
+Worked example: this skill's own `scripts/audit_skill.py`. It is stdlib-only so
+it runs wherever the skill landed, prints `file:line` evidence rather than
+verdicts, handles its own missing-file and bad-frontmatter cases, and its first
+run flagged a false positive on the very document that teaches the anti-pattern —
+which is why it now ignores quoted spans. Hooks, subagents and commands that wrap
+it, plus the fallbacks they owe, are in `references/host-capabilities.md`.
+
 ## Evaluation and iteration — evals before prose
 
 **Build the evaluations before writing extensive documentation.** Otherwise the
