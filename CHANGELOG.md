@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.9.1 — 2026-08-05
+
+### Fixed
+- **The release checklist told agents to publish npm by hand.** Step 5 of the
+  recurring-release checklist in `distribution.md` said "npm publish if
+  applicable (human 2FA the first time)" — contradicting the launch checklist's
+  own step 9, which arms CI publishing precisely so that is the *last* manual
+  publish. A `v*` tag now publishes; manual publish is named as the fallback
+  for a repo that has not armed CI yet.
+- `CONTRIBUTING.md` carried the same stale instruction for the family
+  catalogue, and now points at `test/check_pins.py`, the registry comparison
+  `sshlg-skills` gained in v0.20.0.
+
 ## v0.9.0 — 2026-08-03
 
 The canon knew the Claude Code capability set and used none of it. This release

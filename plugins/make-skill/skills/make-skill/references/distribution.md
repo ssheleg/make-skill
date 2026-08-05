@@ -306,8 +306,12 @@ claude plugin update <name>@<name>             # full id required
 4. Conventional commit; push; confirm CI `success`; tag `v<ver>` and push the tag;
    `gh release create` from the CHANGELOG section (or let the release workflow
    below do it).
-5. npm publish if applicable (human 2FA the first time); e2e `npx <name>@<ver>`
-   from a non-repo cwd.
+5. **npm publishes itself** once CI publishing is armed (launch checklist step
+   9): the `v*` tag triggers it, with provenance, skipping a version the
+   registry already has. A manual `npm publish` here is the fallback for a repo
+   that has not armed it yet — not the normal path, and leaving it as the
+   normal path is how a family ends up with a release step nobody performs and
+   everybody documents. Then e2e `npx <name>@<ver>` from a non-repo cwd.
 6. **Refresh THIS machine's global installs — always, as Definition of Done:**
    `claude plugin marketplace update <name>` → `claude plugin update
    <name>@<name>` → `npx skills update <name> --global --yes && rm -f

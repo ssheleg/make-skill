@@ -146,10 +146,21 @@ So a release is not finished at `npm publish`:
 ```bash
 # in ssheleg/sshlg-skills
 #   1. bump this member's "version" in skills.json
-#   2. bump the launcher's own version, changelog, tag
-npm publish --access public
-npx --yes sshlg-skills@latest list   # the new number must appear here
+#   2. move skills/<member> to the matching tag
+#   3. bump the launcher's own version and changelog, commit
+git push --atomic origin main vX.Y.Z   # its own release.yml publishes it
+npx --yes sshlg-skills@latest list     # the new number must appear here
 ```
+
+There is no manual `npm publish` step in any repo in the family. Every one of
+them carries a `release.yml` whose `publish` job runs on a `v*` tag with
+`PUBLISH_NPMJS` armed, authenticating through `NPM_TOKEN` **and** OIDC trusted
+publishing, and skipping the version when the registry already has it.
+
+Since `sshlg-skills` v0.20.0 the drift itself is checked: `test/check_pins.py`
+compares every pin against the registry and fails the build when one is
+behind, so a forgotten bump is a red CI run on the first release rather than
+an archaeology exercise on the fourth.
 
 This is not hypothetical. On 2026-07-29 `agent-sync` 1.3.4 was on npm, installed everywhere, and
 `list` still said 1.3.3 — so a project whose onboarding compares the running version against `list`
