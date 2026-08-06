@@ -5,7 +5,7 @@ license: MIT
 compatibility: Authoring works on any agent. The bundled scripts/ need python3. Publishing steps need git, gh, node and npm; the plugin gates need the claude CLI. Not usable on the Claude API surface, which has no network and no runtime package install.
 metadata:
   author: ssheleg
-  version: "0.9.1"
+  version: "0.10.0"
   homepage: https://github.com/ssheleg/make-skill
 ---
 
@@ -28,7 +28,7 @@ Copy from a working repo (usually `~/DATA/<name>`): **`ssheleg/super-ux`**
 | `references/host-capabilities.md` | shipping a **hook, subagent, command, script or MCP dependency** — what each buys and costs, hook events/exit codes, and the degradation clauses that keep the skill working without them |
 | `references/claude-code-plugin.md` | anything shipping as a **Claude Code plugin/marketplace** — manifest schemas, component layout, LSP/monitors, path variables, `validate` failures |
 | `references/distribution.md` | the repo layout, publishing, channels, releases |
-| `references/mcp.md` | the skill calls/wraps/documents an **MCP** server, or you're choosing skill vs server |
+| `references/mcp.md`, `references/mcp-ship.md` | skill vs **MCP** server, wrapping one — then shipping it: mounting, its 404, `server.json`, the registry |
 | `references/a2a.md` | the skill spans two autonomous agents (**A2A**): Agent Cards, task lifecycle, delegation |
 
 Missing from this copy? Raw fallback:

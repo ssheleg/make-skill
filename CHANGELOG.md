@@ -1,5 +1,32 @@
 # Changelog
 
+## v0.10.0 — 2026-08-06
+
+### Added
+- **`references/mcp-ship.md`** — the half of MCP work that starts after the
+  server compiles. Mounting into an existing FastAPI/Starlette app and the
+  **double-path 404** that follows (FastMCP defaults `streamable_http_path` to
+  `/mcp/`; mount that at `/mcp` and the real endpoint is `/mcp/mcp`, so every
+  client 404s and the SSE fallback 404s too); ASGI auth middleware and why
+  handler-level auth is too late; a health endpoint outside the mount, which is
+  what separates "app down" from "MCP path wrong" — the two produce identical
+  client errors. Then the 404/307/401 bisect, both client config shapes, and
+  publication: `server.json` for remote and package servers, the three registry
+  name claims (GitHub, DNS, HTTP) with Ed25519 key handling, `mcp-publisher`,
+  CI automation, and versioning.
+
+  This is a deliberate delta, not a duplicate. Anthropic's `mcp-builder` skill
+  covers authoring and evaluation well and carries **nothing** on the registry,
+  on mounting, or on why a client sees 404 — checked against it on 2026-08-06.
+  The reference says so in its own opening so the boundary survives contact
+  with whoever reads it next.
+
+### Notes
+- The reference is reachable from the merged MCP row in the reference table.
+  `SKILL.md`'s body budget was already at ~4981 of its 5000-token ceiling, so a
+  new row did not fit — the validator caught that on the first attempt, which is
+  the budget working as designed rather than an obstacle to route around.
+
 ## v0.9.1 — 2026-08-05
 
 ### Fixed
