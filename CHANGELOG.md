@@ -1,5 +1,63 @@
 # Changelog
 
+## v0.11.1 — 2026-08-10
+
+A behavioural pass over v0.11.0 — walking the skill the way an agent walks it and
+running every command it hands out, rather than re-reading the files. The
+structural gates were already green; what this found was in the one field no
+structural gate covers.
+
+### Fixed — the description had a neighbour and no answer to it
+
+Coexistence was measured instead of assumed, across the 130 skills of the 23
+enabled plugins on the author's machine. The nearest neighbour is **not** the one
+`test/evals/RESULTS.md` predicted:
+
+| Neighbour | Overlap |
+|---|---|
+| **`claude-mem:version-bump`** | **9.6%** |
+| `agent-sync` | 5.5% |
+| `task-pipeline` (the predicted one) | 4.7% |
+
+`version-bump` advertises "version increments across package.json,
+marketplace.json, plugin.json manifests, git tagging, GitHub releases, and
+changelog generation" — this skill's release checklist, and enabled alongside it.
+The overlap is not vocabulary, it is *job*.
+
+- The description now carries the clause `references/authoring.md` prescribes for
+  exactly this case: **NOT for a version bump or release in a repo that ships
+  anything but a skill or plugin.**
+- **`triggers.json` gains q21 and q22**, the same manifest-bump-and-release
+  request once where the artifact IS a skill and once where it is not, on
+  opposite sides of the split so the near-miss is measured in validation rather
+  than tuned on. 22 queries, 11 positive / 11 near-miss negative.
+- `RESULTS.md` records the measured table and drops the guess.
+
+### Added — the headroom rule reaches the field that decides triggering
+
+v0.11.0 gave the body a 5% working limit and left the description at 1003 of
+1024\. Adding the clause above needed 60 characters that did not exist — the same
+disease, in the field that decides whether the skill fires at all. Both the house
+validator and the bundled auditor (`--house`) now hold the description to **≤970
+of 1024**, with a negative self-test on each.
+
+### Verified, not assumed
+
+Every command the canon hands an agent was executed against the released
+artifact: `make-skill-audit` by bare name, the non-Claude fallback path, the
+raw-fallback reference URLs (200 — checked for the first time), `npx skills add
+--list` (no skeleton leaks), `npx` from a non-repo cwd, `claude plugin details`.
+The hook was exercised on all three of its paths and returns valid JSON. Building
+a skill from `assets/SKILL.template.md` and auditing it gives 0 GAP. The
+compression in v0.11.0 was checked against every fact the evaluation scenarios
+depend on: all of them are still reachable, and all 11 references are still
+linked from the body.
+
+The evaluation suite is still **authored and never executed against a model** —
+that gap needs a fresh session per query per model, and this pass does not close
+it. What it does show is why it matters: the risk this repo had written down was
+not the risk it had.
+
 ## v0.11.0 — 2026-08-10
 
 A file-by-file audit of the whole repo, run with this skill's own evidence rules.

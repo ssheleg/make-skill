@@ -180,8 +180,9 @@ CC_SKILL_KEYS = {
 NAME_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 BODY_MAX_LINES = 500
 BODY_MAX_TOKENS = 5000
-# The working limit: 5% under the ceiling. See the budget check for why.
+# The working limits: 5% under each ceiling. See the budget checks for why.
 BODY_TARGET_TOKENS = 4750
+DESC_TARGET_CHARS = 970
 CHARS_PER_TOKEN = 3.9  # measured, not assumed — see the comment at the budget check
 # Anthropic best practices: a reference longer than this gets a table of contents,
 # because a partial `head` read is what the agent often sees.
@@ -273,6 +274,16 @@ else:
         else:
             if len(desc) > 1024:
                 fail(f"SKILL.md: description is {len(desc)} chars, spec max is 1024")
+            elif len(desc) > DESC_TARGET_CHARS:
+                # The description is the entire triggering budget, and it is the field
+                # that has to grow when a near-miss skill appears (authoring.md: "say
+                # what it is NOT for"). At 1003/1024 there was no room to add that
+                # sentence without first cutting a trigger phrase — the same disease as
+                # a body at 99% of budget, in the field that decides whether the skill
+                # fires at all.
+                fail(f"SKILL.md: description is {len(desc)} chars — inside the 1024 cap but "
+                     f"past the {DESC_TARGET_CHARS} working limit (5% headroom). Leave room "
+                     "for the 'what this is NOT for' clause a new neighbour will require")
             if not desc.lower().startswith("use when"):
                 fail("SKILL.md: description must start with 'Use when …' (canon)")
             if not re.search(r"[а-яё]", desc, re.I):

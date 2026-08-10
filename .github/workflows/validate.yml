@@ -270,7 +270,7 @@ jobs:
             echo "OK: validator rejects Claude Code violation '$case'"
           done
 
-      - name: Negative self-test (claims about the repo, and runnable commands)
+      - name: Negative self-test (claims, budgets and runnable commands)
         run: |
           set -eu
           # Everything here shipped at least once and was invisible to every rule
@@ -280,7 +280,7 @@ jobs:
           # layout this validator rejects.
           for case in claim:'claims' cardver:'SKILL-CARD' readmeref:'README' \
                       bodyvar:'substituted' cmdvar:'cannot run' mdclayout:'templates' \
-                      headroom:'headroom' xmldrift:'XML_TAG_RE'; do
+                      headroom:'headroom' deschead:'working limit' xmldrift:'XML_TAG_RE'; do
             name="${case%%:*}"; expect="${case#*:}"
             rm -rf "/tmp/cl-$name"
             cp -R . "/tmp/cl-$name"
@@ -322,6 +322,11 @@ jobs:
               body = re.sub(r"^---\n.*?\n---\n", "", t, count=1, flags=re.S)
               need = int(4750 * 3.9) - len(body) + 40
               skill.write_text(t + "\n" + ("p" * max(need, 40)) + "\n", encoding="utf-8")
+          elif case == "deschead":   # description inside the 1024 cap, past its own limit
+              t = skill.read_text(encoding="utf-8")
+              d = re.search(r"^description: (.+?)(?=\nlicense:)", t, re.S | re.M).group(1)
+              pad = " padding phrase." * 6                      # lands between 970 and 1024
+              skill.write_text(t.replace(d, (d + pad)[:1000], 1), encoding="utf-8")
           else:                      # the two validators disagreeing on one rule
               p = root / "plugins/make-skill/skills/make-skill/scripts/audit_skill.py"
               p.write_text(re.sub(r'^XML_TAG_RE = re\.compile\(r".+"\)$',
@@ -361,6 +366,20 @@ jobs:
                     REF_NO_TRIGGER LINK_ESCAPE WIN_PATH TIME_BRANCH; do
             echo "$out" | grep -q "\"$id\"" || { echo "auditor missed $id"; exit 1; }
           done
+          # 3. the house headroom rule must fire on a description that is legal upstream
+          #    but has no room left for a "NOT for …" clause
+          rm -rf /tmp/aud/wide && mkdir -p /tmp/aud/wide
+          python3 - <<'PY'
+          import pathlib
+          d = "Use when doing a thing - \"сделай\". " + "padding phrase. " * 60
+          pathlib.Path("/tmp/aud/wide/SKILL.md").write_text(
+              f"---\nname: wide\ndescription: {d[:1000]}\n---\n\n# Wide\n", encoding="utf-8")
+          PY
+          if python3 "$S/scripts/audit_skill.py" /tmp/aud/wide --house --json | grep -q DESC_HEADROOM; then
+            echo "OK: auditor flags a description with no headroom"
+          else
+            echo "ERROR: auditor missed DESC_HEADROOM"; exit 1
+          fi
           echo "OK: auditor clean on its own skill, nine defects found on the fixture"
 
       - name: Hook is silent unless a SKILL.md was written

@@ -30,6 +30,10 @@ import sys
 # --- limits, each with the authority that sets it --------------------------
 NAME_MAX = 64           # spec: name is 1-64 characters
 DESC_MAX = 1024         # spec: description is 1-1024 characters
+# House working limit: 5% under the cap. The description is the whole triggering
+# budget AND the field that must grow when a near-miss skill appears ("say what
+# it is NOT for"). A description at 98% of cap cannot absorb that sentence.
+DESC_TARGET = 970
 COMPAT_MAX = 500        # spec: compatibility is 1-500 characters
 BODY_MAX_LINES = 500    # spec + Anthropic: keep the body under 500 lines
 BODY_MAX_TOKENS = 5000  # spec + Anthropic: level-2 budget
@@ -224,6 +228,14 @@ def _check_description(a, fm, lines, rel, house):
             a.gap("DESC_RU", "description carries no Russian trigger phrases (house rule)", rel, ln)
         else:
             a.ok("DESC_RU", "description carries Russian trigger phrases (house rule)", rel, ln)
+        if DESC_TARGET < len(desc) <= DESC_MAX:
+            a.gap("DESC_HEADROOM", "description is %d chars — inside the %d cap but past the "
+                  "%d working limit (house rule): leave room for the 'what this is NOT for' "
+                  "clause a near-miss neighbour will require"
+                  % (len(desc), DESC_MAX, DESC_TARGET), rel, ln)
+        elif len(desc) <= DESC_TARGET:
+            a.ok("DESC_HEADROOM", "description is %d/%d chars, inside the working limit"
+                 % (len(desc), DESC_TARGET), rel, ln)
 
 
 def _check_optional_fields(a, fm, lines, rel):

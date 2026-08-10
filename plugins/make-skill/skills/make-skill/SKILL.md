@@ -1,11 +1,11 @@
 ---
 name: make-skill
-description: Use when creating, upgrading, auditing, or publishing agent skills and Claude Code plugins - "make a skill" / "сделай скилл", "new skill" / "новый скилл", "wrap it in a plugin" / "заверни в плагин", "publish a skill" / "опубликуй скилл", "retrofit a skill to the standard" / "приведи скилл к стандарту", "does this skill match the spec" / "соответствует ли скилл стандарту", "plugin.json / marketplace.json" / "claude plugin validate fails" / "проверь плагин по документации Anthropic", "is this skill safe to install" / "безопасно ли ставить этот скилл" - or when a skill must reach an MCP server or another agent over A2A. Encodes the Agent Skills open standard AND Anthropic's platform rules (front-matter limits, disclosure budgets, Skills API surfaces, evals), the Claude Code plugin reference (manifest schemas, component layout, validate --strict), plus the proven ssheleg pipeline - marketplace layout, version sync, validator+CI, multi-agent distribution, npm gotchas, end-to-end first publish.
+description: Use when creating, upgrading, auditing, or publishing agent skills and Claude Code plugins - "make a skill" / "сделай скилл", "wrap it in a plugin" / "заверни в плагин", "publish a skill" / "опубликуй скилл", "retrofit a skill to the standard" / "приведи скилл к стандарту", "does this skill match the spec" / "соответствует ли скилл стандарту", "claude plugin validate fails" / "проверь плагин по документации Anthropic", "is this skill safe to install" / "безопасно ли ставить этот скилл" - or when a skill must reach an MCP server or another agent over A2A. NOT for a version bump or release in a repo that ships anything but a skill or plugin. Encodes the Agent Skills open standard and Anthropic's platform rules (front-matter limits, budgets, the Skills API, evals), the Claude Code plugin reference (manifest schemas, component layout, validate --strict), plus the ssheleg pipeline - marketplace layout, version sync, validator+CI, distribution, npm gotchas.
 license: MIT
 compatibility: Authoring works on any agent. The bundled scripts/ need python3. Publishing steps need git, gh, node and npm; the plugin gates need the claude CLI. Not usable on the Claude API surface, which has no network and no runtime package install.
 metadata:
   author: ssheleg
-  version: "0.11.0"
+  version: "0.11.1"
   homepage: https://github.com/ssheleg/make-skill
 ---
 
@@ -95,7 +95,9 @@ differences and the checklist: `references/agent-skills-spec.md`.
 House additions on top of the spec:
 
 - `description` starts "Use when …" and lists concrete trigger phrases — English
-  AND Russian (user works in both). A skill nobody triggers is dead weight.
+  AND Russian (user works in both). A skill nobody triggers is dead weight. Hold
+  **5% headroom here too** (≤970 of 1024): a near-miss neighbour forces a "NOT
+  for …" clause, and a description at 98% of cap has nowhere to put it.
 - One naming pattern, preferably gerund (`processing-pdfs`); never `helper`,
   `utils`, `tools`, `data` — vague names lose every selection.
 - One skill = one job. Multiple concerns → multiple skills + a shared contract
@@ -110,8 +112,8 @@ House additions on top of the spec:
 - **Evals before prose:** run the target task with NO skill, record the
   failures, write ≥3 evaluations against them, then write the minimum that
   passes; a skill built without a baseline documents imagined problems. Adding
-  to an existing family → test **coexistence**: a broad description steals the
-  triggers of the skills already installed.
+  to an existing family → **measure coexistence against the INSTALLED set**, do
+  not guess it: the neighbour you would name is usually not the nearest one.
 - Ship a one-command entry point: idempotent — inspect state → repair missing
   pieces → status report → exactly ONE suggested next action. Detect mode, never
   ask. **The skill IS that command**; the invocation differs by channel
@@ -290,9 +292,9 @@ agent is **A2A** (`a2a.md`). Non-negotiables for any such skill:
   chars/token, cl100k gives 3.8–4.5). Budget against a tokenizer and expect the
   CLI to look alarming for a body already inside 5000 real tokens.
 - **A number you typed by hand is an assertion, not documentation.** Counts of
-  files, steps and checklist items drift the release after you write them —
-  this canon shipped "13-item" beside "14-item" and "ten references" beside
-  eleven. Compute it, or have the validator compare it to the artifact.
+  files, steps and checklist items drift the release after you write them — this
+  canon shipped "13-item" beside "14-item". Compute it, or have the validator
+  compare it to the artifact.
 
 ## Release (every version)
 
@@ -308,8 +310,7 @@ session:
   --yes && rm -f ~/.claude/skills/<name>`, then remind about the restart;
 - **move the family pin in the SAME session.** A member released without its
   umbrella pin bumped is invisible: `list` advertises the old version and
-  `update` installs it. Seen here 2026-08-10 — npm served make-skill 0.10.0
-  while `sshlg-skills list` still said 0.9.1;
+  `update` installs it (seen here 2026-08-10);
 - **arm the tag-triggered release workflow** (`RELEASE_ENABLED`,
   `PUBLISH_NPMJS`, off by default) so the next release needs no human. Manual
   publishing is how a registry ends up behind its own tags — six of seven

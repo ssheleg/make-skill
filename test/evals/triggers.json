@@ -1,10 +1,34 @@
 {
   "skill": "make-skill",
-  "note": "20 queries, 10 should fire and 10 near-misses that share keywords. Run each 3x in a fresh session; pass threshold 0.5. See README.md.",
+  "note": "22 queries, 11 should fire and 11 near-misses that share keywords. Run each 3x in a fresh session; pass threshold 0.5. q21/q22 cover the measured nearest neighbour, claude-mem:version-bump, which claims the same manifest-bump-and-release job. See README.md.",
   "split": {
-    "comment": "60/40, fixed across iterations, and BOTH classes appear on both sides — a split that puts every positive in train can only measure false-firing.",
-    "train": ["q01", "q02", "q03", "q04", "q05", "q06", "q11", "q12", "q13", "q14", "q15", "q16"],
-    "validation": ["q07", "q08", "q09", "q10", "q17", "q18", "q19", "q20"]
+    "comment": "60/40, fixed across iterations, and BOTH classes appear on both sides — a split that puts every positive in train can only measure false-firing. q21/q22 sit on opposite sides on purpose: the near-miss must be measured in validation.",
+    "train": [
+      "q01",
+      "q02",
+      "q03",
+      "q04",
+      "q05",
+      "q06",
+      "q11",
+      "q12",
+      "q13",
+      "q14",
+      "q15",
+      "q16",
+      "q21"
+    ],
+    "validation": [
+      "q07",
+      "q08",
+      "q09",
+      "q10",
+      "q17",
+      "q18",
+      "q19",
+      "q20",
+      "q22"
+    ]
   },
   "queries": [
     {
@@ -146,6 +170,20 @@
       "query": "почини CI, он падает на линтере",
       "should_trigger": false,
       "why": "shares CI failure vocabulary, unrelated repo"
+    },
+    {
+      "id": "q21",
+      "lang": "en",
+      "query": "bump the version across marketplace.json, plugin.json and package.json and cut the release for my Claude Code plugin",
+      "should_trigger": true,
+      "why": "the release checklist is this skill's — the artifact being released IS a skill/plugin. Measured near-miss: claude-mem:version-bump advertises the same manifest set"
+    },
+    {
+      "id": "q22",
+      "lang": "ru",
+      "query": "подними версию во всех манифестах и выпусти релиз нашего десктопного приложения",
+      "should_trigger": false,
+      "why": "тот же словарь релиза, но артефакт не скил и не плагин — это случай для version-bump или обычной работы, а не для этого скила"
     }
   ]
 }
