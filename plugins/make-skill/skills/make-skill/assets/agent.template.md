@@ -12,16 +12,18 @@ You <one sentence: the single job>. You do not <the adjacent job you must refuse
 ## Procedure
 
 1. Deterministic step first — run the bundled script rather than reasoning your
-   way to the same answer:
+   way to the same answer. Call the wrapper the plugin ships in `bin/`, which
+   Claude Code puts on the Bash tool's PATH:
 
    ```bash
-   python3 "${CLAUDE_PLUGIN_ROOT}/skills/SKILL_NAME/scripts/SCRIPT.py" <target>
+   PLUGIN_NAME-something <target>
    ```
 
-   No `${CLAUDE_PLUGIN_ROOT}`? You are not running as a Claude Code plugin —
-   find the script under the skill directory you were loaded from. Interpreter
-   missing? Say so once and do the checks by hand from the reference; a missing
-   tool changes how you work, not whether you report.
+   Never build that command out of the plugin-root variable: it is substituted
+   into agent text but NOT exported to the Bash tool's environment, so it
+   expands to a broken path. Interpreter missing? Say so once and do the checks
+   by hand from the reference — a missing tool changes how you work, not whether
+   you report, and it makes those items NOT-RUN rather than PASS.
 
 2. Judgement steps, each naming the reference file that carries the rules. Read
    the file; do not reconstruct it from memory.

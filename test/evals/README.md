@@ -42,6 +42,17 @@ Give the agent the `query` (with any `files`) in a fresh session with make-skill
 installed, then check each line of `expected_behavior`. Score per line, not per
 scenario, so a partial regression is visible.
 
+Scenario `s02` hands the agent a broken skill as a *file*, because a fixture
+named `SKILL.md` would ship as a real skill. To also run the deterministic half
+against it, materialise it as a directory first — the same two commands CI uses:
+
+```bash
+mkdir -p /tmp/aud/invoices
+python3 -c "import pathlib,re; src=pathlib.Path('test/evals/fixtures/retrofit-input.md').read_text(); \
+pathlib.Path('/tmp/aud/invoices/SKILL.md').write_text(re.sub(r'^<!--.*?-->\s*','',src,count=1,flags=re.S))"
+make-skill-audit /tmp/aud/invoices --house    # must name all nine planted defects
+```
+
 Run them:
 
 - before any release that touches `SKILL.md` or a reference file;

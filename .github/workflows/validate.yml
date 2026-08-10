@@ -270,12 +270,81 @@ jobs:
             echo "OK: validator rejects Claude Code violation '$case'"
           done
 
+      - name: Negative self-test (claims about the repo, and runnable commands)
+        run: |
+          set -eu
+          # Everything here shipped at least once and was invisible to every rule
+          # that existed at the time: a count typed into prose, a card pinned two
+          # releases back, a reference the README never learned about, a path
+          # variable in a command that cannot run, and a Cursor rule prescribing a
+          # layout this validator rejects.
+          for case in claim:'claims' cardver:'SKILL-CARD' readmeref:'README' \
+                      bodyvar:'substituted' cmdvar:'cannot run' mdclayout:'templates' \
+                      headroom:'headroom' xmldrift:'XML_TAG_RE'; do
+            name="${case%%:*}"; expect="${case#*:}"
+            rm -rf "/tmp/cl-$name"
+            cp -R . "/tmp/cl-$name"
+            CASE="$name" python3 - <<'PY'
+          import os, pathlib, re
+          case = os.environ["CASE"]
+          root = pathlib.Path(f"/tmp/cl-{case}")
+          skill = root / "plugins/make-skill/skills/make-skill/SKILL.md"
+          if case == "claim":        # a counted claim that no longer matches its artifact
+              p = root / "README.md"
+              p.write_text(p.read_text(encoding="utf-8").replace("14-item", "13-item", 1),
+                           encoding="utf-8")
+          elif case == "cardver":    # the reviewer's card pinned to an older release
+              p = root / "SKILL-CARD.md"
+              p.write_text(re.sub(r"(\*\*Version\*\*\s*\|\s*)[0-9][^\s|]*", r"\g<1>0.0.1",
+                                  p.read_text(encoding="utf-8"), count=1), encoding="utf-8")
+          elif case == "readmeref":  # a shipped reference the README never mentions
+              (root / "plugins/make-skill/skills/make-skill/references/newthing.md").write_text(
+                  "# newthing\n\n**Load this when:** never.\n")
+              skill.write_text(skill.read_text(encoding="utf-8")
+                               + "\nSee `references/newthing.md` when nothing.\n", encoding="utf-8")
+          elif case == "bodyvar":    # a path variable in the body renders as a path
+              skill.write_text(skill.read_text(encoding="utf-8")
+                               + "\nHooks and ${CLAUDE_PLUGIN_ROOT} live in Claude Code.\n",
+                               encoding="utf-8")
+          elif case == "cmdvar":     # a command the agent cannot actually run
+              p = root / "plugins/make-skill/commands/skill-audit.md"
+              p.write_text(p.read_text(encoding="utf-8").replace(
+                  "make-skill-audit <skill-dir> --house",
+                  'python3 "${CLAUDE_PLUGIN_ROOT}/skills/make-skill/scripts/audit_skill.py" x',
+                  1), encoding="utf-8")
+          elif case == "mdclayout":  # the Cursor rule teaching a rejected layout
+              p = root / "cursor/rules/make-skill.mdc"
+              p.write_text(p.read_text(encoding="utf-8").replace(
+                  "cursor/rules/*.mdc ", "templates/*.md\ncursor/rules/*.mdc ", 1),
+                  encoding="utf-8")
+          elif case == "headroom":   # inside the 5000 ceiling, past the working limit
+              t = skill.read_text(encoding="utf-8")
+              body = re.sub(r"^---\n.*?\n---\n", "", t, count=1, flags=re.S)
+              need = int(4750 * 3.9) - len(body) + 40
+              skill.write_text(t + "\n" + ("p" * max(need, 40)) + "\n", encoding="utf-8")
+          else:                      # the two validators disagreeing on one rule
+              p = root / "plugins/make-skill/skills/make-skill/scripts/audit_skill.py"
+              p.write_text(re.sub(r'^XML_TAG_RE = re\.compile\(r".+"\)$',
+                                  'XML_TAG_RE = re.compile(r"<different>")',
+                                  p.read_text(encoding="utf-8"), count=1, flags=re.M),
+                           encoding="utf-8")
+          PY
+            if out=$(python3 "/tmp/cl-$name/test/validate.py" 2>&1); then
+              echo "ERROR: validator passed claim/command violation '$name'"; exit 1
+            fi
+            if ! echo "$out" | grep -qi -- "$expect"; then
+              echo "ERROR: '$name' failed for the wrong reason (no '$expect'):"; echo "$out"; exit 1
+            fi
+            echo "OK: validator rejects '$name' with the right message"
+          done
+
       - name: Bundled auditor (clean on its own skill, finds every planted defect)
         run: |
           set -eu
           S=plugins/make-skill/skills/make-skill
-          # 1. the skill that ships the auditor must pass it, house rules included
-          python3 "$S/scripts/audit_skill.py" "$S" --house
+          # 1. the skill that ships the auditor must pass it, house rules included —
+          #    through the bin/ wrapper, which is the invocation the docs promise
+          ./plugins/make-skill/bin/make-skill-audit "$S" --house
           # 2. the evaluation fixture, materialised as a skill directory, must fail
           #    with every one of its nine planted defects named
           rm -rf /tmp/aud && mkdir -p /tmp/aud/invoices
@@ -325,7 +394,12 @@ jobs:
       - name: npm installer functional test (fresh / rerun-skip / --force)
         run: |
           set -eu
+          # Start from an empty HOME. On a CI runner it always is; on a developer
+          # machine running this suite locally (CONTRIBUTING promises that works)
+          # a previous run's copy is still there, and "fresh install" silently
+          # becomes "rerun-skip".
           export HOME=/tmp/fakehome
+          rm -rf "$HOME"
           mkdir -p "$HOME"
           node bin/make-skill.js
           test -f "$HOME/.claude/skills/make-skill/SKILL.md"
@@ -333,7 +407,7 @@ jobs:
           # name registers /make-skill twice (see `claude plugin details`)
           test ! -e "$HOME/.claude/commands/make-skill.md"
           # references must travel with the skill — relative links break otherwise
-          for r in agent-skills-spec authoring surfaces enterprise retrofit host-capabilities claude-code-plugin distribution mcp a2a; do
+          for r in agent-skills-spec authoring surfaces enterprise retrofit host-capabilities claude-code-plugin distribution mcp mcp-ship a2a; do
             test -f "$HOME/.claude/skills/make-skill/references/$r.md"
           done
           # scripts and skeletons must travel too — they are the half that works
@@ -348,7 +422,17 @@ jobs:
           if node bin/make-skill.js --wat; then
             echo "ERROR: unknown arg accepted"; exit 1
           fi
-          echo "OK: npm installer behaves"
+          # One channel per agent: with the plugin present, a plain copy would
+          # shadow it and the stale copy wins. Both installers must refuse.
+          mkdir -p "$HOME/.claude/plugins/marketplaces/make-skill"
+          rm -rf "$HOME/.claude/skills/make-skill"
+          node bin/make-skill.js | grep -q 'already installed as a Claude Code plugin'
+          test ! -e "$HOME/.claude/skills/make-skill"
+          ./install.sh | grep -q 'already installed as a Claude Code plugin'
+          test ! -e "$HOME/.claude/skills/make-skill"
+          node bin/make-skill.js --force | grep -q '^Installed'
+          rm -rf "$HOME/.claude/plugins/marketplaces"
+          echo "OK: npm installer behaves, and neither installer creates a shadow"
 
       - name: Workflow YAML parses (validate + release)
         run: |

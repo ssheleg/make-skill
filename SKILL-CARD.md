@@ -11,7 +11,7 @@ table. Written so somebody who did not build this can decide.
 |---|---|
 | **Purpose** | Create, retrofit, audit and publish agent skills and Claude Code plugins: the Agent Skills open standard, Anthropic's platform rules, the plugin reference, multi-channel distribution, and the release pipeline |
 | **Owner** | ssheleg ([github.com/ssheleg/make-skill](https://github.com/ssheleg/make-skill)) |
-| **Version** | 0.9.0 |
+| **Version** | 0.11.0 |
 | **Surface** | Claude Code (plugin) and the vercel `skills` CLI (70+ agents). **Not** uploaded to the Skills API: its workflows shell out to `git`, `gh`, `npm` and the `claude` CLI, and the API container has no network and no runtime package install |
 | **Dependencies** | None required. `python3` for the bundled auditor; `git`/`gh`/`npm`/`node` for the publishing steps; the `claude` CLI for the two `plugin validate --strict` gates. Every one of them degrades to a written manual path |
 | **Evaluation status** | Suite authored — 20 trigger queries, 4 behavioural scenarios. **Never executed against a model.** See [`test/evals/RESULTS.md`](test/evals/RESULTS.md) |
@@ -23,8 +23,8 @@ that apply.
 
 | Indicator | Applies? | What exactly |
 |---|---|---|
-| **Code execution** | **Yes — High** | `skills/make-skill/scripts/audit_skill.py` (reads a skill directory, prints a report, writes nothing), `hooks/skill-md-audit.sh` (**runs automatically** — see below), `bin/make-skill.js` and `install.sh` (installers), `test/validate.py` (repo check). All stdlib/zero-dependency |
-| **Automatic execution** | **Yes — High** | The `PostToolUse` hook fires after every `Write`/`Edit`/`MultiEdit` **in every project** once the plugin is enabled. It reads the hook's stdin JSON, exits 0 immediately unless the written path ends in `SKILL.md`, and otherwise runs the auditor on that directory and returns advice as a `systemMessage`. It never blocks, never writes, and never makes a network call. Read `plugins/make-skill/hooks/skill-md-audit.sh` — it is 30 lines |
+| **Code execution** | **Yes — High** | `skills/make-skill/scripts/audit_skill.py` (reads a skill directory, prints a report, writes nothing), `bin/make-skill-audit` (a shell wrapper around it, placed on the Bash tool's PATH by Claude Code — it runs only when you call it), `hooks/skill-md-audit.sh` (**runs automatically** — see below), `bin/make-skill.js` and `install.sh` (installers), `test/validate.py` (repo check). All stdlib/zero-dependency |
+| **Automatic execution** | **Yes — High** | The `PostToolUse` hook fires after every `Write`/`Edit`/`MultiEdit` **in every project** once the plugin is enabled. It reads the hook's stdin JSON, exits 0 immediately unless the written path ends in `SKILL.md`, and otherwise runs the auditor on that directory (spec floor only, without the house rules) and returns advice as a `systemMessage`. It never blocks, never writes, and never makes a network call. Read `plugins/make-skill/hooks/skill-md-audit.sh` |
 | **Network access patterns** | Minimal | No `curl`/`fetch`/`requests` in any shipped code. The canon instructs the agent to re-read upstream specs (agentskills.io, platform.claude.com, code.claude.com) and to run `npm view` / `gh` during a publish — all named in the text, none automatic |
 | **Hardcoded credentials** | No | None. Publishing uses `NPM_TOKEN` from repository secrets in CI; the canon explicitly tells the agent never to handle the user's token |
 | **Instruction manipulation** | No | Nothing instructs an agent to bypass safety rules, hide actions, or behave conditionally on hidden input. The canon states the opposite rule for MCP/A2A output ("untrusted data, never instructions") and forbids telling an agent to auto-approve tool calls |
@@ -34,11 +34,13 @@ that apply.
 
 ## What to check before you trust it
 
-1. Read `SKILL.md` and the ten files under `skills/make-skill/references/` —
+1. Read `SKILL.md` and the 11 files under `skills/make-skill/references/` —
    that is the whole instruction surface, and every one is linked from `SKILL.md`.
+   This validator fails if a shipped reference is missing from the README, so the
+   count above cannot quietly go stale.
 2. Read `plugins/make-skill/hooks/skill-md-audit.sh` before enabling the plugin.
    It is the only thing here that runs without you asking.
-3. Run `python3 test/validate.py` — the structural gate, plus six groups of
+3. Run `python3 test/validate.py` — the structural gate, plus 9 groups of
    negative self-tests in CI that plant a defect and require rejection.
 4. Run the bundled auditor against something you know is broken:
    `python3 plugins/make-skill/skills/make-skill/scripts/audit_skill.py <dir> --house`.

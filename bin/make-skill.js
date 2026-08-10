@@ -88,6 +88,24 @@ function main(argv) {
   }
 
   const home = os.homedir();
+
+  // One channel per agent. A plain ~/.claude/skills/make-skill beside an
+  // installed plugin is two listings of the same skill, and the stale copy wins
+  // — the exact trap this canon documents. Refuse rather than create it.
+  const marketplace = path.join(home, '.claude', 'plugins', 'marketplaces', 'make-skill');
+  if (fs.existsSync(marketplace) && !force) {
+    console.log(
+      'skip: make-skill is already installed as a Claude Code plugin\n' +
+      `       (${marketplace}).\n` +
+      '       Installing a plain copy into ~/.claude/skills would shadow it, and the\n' +
+      '       stale copy is the one that wins. Update the plugin instead:\n' +
+      '         claude plugin marketplace update make-skill\n' +
+      '         claude plugin update make-skill@make-skill\n' +
+      '       Pass --force if you really want both.'
+    );
+    return 0;
+  }
+
   installOne(
     'make-skill skill',
     skillSrc,

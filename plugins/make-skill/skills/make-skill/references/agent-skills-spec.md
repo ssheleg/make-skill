@@ -154,4 +154,6 @@ Rules:
 - [ ] runtime needs (network, packages) declared in `compatibility` —
       `references/surfaces.md`
 - [ ] `skills-ref validate ./<skill dir>` passes (upstream truth), in addition to
-      `test/validate.py` (house rules)
+      `test/validate.py` (house rules). It installs from source only, so on most
+      machines the honest verdict is **NOT-RUN with that reason**
+      (`references/retrofit.md`) — never a PASS nobody earned

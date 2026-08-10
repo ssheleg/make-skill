@@ -271,6 +271,15 @@ They substitute in skill/agent content, hook and monitor commands, MCP
 `command`/`args`/`env`/`workspaceFolder`. In shell-form commands, quote them:
 `"${CLAUDE_PLUGIN_ROOT}"/scripts/x.sh`.
 
+**They are NOT exported to the Bash tool.** Substitution into text and export
+into a process are different things: a hook script sees `CLAUDE_PLUGIN_ROOT` in
+its environment, a `Bash` tool call does not (measured empty on 2.1.220). So a
+skill that *prints* the variable gets a real path, and a skill that tells the
+agent to *run* a command containing it gets `/skills/...` and a missing-file
+error. Put runnable scripts in the plugin's `bin/`, which lands on the Bash
+tool's PATH, and call them by name — `references/host-capabilities.md` →
+*Scripts*.
+
 **Portability:** all four are Claude Code inventions. A skill that must also run
 on other agents references bundled files by **relative path** and treats the
 variables as an optimization, not the contract.

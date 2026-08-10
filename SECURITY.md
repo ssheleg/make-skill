@@ -24,15 +24,21 @@ is the only thing that runs without you asking:
   author skills it is a no-op you never see. When it is a `SKILL.md`, it runs
   the bundled auditor on that directory and returns the report as advice
   (`systemMessage`). It never blocks, never writes a file, never makes a network
-  call, and needs no `jq`. Thirty lines; read them before enabling the plugin.
+  call, and needs no `jq`. Read it before enabling the plugin — it is short.
 - **`skills/make-skill/scripts/audit_skill.py`** reads a skill directory and
   prints a report. Standard library only. It writes nothing and is run by you,
   the `/skill-audit` command, the subagent, or the hook above.
+- **`plugins/make-skill/bin/make-skill-audit`** is a POSIX-shell wrapper that
+  Claude Code places on the Bash tool's PATH while the plugin is enabled. It
+  resolves the auditor relative to its own location and `exec`s it; it runs only
+  when you invoke it, and it touches nothing else.
 - **`bin/make-skill.js`** (run via `npx`) and **`install.sh`** copy the skill
   directory into `~/.claude/skills/make-skill` and nothing else — no command file,
-  no other path in `$HOME` — and overwrite only with `--force`. Both are
-  zero-dependency: no network calls, no postinstall script. CI asserts the
-  absence of `~/.claude/commands/make-skill.md` on every run.
+  no other path in `$HOME` — and overwrite only with `--force`. Both refuse to
+  install at all when the Claude Code plugin is present, rather than leaving a
+  plain copy that shadows it. Both are zero-dependency: no network calls, no
+  postinstall script. CI asserts the absence of `~/.claude/commands/make-skill.md`
+  on every run.
 - **`test/validate.py`** reads repository files and exits with a status. It writes
   nothing. `test/evals/` is inert data — text a human feeds to an agent — and
   `test/evals/fixtures/untrusted-skill.md` is a deliberately malicious *sample*

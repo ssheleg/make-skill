@@ -159,7 +159,11 @@ plg_ver = plg.get("version") if plg else None
 # they are enforced, i.e. on someone else's machine. Read 2026-08-03.
 SPEC_KEYS = {"name", "description", "license", "compatibility", "metadata", "allowed-tools"}
 RESERVED_NAME_WORDS = ("anthropic", "claude")
-XML_TAG_RE = re.compile(r"<[^<>]+>")
+# One rule, one pattern — compared against scripts/audit_skill.py further down,
+# so the shipped auditor and this validator cannot drift apart. The leading
+# non-space class keeps ordinary prose ("a < b > c") out of it.
+XML_TAG_PATTERN = r"<[^<>\s][^<>]*>"
+XML_TAG_RE = re.compile(XML_TAG_PATTERN)
 # "Always write in third person" — the description is injected into the system
 # prompt, and first/second person degrades skill selection.
 PERSON_RE = re.compile(
@@ -176,6 +180,8 @@ CC_SKILL_KEYS = {
 NAME_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 BODY_MAX_LINES = 500
 BODY_MAX_TOKENS = 5000
+# The working limit: 5% under the ceiling. See the budget check for why.
+BODY_TARGET_TOKENS = 4750
 CHARS_PER_TOKEN = 3.9  # measured, not assumed — see the comment at the budget check
 # Anthropic best practices: a reference longer than this gets a table of contents,
 # because a partial `head` read is what the agent often sees.
@@ -327,6 +333,26 @@ else:
              f"{CHARS_PER_TOKEN}), budget is < {BODY_MAX_TOKENS} — every token "
              "competes with the user's actual task. Move a section into "
              "references/ with a stated load trigger")
+    elif est_tokens >= BODY_TARGET_TOKENS:
+        # v0.10.0 shipped at ~4995 of 5000: correct in the letter, and it made
+        # the next one-word correction a fight with this validator. Headroom is
+        # the difference between a canon that can be fixed and one that can only
+        # be traded against itself.
+        fail(f"SKILL.md body is ~{est_tokens} tokens — inside the {BODY_MAX_TOKENS} "
+             f"ceiling but past the {BODY_TARGET_TOKENS} working limit (5% headroom). "
+             "A body at 99% of budget cannot absorb a correction. Move a section "
+             "into references/ before adding one")
+
+    # A path variable in the BODY is substituted at load time, so the agent reads
+    # an absolute path where a capability was named ("Hooks, subagents, /commands,
+    # /Users/.../0.10.0 and MCP servers exist only inside Claude Code" — shipped
+    # in v0.9.0). It is also empty in the Bash tool, so a command built from one
+    # cannot run. Neither belongs in the body: reference files may discuss it.
+    for var in re.findall(r"\$\{CLAUDE_[A-Z_]+\}", body):
+        fail(f"SKILL.md body contains {var} — it is substituted into the body at "
+             "load time (prose becomes a filesystem path) and is empty in the Bash "
+             "tool (a command built from it cannot run). Name the capability, and "
+             "ship runnable scripts in the plugin's bin/, which lands on PATH")
 
 # references/ must exist, stay one level deep, and each file must be reachable
 refs_dir = os.path.join(SKILL_DIR, "references")
@@ -541,6 +567,14 @@ for f in mdcs:
     for target in re.findall(r"\[[^\]]*\]\(([^)\s]+)\)", mtxt):
         if not target.startswith(("http://", "https://", "mailto:", "#")):
             fail(f"cursor/rules/{f}: relative link {target!r} — .mdc must embed contracts inline")
+    # The Cursor rule is a fourth copy of the canon and drifted from it: through
+    # v0.10.0 its layout block still prescribed a repo-root templates/, which the
+    # stray-SKILL.md rule below rejects outright. A user following the shipped
+    # rule built a repo this validator refuses.
+    if re.search(r"^templates/", mtxt, re.M):
+        fail(f"cursor/rules/{f}: prescribes a repo-root templates/ — that reaches no "
+             "agent through any channel and this validator rejects it. Skeletons live "
+             "in skills/<skill>/assets/, and the .mdc must say the same as the canon")
 
 # assets/: the skeletons must NOT be named SKILL.md — the skills CLI discovers
 # every SKILL.md in the repo and would ship the placeholder as a real skill.
@@ -684,6 +718,126 @@ if scen is not None:
             if not os.path.isfile(os.path.join(ROOT, rel)):
                 fail(f"test/evals/scenarios.json: scenario {sid!r} points at missing "
                      f"file {rel!r}")
+
+# --- claims about the repo must match the repo ------------------------------
+# Every defect this section catches shipped at least once: "13-item" beside
+# "14-item", "ten files" beside eleven, "six groups" beside eight, a SKILL-CARD
+# pinned two releases back. None of them were catchable by any rule above,
+# because a number typed into prose is an assertion and nothing was comparing it
+# to the artifact. CHANGELOG.md and docs/superpowers/ are exempt: they are
+# history, and a past entry is allowed to quote the count that was true then.
+CLAIM_SKIP_DIRS = (os.path.join("docs", "superpowers"), os.path.join("test", "evals", "fixtures"))
+CLAIM_SKIP_FILES = {"CHANGELOG.md"}
+
+
+def tracked_docs():
+    for dirpath, dirnames, filenames in os.walk(ROOT):
+        dirnames[:] = [d for d in dirnames if d not in (".git", "node_modules")]
+        rel_dir = os.path.relpath(dirpath, ROOT)
+        if any(rel_dir.startswith(s) for s in CLAIM_SKIP_DIRS):
+            continue
+        for fn in sorted(filenames):
+            if not fn.endswith((".md", ".mdc")):
+                continue
+            rel = os.path.relpath(os.path.join(dirpath, fn), ROOT)
+            if rel in CLAIM_SKIP_FILES:
+                continue
+            yield rel, open(os.path.join(dirpath, fn), encoding="utf-8").read()
+
+
+retrofit_path = os.path.join(refs_dir, "retrofit.md")
+retrofit_items = 0
+if os.path.isfile(retrofit_path):
+    retrofit_items = len(re.findall(r"^\d+\. \*\*", open(retrofit_path, encoding="utf-8").read(), re.M))
+ref_files = sorted(f for f in os.listdir(refs_dir) if f.endswith(".md")) if os.path.isdir(refs_dir) else []
+wf_path = os.path.join(ROOT, ".github/workflows/validate.yml")
+wf_txt = open(wf_path, encoding="utf-8").read() if os.path.isfile(wf_path) else ""
+selftest_groups = wf_txt.count("name: Negative self-test")
+
+COUNTED_CLAIMS = [
+    (re.compile(r"(\d+)-item checklist"), retrofit_items,
+     "numbered items in references/retrofit.md"),
+    (re.compile(r"the (\d+) files under `skills/make-skill/references/`"), len(ref_files),
+     "*.md in the skill's references/"),
+    (re.compile(r"(\d+) groups of negative self-tests"), selftest_groups,
+     "'Negative self-test' steps in .github/workflows/validate.yml"),
+    (re.compile(r"(\d+) negative self-test groups"), selftest_groups,
+     "'Negative self-test' steps in .github/workflows/validate.yml"),
+]
+
+for rel, txt in tracked_docs():
+    for pattern, actual, source in COUNTED_CLAIMS:
+        for claimed in pattern.findall(txt):
+            if int(claimed) != actual:
+                fail(f"{rel}: claims {claimed} where the repo has {actual} ({source}) "
+                     "— compute the number or have this validator compare it, but do "
+                     "not type it")
+
+# every shipped reference must be listed in the README too: v0.10.0 added
+# mcp-ship.md to SKILL.md alone, so the README's "what ships with it" table told
+# a reader the instruction surface was one file smaller than it is
+readme_txt = ""
+readme_path = os.path.join(ROOT, "README.md")
+if os.path.isfile(readme_path):
+    readme_txt = open(readme_path, encoding="utf-8").read()
+    for entry in ref_files:
+        if f"`{entry}`" not in readme_txt:
+            fail(f"README.md never mentions references/{entry} — the table that tells a "
+                 "reader what ships must list every reference the skill actually ships")
+
+# SKILL-CARD.md is the registry entry a reviewer reads before installing; a stale
+# version there is the one field that makes the whole card untrustworthy
+card_path = os.path.join(ROOT, "SKILL-CARD.md")
+if os.path.isfile(card_path) and plg_ver:
+    card = open(card_path, encoding="utf-8").read()
+    cm = re.search(r"\*\*Version\*\*\s*\|\s*([0-9][^\s|]*)", card)
+    if not cm:
+        fail("SKILL-CARD.md: no '**Version** | X.Y.Z' row — a registry entry without a "
+             "deployed version answers nothing")
+    elif cm.group(1) != plg_ver:
+        fail(f"SKILL-CARD.md: Version {cm.group(1)!r} != plugin.json {plg_ver!r}")
+
+# --- a runnable command may not be built from a path variable ----------------
+# ${CLAUDE_PLUGIN_ROOT} is substituted into skill/command/agent TEXT and exported
+# to hook processes, but it is EMPTY in the Bash tool. A documented command built
+# from it expands to "/skills/..." and dies — and an agent that cannot run the
+# deterministic half reasons through it instead and reports a PASS it never ran.
+# Reference files may discuss the variable; files that hand the agent commands
+# may not put it inside one.
+FENCE_RE = re.compile(r"```[a-zA-Z0-9]*\n(.*?)```", re.S)
+runnable = sorted(glob.glob(os.path.join(PLUGIN_DIR, "commands", "*.md"))
+                  + glob.glob(os.path.join(PLUGIN_DIR, "agents", "*.md"))
+                  + glob.glob(os.path.join(SKILL_DIR, "assets", "*.template.md")))
+for path in runnable:
+    rel = os.path.relpath(path, ROOT)
+    for block in FENCE_RE.findall(open(path, encoding="utf-8").read()):
+        for var in re.findall(r"\$\{CLAUDE_[A-Z_]+\}", block):
+            fail(f"{rel}: a command block contains {var}, which is empty in the Bash "
+                 "tool — the command cannot run. Ship a wrapper in the plugin's bin/ "
+                 "(Claude Code puts it on PATH) and call it by name")
+
+# executables the plugin puts on PATH
+plugin_bin = os.path.join(PLUGIN_DIR, "bin")
+if os.path.isdir(plugin_bin):
+    for entry in sorted(os.listdir(plugin_bin)):
+        full = os.path.join(plugin_bin, entry)
+        if not os.path.isfile(full):
+            continue
+        if not open(full, encoding="utf-8").readline().startswith("#!"):
+            fail(f"bin/{entry}: no shebang — it is executed by name off PATH")
+        if not os.access(full, os.X_OK):
+            fail(f"bin/{entry}: not executable (chmod +x)")
+
+# one rule, one implementation: the shipped auditor and this validator must apply
+# the same XML-tag test, or a skill passes one gate and fails the other
+aud_src = open(os.path.join(SKILL_DIR, "scripts", "audit_skill.py"), encoding="utf-8").read()
+am = re.search(r'^XML_TAG_RE = re\.compile\(r"(.+)"\)$', aud_src, re.M)
+if not am:
+    fail("scripts/audit_skill.py: XML_TAG_RE not found — this validator compares it")
+elif am.group(1) != XML_TAG_PATTERN:
+    fail(f"XML_TAG_RE differs: audit_skill.py has {am.group(1)!r}, validate.py has "
+         f"{XML_TAG_PATTERN!r} — one rule, two implementations, and a skill that "
+         "passes one gate fails the other")
 
 # required root files — a public repo also owes contributors an entry point and
 # a place to report something exploitable privately

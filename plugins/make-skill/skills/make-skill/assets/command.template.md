@@ -16,16 +16,17 @@ Two rules this skeleton exists to enforce:
 
 Do <the task> for `$ARGUMENTS`.
 
-1. The deterministic part, by script:
+1. The deterministic part, by script. Ship a wrapper in the plugin's `bin/`
+   (Claude Code puts it on the Bash tool's PATH) and call it by name:
 
    ```bash
-   python3 "${CLAUDE_PLUGIN_ROOT}/skills/SKILL_NAME/scripts/SCRIPT.py" $ARGUMENTS
+   PLUGIN_NAME-something $ARGUMENTS
    ```
 
-   Not running as a Claude Code plugin, so `${CLAUDE_PLUGIN_ROOT}` is unset? The
-   script is in the skill directory this file was installed beside. No
-   interpreter? Fall back to the manual procedure in the reference and say that
-   you did.
+   Do NOT build the command out of the plugin-root variable: it is substituted
+   into this text but is NOT exported to the Bash tool's environment, so the
+   command expands to a broken path. No interpreter? Fall back to the manual
+   procedure in the reference and say that you did.
 
 2. The judgement part, from `references/FILE.md`.
 

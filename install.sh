@@ -15,6 +15,19 @@ fi
 
 SRC="$HERE/plugins/make-skill/skills/make-skill"
 DEST="${HOME}/.claude/skills/make-skill"
+
+# One channel per agent: a plain copy beside an installed plugin is two listings
+# of the same skill, and the stale one wins. Refuse rather than create that.
+MARKETPLACE="${HOME}/.claude/plugins/marketplaces/make-skill"
+if [[ -e "$MARKETPLACE" && "$FORCE" -eq 0 ]]; then
+  echo "skip: make-skill is already installed as a Claude Code plugin ($MARKETPLACE)."
+  echo "      A plain copy in ~/.claude/skills would shadow it. Update the plugin:"
+  echo "        claude plugin marketplace update make-skill"
+  echo "        claude plugin update make-skill@make-skill"
+  echo "      Pass --force if you really want both."
+  exit 0
+fi
+
 if [[ -e "$DEST" && "$FORCE" -eq 0 ]]; then
   echo "skip: skill already installed at $DEST (rerun with --force to overwrite)"
 else

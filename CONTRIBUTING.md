@@ -22,7 +22,7 @@ Especially welcome:
   `plugins/make-skill/skills/make-skill/references/` no longer matches upstream,
   a correction with a link to the current source is the most valuable PR there is.
 - Support for a distribution channel that behaves differently from the documented
-  four.
+  five.
 
 Please open an issue first for anything that changes a workflow's shape — the
 canon is opinionated on purpose, and it's cheaper to discuss the opinion than the
@@ -38,7 +38,7 @@ python3 test/validate.py
 
 Exit 0 prints `PASS: …`. Every failure names the file and the rule.
 
-To run the entire CI suite locally exactly as GitHub does — validator, six
+To run the entire CI suite locally exactly as GitHub does — validator, 9
 negative self-test groups, installer functional tests against a throwaway `HOME`,
 and YAML parsing:
 
@@ -69,7 +69,10 @@ Fail these and CI stops you, so check them before pushing:
   `claude` (Anthropic's Skills API rejects those on upload); `description`
   ≤ 1024 chars, third person, no angle brackets; only fields from the spec or
   the Claude Code extension set present; the `SKILL.md` **body** under 500 lines
-  and under 5000 estimated tokens (chars/4 — no tokenizer in the stdlib).
+  and under 5000 estimated tokens — and under the 4750 **working limit**, so the
+  canon keeps 5% headroom and the next correction is not a fight with this
+  validator. The estimate is `chars / 3.9`, measured against cl100k rather than
+  assumed; `claude plugin details` uses ~2.8 and always looks worse.
 - **Reference files stay navigable.** Each one is linked from `SKILL.md`, opens
   with a `**Load this when:**` condition, and — past 100 lines — a `## Contents`
   list, because a partial `head` read is what an agent often gets.
@@ -96,7 +99,19 @@ Fail these and CI stops you, so check them before pushing:
 - **Reference files must be reachable** from `SKILL.md`, one level deep, and no
   link may escape the skill directory (packagers ship that directory alone).
 - **No relative links in `cursor/rules/*.mdc`** — those files get copied into
-  other people's projects, where a relative link dangles.
+  other people's projects, where a relative link dangles. The `.mdc` must also
+  not prescribe a layout the rest of the canon rejects: it is a fourth copy of
+  the doctrine, and it drifted once already.
+- **Claims about the repo must match the repo.** Counts of checklist items,
+  reference files and CI self-test groups are compared to the artifacts they
+  describe; `SKILL-CARD.md`'s version must equal `plugin.json`'s; every shipped
+  `references/*.md` must appear in the README. A number typed by hand is an
+  assertion, and each of these drifted before the rule existed.
+- **No runnable command built from a path variable.** `${CLAUDE_PLUGIN_ROOT}` is
+  substituted into skill/command/agent text and exported to hooks, but it is
+  empty in the Bash tool — so it may not appear in `SKILL.md`'s body at all, nor
+  inside a fenced command block in `commands/`, `agents/` or the templates. Ship
+  the executable in `plugins/<name>/bin/`, which Claude Code puts on PATH.
 
 - **The evaluation suite stays real.** `test/evals/triggers.json` keeps ~20
   queries with at least six near-miss negatives, and `test/evals/scenarios.json`
@@ -127,8 +142,10 @@ out when the workflow was read line by line.
 
 Conventional commits (`feat:`, `fix:`, `docs:`, `chore:`). Releases are cut from a
 `v*` tag by `.github/workflows/release.yml`, which is **off unless the repo
-variable `RELEASE_ENABLED` is `true`** — forks decide for themselves. Publishing
-to npm stays a human step (2FA).
+variable `RELEASE_ENABLED` is `true`** — forks decide for themselves. **The tag
+publishes to npm too**, once `PUBLISH_NPMJS` is armed; a manual `npm publish` is
+the fallback for a fork that has not armed it, never the normal path (see the
+family section below).
 
 You do not need to bump the version in a PR; say what changed and the maintainer
 will fold it into the next release.

@@ -40,10 +40,26 @@ jobs:
         with:
           ref: ${{ steps.t.outputs.tag }}
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
       - name: Structural validator (gate the release on a valid repo)
         run: |
           set -eu
           python3 test/validate.py
+
+      - name: Anthropic's own gate, on the tag (both manifests, --strict)
+        run: |
+          set -eu
+          # The validate workflow also runs on the tag, but it is a SEPARATE
+          # workflow: a red run there cannot stop this one from cutting a release
+          # and publishing to npm. Re-running the manifest gate here is what makes
+          # "everything green BEFORE the tag" true of the artifact being released.
+          npm install -g @anthropic-ai/claude-code
+          claude --version
+          claude plugin validate ./plugins/make-skill --strict
+          claude plugin validate . --strict
 
       - name: Tag must match the manifests (version sync)
         run: |

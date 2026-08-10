@@ -72,9 +72,10 @@ canon below only ADDS to it.
 .claude-plugin/marketplace.json            # plugins[0].source: ./plugins/<name>
 plugins/<name>/.claude-plugin/plugin.json
 plugins/<name>/skills/<skill>/SKILL.md (+ references/, scripts/, assets/)
+plugins/<name>/skills/<skill>/assets/*.template.*   # skeletons — NEVER SKILL.md
 plugins/<name>/commands/*.md               # only under a name no skill uses
+plugins/<name>/bin/<exe>                   # on Claude Code's Bash PATH
 cursor/rules/*.mdc                         # self-contained, NO relative links
-templates/*.md                             # skeletons — NEVER name one SKILL.md
 bin/<name>.js + package.json               # zero-dep npx installer
 test/validate.py                           # stdlib-only consistency validator
 test/evals/                                # triggers.json + scenarios.json (data, run by a human)
@@ -110,13 +111,16 @@ checker, not a house opinion:
 - A pinned `version` is the update cache key — bump it or nobody ever receives
   the change. Marketplace names like `agent-skills`/`anthropic-*` are reserved
   and stop loading.
-- Bundled scripts resolve through `${CLAUDE_PLUGIN_ROOT}`, state through
-  `${CLAUDE_PLUGIN_DATA}` — both Claude-Code-only, so keep relative paths as the
-  portable contract.
+- Path variables are substituted into skill/command/agent TEXT and exported to
+  HOOK processes — but `${CLAUDE_PLUGIN_ROOT}` is **empty in the Bash tool**, so
+  a command you tell the agent to run must never be built from it (it expands to
+  `/skills/...` and dies). Put runnable scripts in the plugin's `bin/`, which
+  Claude Code adds to the Bash PATH, and call them by name; keep relative paths
+  as the portable contract. State through `${CLAUDE_PLUGIN_DATA}`.
 
 ## Host capabilities and the degradation contract
 
-Hooks, subagents, `/commands`, `${CLAUDE_PLUGIN_ROOT}` and MCP servers exist only
+Hooks, subagents, `/commands`, plugin path variables and MCP servers exist only
 inside Claude Code — which is a minority of where skills run. **Each is an
 accelerator with a WRITTEN fallback; the skill still finishes its job without
 it.** Put all three cases in the body, in the words the agent reads when it hits
@@ -148,9 +152,19 @@ through a quoted `"${CLAUDE_PLUGIN_ROOT}/…"` with a `timeout`; hook scripts ex
   with `npx skills add <repo> --list`.
 - **Validator must be able to fail:** CI runs a negative self-test (corrupt a copy →
   expect FAIL). A validator that can't fail is decoration.
+- **A number typed by hand is an assertion, not documentation.** Counts of files,
+  steps and checklist items drift the release after you write them — compute
+  them, or have the validator compare each claim to the artifact.
+- **Audit verdicts are PASS / GAP / NOT-RUN.** Without the third, a check whose
+  tool is missing gets recorded as a PASS nobody earned.
 - **One channel per agent:** don't run a plugin AND a plain `~/.claude/skills` copy
   on the same install — the stale plain copy shadows the plugin.
-- **npm name first:** `npm view <name>` (E404 = free). **npm publish = human 2FA.**
+- **npm name first:** `npm view <name>` (E404 = free — the name-similarity 403
+  only fires on publish). **A `v*` tag publishes**: arm CI publishing once and a
+  manual `npm publish` is the fallback, not the route.
+- **A release is not done until the family pin moves.** An umbrella that still
+  pins the previous version keeps advertising and installing it, with nothing in
+  either repo revealing the gap.
 - **Commands ARE skills now:** a `commands/<x>.md` beside `skills/<x>/` registers
   `/<x>` twice — the skill wins, the command is unreachable always-on cost. Check
   with `claude plugin details <name>@<marketplace>`; quote every `argument-hint`.

@@ -14,18 +14,33 @@ standard — including the no-argument `/make-skill` path, where a `SKILL.md`,
 
 ## Run the script first
 
-The mechanical half is deterministic — do not reason your way through it:
+The mechanical half is deterministic — do not reason your way through it. In
+Claude Code the plugin's `bin/` is on the Bash tool's PATH, so the auditor is
+reachable by name:
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/make-skill/scripts/audit_skill.py" <skill-dir> --house
+make-skill-audit <skill-dir> --house
 ```
 
-`${CLAUDE_PLUGIN_ROOT}` is Claude Code's. On any other host the script sits at
-`scripts/audit_skill.py` inside the make-skill directory you are reading this
-from (`~/.agents/skills/make-skill/`, `~/.claude/skills/make-skill/`). No
-`python3` at all? Check items 1 and 9 below by hand against
-`references/agent-skills-spec.md` — the script implements that checklist and
-nothing more. Either way, the judgement items are yours.
+On any other host, run the script it wraps — `scripts/audit_skill.py` inside the
+make-skill directory you are reading this from (`~/.agents/skills/make-skill/`,
+`~/.claude/skills/make-skill/`):
+
+```bash
+python3 <make-skill dir>/scripts/audit_skill.py <skill-dir> --house
+```
+
+**Do not build the command out of `${CLAUDE_PLUGIN_ROOT}`.** That variable is
+substituted into skill, command and agent *text*, but it is **not exported to
+the Bash tool's environment** — a command written around it expands to
+`/skills/...` and dies with "No such file or directory" (measured, Claude Code
+2.1.220). That failure is how a mechanical check turns into a reasoned-about
+PASS, which is the one outcome this file exists to prevent.
+
+No `python3` at all? Record items 1 and 9 as **NOT-RUN** with that reason and
+check them by hand against `references/agent-skills-spec.md` — the script
+implements that checklist and nothing more. Either way, the judgement items are
+yours.
 
 ## How to report
 
@@ -35,11 +50,21 @@ Audit first, fix second, in the same session. One verdict per item:
 |---|---|
 | **PASS** | the check was actually run — a command's output or a `file:line` |
 | **GAP** | what is wrong, the evidence, and the fix that closes it |
+| **NOT-RUN** | the tool the check needs is absent — name the tool and the reason |
 
 "Looks fine" is not a verdict. Neither is a PASS on a check that was reasoned
 about rather than executed: `python3 test/validate.py`, `claude plugin validate
 … --strict`, `npx skills add <repo> --list` all produce output, and the output is
-the evidence. Report the gap table before changing anything, then fix.
+the evidence.
+
+**NOT-RUN exists so that "I could not run this" has somewhere to go.** A
+checklist with only PASS and GAP forces an unrunnable check into one of them,
+and the cheaper lie is PASS. Item 1's `skills-ref validate` is the standing
+example: it installs from source only, so on most machines it is NOT-RUN, and
+saying so is the honest result. A NOT-RUN you did not try to resolve is still a
+gap in the audit — say what would make it runnable.
+
+Report the table before changing anything, then fix.
 
 ## The 14-item audit checklist
 
@@ -84,15 +109,17 @@ the evidence. Report the gap table before changing anything, then fix.
     skills add <repo> --list` lists ONLY real skills; `npx <name>` works from a
     non-repo cwd if it is published; `.mdc` rules valid and free of relative
     links.
-11. **Repo meta**: homepage, description and topics set on the forge; LICENSE
+11. **Repo meta**: homepage, description and topics set on the forge (any
+    consistent homepage convention — do not "fix" a deliberate one); LICENSE
     present and declared in the front matter and the marketplace entry;
     CHANGELOG current; public repos also carry CONTRIBUTING.md and SECURITY.md.
 12. **Gotcha compliance**: the list in `SKILL.md`, plus the installer traps in
     `references/distribution.md` when the repo ships a CLI or a validator.
 13. **Protocol dependencies** if it touches MCP or A2A (`references/mcp.md`,
-    `references/a2a.md`): dependency and protocol version in `compatibility`,
-    discovery instead of hardcoded tool names, the untrusted-output rule stated,
-    interactive auth handled as a human step rather than a retry loop.
+    `references/mcp-ship.md` once a server is being shipped, `references/a2a.md`):
+    dependency and protocol version in `compatibility`, discovery instead of
+    hardcoded tool names, the untrusted-output rule stated, interactive auth
+    handled as a human step rather than a retry loop.
 14. **Host capabilities and their fallbacks**
     (`references/host-capabilities.md`) if it ships a hook, subagent, command or
     MCP server: the degradation contract written in the body for all three axes

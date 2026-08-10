@@ -171,7 +171,10 @@ def _check_name(a, fm, lines, dir_name, rel):
         a.gap("NAME_CHARSET", "name %r must be lowercase a-z0-9 with single internal "
               "hyphens — no uppercase, no leading/trailing or doubled hyphen" % name, rel, ln)
     else:
-        a.ok("NAME_CHARSET", "name %r is spec-legal" % name, rel, ln)
+        # Charset only. Saying "spec-legal" here would contradict NAME_RESERVED
+        # and NAME_XML below, and a PASS line quoted out of context is exactly
+        # how a wrong verdict acquires real command output as its evidence.
+        a.ok("NAME_CHARSET", "name %r uses a legal charset" % name, rel, ln)
     if name != dir_name:
         a.gap("NAME_DIR", "name %r != directory %r — the spec requires them to match, "
               "and the Skills API matches the uploaded top-level directory against it"
@@ -211,10 +214,16 @@ def _check_description(a, fm, lines, rel, house):
     else:
         a.ok("DESC_PERSON", "description is third person", rel, ln)
     if house:
+        # Both report either way: "the house rules were checked" has to be
+        # provable from the output the canon tells the agent to cite.
         if not desc.lower().startswith("use when"):
             a.gap("DESC_USEWHEN", "description must start with 'Use when …' (house rule)", rel, ln)
+        else:
+            a.ok("DESC_USEWHEN", "description opens with 'Use when …' (house rule)", rel, ln)
         if not re.search(r"[а-яё]", desc, re.I):
             a.gap("DESC_RU", "description carries no Russian trigger phrases (house rule)", rel, ln)
+        else:
+            a.ok("DESC_RU", "description carries Russian trigger phrases (house rule)", rel, ln)
 
 
 def _check_optional_fields(a, fm, lines, rel):
@@ -253,13 +262,18 @@ def _check_keys(a, fm, lines, rel):
 def _check_body_budget(a, body, rel):
     n_lines = body.count("\n") + 1
     est = int(len(body) / CHARS_PER_TOKEN)
+    # Both, not either: a body over the line budget still has to report its
+    # token count, or the second fix arrives only after the first one ships.
+    over = False
     if n_lines >= BODY_MAX_LINES:
         a.gap("BODY_LINES", "body is %d lines, the budget is < %d — move detail into "
               "references/" % (n_lines, BODY_MAX_LINES), rel)
-    elif est >= BODY_MAX_TOKENS:
+        over = True
+    if est >= BODY_MAX_TOKENS:
         a.gap("BODY_TOKENS", "body is ~%d tokens (%d chars / %s), the budget is < %d"
               % (est, len(body), CHARS_PER_TOKEN, BODY_MAX_TOKENS), rel)
-    else:
+        over = True
+    if not over:
         a.ok("BODY_BUDGET", "body is %d lines / ~%d tokens (budget %d / %d)"
              % (n_lines, est, BODY_MAX_LINES, BODY_MAX_TOKENS), rel)
 
@@ -295,21 +309,27 @@ def _check_bundle(a, skill_dir, skill_text, dir_name):
 
 
 def _check_links(a, skill_dir, skill_text, rel):
-    """A relative link that escapes the skill directory arrives broken everywhere."""
-    escaped = broken = False
-    for target in LINK_RE.findall(skill_text):
-        if target.startswith(("http://", "https://", "mailto:", "#")):
-            continue
-        if target.startswith("../") or "/../" in target:
-            a.gap("LINK_ESCAPE", "link %r escapes the skill directory — packagers ship "
-                  "that directory alone, so it arrives broken on every agent" % target, rel)
-            escaped = True
-            continue
-        path = os.path.normpath(os.path.join(skill_dir, target.split("#")[0]))
-        if not os.path.exists(path):
-            a.gap("LINK_BROKEN", "link %r does not resolve" % target, rel)
-            broken = True
-    if not escaped and not broken:
+    """A relative link that escapes the skill directory arrives broken everywhere.
+
+    Reported per line: the canon defines evidence as a `file:line`, so a finding
+    without one forces the agent to either drop the evidence or invent it.
+    """
+    bad = False
+    for i, line in enumerate(skill_text.split("\n"), start=1):
+        for target in LINK_RE.findall(line):
+            if target.startswith(("http://", "https://", "mailto:", "#")):
+                continue
+            if target.startswith("../") or "/../" in target:
+                a.gap("LINK_ESCAPE", "link %r escapes the skill directory — packagers "
+                      "ship that directory alone, so it arrives broken on every agent"
+                      % target, rel, i)
+                bad = True
+                continue
+            path = os.path.normpath(os.path.join(skill_dir, target.split("#")[0]))
+            if not os.path.exists(path):
+                a.gap("LINK_BROKEN", "link %r does not resolve" % target, rel, i)
+                bad = True
+    if not bad:
         a.ok("LINK_INTEGRITY", "every relative link resolves and stays inside the skill", rel)
 
 
@@ -335,8 +355,11 @@ def _check_prose(a, body, rel):
             a.gap("TIME_BRANCH", "time-branching instruction (%r) — it is wrong the day "
                   "it ships; put superseded material under '## Old patterns'"
                   % raw.strip()[:60], rel, i)
-    # a pointer at a directory rather than a file with a load condition
-    for i, line in enumerate(body.split("\n"), start=1):
+    # A pointer at a directory rather than a file with a load condition. Quoted
+    # spans are blanked here too: a canon that forbids "see references/" has to
+    # be able to quote the phrase it forbids.
+    for i, raw in enumerate(body.split("\n"), start=1):
+        line = _strip_quoted(raw)
         if re.search(r"\b(?:see|read)\s+`?(?:references|scripts|assets)/`?(?![\w.-])", line, re.I):
             a.gap("REF_NO_TRIGGER", "points at a directory instead of a file with a "
                   "stated load condition — 'read X when Y' beats 'see references/'", rel, i)

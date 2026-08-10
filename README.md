@@ -35,10 +35,12 @@ make a skill that turns our incident runbooks into a triage workflow
 ```
 
 …or run just the mechanical half against any skill directory, no agent turn
-required:
+required. The plugin puts the auditor on the Bash tool's PATH, and the skills-CLI
+copy ships the script it wraps:
 
 ```bash
-python3 ~/.claude/plugins/*/make-skill/*/skills/make-skill/scripts/audit_skill.py ./my-skill --house
+make-skill-audit ./my-skill --house                                    # in Claude Code
+python3 ~/.agents/skills/make-skill/scripts/audit_skill.py ./my-skill --house   # any terminal
 ```
 
 With no argument the skill detects the situation — a `SKILL.md` or
@@ -148,6 +150,7 @@ agent opens only when the situation calls for them:
 | `claude-code-plugin.md` | the [Claude Code layer](https://code.claude.com/docs/en/plugins-reference) — `plugin.json` / `marketplace.json` schemas, plugin sources, component locations, host-only front-matter, path variables, cache and symlink rules, the `claude plugin` CLI |
 | `distribution.md` | the repo layout, every install channel, exact CLI flags, npm publishing traps, the release checklist |
 | `mcp.md` | [MCP](https://modelcontextprotocol.io) — skill vs server, primitives and methods, transports, consent and untrusted-output rules |
+| `mcp-ship.md` | shipping an MCP server — mounting it in an existing app and the double-path 404, auth middleware, the 404/307/401 bisect, `server.json` and the MCP Registry |
 | `a2a.md` | [A2A](https://a2a-protocol.org) — Agent Cards, task lifecycle, method mapping, v0.x→1.0 wire drift |
 
 Plus six skeletons in `skills/make-skill/assets/` — inside the skill directory,
@@ -175,7 +178,9 @@ npx skills add ssheleg/make-skill
 Don't target `claude-code` here if you installed the plugin above — see
 one-channel-per-agent.
 
-**npx, no clone:**
+**npx, no clone** — installs a plain copy into `~/.claude/skills/make-skill`, so
+use it only if you did **not** install the plugin above. Both installers detect
+the plugin and refuse rather than leave a copy shadowing it:
 
 ```bash
 npx github:ssheleg/make-skill     # always current with this repo
@@ -185,7 +190,7 @@ npx @ssheleg/make-skill           # npm registry (scoped: npm blocks the bare na
 **Cursor, per project:** copy [`cursor/rules/make-skill.mdc`](cursor/rules/make-skill.mdc)
 into `.cursor/rules/` — it is self-contained by design.
 
-**Plain skill:**
+**Plain skill** — same one-channel caveat as `npx` above:
 
 ```bash
 git clone https://github.com/ssheleg/make-skill
@@ -228,7 +233,8 @@ says so); `bash` for `install.sh` and the hook (Windows users: use `npx`, the
 plugin, or the skills CLI). The canon itself is plain Markdown and needs nothing.
 
 What runs on its own: one `PostToolUse` hook, which exits silently unless the
-file you just wrote is a `SKILL.md`. It is 30 lines and is described in
+file you just wrote is a `SKILL.md`. Read it at
+`plugins/make-skill/hooks/skill-md-audit.sh`; it is described in
 [SECURITY.md](SECURITY.md) and [SKILL-CARD.md](SKILL-CARD.md).
 
 ## Repo layout
@@ -242,6 +248,7 @@ plugins/make-skill/
 │   ├── references/*.md               # loaded on demand
 │   ├── scripts/audit_skill.py        # audits any skill dir, stdlib only
 │   └── assets/*.template.*           # six skeletons: skill, manifests, hooks, agent, command
+├── bin/make-skill-audit              # on Claude Code's Bash PATH — the auditor by name
 ├── hooks/                            # Claude Code only — PostToolUse SKILL.md audit
 ├── agents/skill-auditor.md           # Claude Code only
 └── commands/skill-audit.md           # Claude Code only, never named after a skill

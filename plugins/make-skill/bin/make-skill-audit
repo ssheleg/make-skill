@@ -1,0 +1,41 @@
+#!/usr/bin/env sh
+# make-skill-audit — the bundled skill auditor, reachable by name.
+#
+# Claude Code puts a plugin's bin/ on the Bash tool's PATH while the plugin is
+# enabled, so `make-skill-audit <dir> --house` works in a session. That matters
+# because ${CLAUDE_PLUGIN_ROOT} is substituted into skill/command text but is
+# NOT exported to the Bash tool's environment: a documented command written
+# around it expands to "/skills/..." and fails, and an agent that cannot run the
+# deterministic half tends to reason through it and report a PASS it never ran.
+#
+# Resolves the auditor from its own location, never from an environment
+# variable, so it also works when copied, symlinked into a hub, or invoked
+# through an absolute path.
+set -eu
+
+self="$0"
+# Follow symlinks without readlink -f, which BSD/macOS does not have.
+while [ -L "$self" ]; do
+  link="$(readlink "$self")"
+  case "$link" in
+    /*) self="$link" ;;
+    *)  self="$(dirname "$self")/$link" ;;
+  esac
+done
+here="$(cd "$(dirname "$self")" && pwd)"
+auditor="$here/../skills/make-skill/scripts/audit_skill.py"
+
+if [ ! -f "$auditor" ]; then
+  echo "make-skill-audit: auditor not found at $auditor" >&2
+  echo "Run scripts/audit_skill.py from the make-skill skill directory instead." >&2
+  exit 2
+fi
+
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "make-skill-audit: no python3 on PATH." >&2
+  echo "Record the mechanical items NOT-RUN with this reason, then work the" >&2
+  echo "checklist by hand from references/agent-skills-spec.md." >&2
+  exit 2
+fi
+
+exec python3 "$auditor" "$@"

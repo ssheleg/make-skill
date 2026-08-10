@@ -1,5 +1,127 @@
 # Changelog
 
+## v0.11.0 — 2026-08-10
+
+A file-by-file audit of the whole repo, run with this skill's own evidence rules.
+It found one defect that made the canon read as nonsense, one that made its first
+documented command fail, and a class of drift nothing was checking. Every fix
+here ships with the rule that stops it coming back.
+
+### Fixed — the two defects that manufacture wrong answers
+
+- **A path variable used as a noun.** `SKILL.md` said "Hooks, subagents,
+  `/commands`, `${CLAUDE_PLUGIN_ROOT}` and MCP servers exist only inside Claude
+  Code". The body is substituted at load time, so what an agent actually read was
+  "Hooks, subagents, `/commands`, `/Users/…/plugins/cache/make-skill/0.10.0` and
+  MCP servers exist only inside Claude Code" — a filesystem path presented as a
+  host capability. The body now names the capability, and the validator rejects
+  any `${CLAUDE_*}` in it.
+
+- **The first command of the audit procedure could not run.** `retrofit.md`, the
+  `/skill-audit` command and the `skill-auditor` agent all opened with
+  `python3 "${CLAUDE_PLUGIN_ROOT}/skills/make-skill/scripts/audit_skill.py"`.
+  That variable is substituted into *text* and exported to *hooks*, but it is
+  **empty in the Bash tool** — measured on Claude Code 2.1.220, the command
+  expands to `/skills/...` and dies. The instruction immediately above it says
+  "do not reason your way through it", so the agent was left with a forbidden
+  fallback and a broken tool, and the cheap way out is a PASS nobody ran.
+
+  Fixed at the root: **`plugins/make-skill/bin/make-skill-audit`**. Claude Code
+  puts a plugin's `bin/` on the Bash tool's PATH, so the auditor is now reachable
+  by name with no variable in the command. The wrapper resolves its payload from
+  its own location (following symlinks), so it also works copied, symlinked into
+  an agents hub, or called by absolute path. `bin/` is now documented as a host
+  capability in its own right — it is the only reliable way to hand an agent a
+  runnable command.
+
+### Added — NOT-RUN, the missing verdict
+
+An audit with only PASS and GAP forces a check whose tool is absent into one of
+them, and the cheaper lie is PASS. `retrofit.md` now defines **NOT-RUN**, and the
+standing example is its own item 1: `skills-ref validate` installs from source
+only, so on most machines "NOT-RUN, with the reason" is the honest result. The
+conformance checklist says so where the demand is made.
+
+### Fixed — claims about the repo that the repo contradicted
+
+Each of these was true when written and drifted the release after:
+
+- `SKILL.md` said "13-item checklist" in its reference table and "14-item" nine
+  sections later; the file has 14.
+- `SKILL-CARD.md` — the card a reviewer reads before installing — was pinned at
+  0.9.0, claimed "ten files" of instruction surface against eleven, and "six
+  groups" of CI self-tests against eight.
+- `README.md` never listed `mcp-ship.md`, added in v0.10.0.
+- `README.md`'s "no agent turn required" one-liner used a glob one directory
+  level too shallow: `no matches found`, and at the right depth it matches every
+  cached version at once.
+- `CONTRIBUTING.md` said "npm publishing stays a human step" 24 lines above "there
+  is no manual `npm publish` step in any repo in the family", named `chars/4`
+  where the validator uses the measured 3.9, and counted four channels where the
+  canon documents five.
+- Three files claimed the hook is "30 lines"; it is 43. The claim is gone rather
+  than corrected — the number told a reader nothing.
+
+**The rule that closes the class:** counted claims are now compared to the
+artifacts they describe (checklist items, reference files, CI self-test groups),
+`SKILL-CARD.md`'s version must equal `plugin.json`'s, and every shipped
+`references/*.md` must appear in the README. A new gotcha states the principle: a
+number typed by hand is an assertion, not documentation.
+
+### Fixed — the Cursor rule contradicted the validator
+
+`cursor/rules/make-skill.mdc` prescribed a repo-root `templates/` directory,
+which `test/validate.py` rejects outright and a CI self-test asserts against. A
+Cursor user following the shipped rule built a repo this repo refuses. The rule
+now matches the canon, drops the superseded "npm publish = human 2FA", carries
+the path-variable fact and the family-pin rule — and the validator fails if a
+`.mdc` prescribes that layout again.
+
+### Fixed — the installers created the shadow the canon forbids
+
+`bin/make-skill.js` and `install.sh` wrote `~/.claude/skills/make-skill`, which
+is exactly the duplicate-shadow this canon spends three paragraphs warning about,
+with no check and no warning. Both now detect an installed plugin and refuse,
+naming the update commands instead; `--force` still overrides.
+
+### Fixed — the auditor
+
+- `PASS NAME_CHARSET … is spec-legal` was printed for `claude-invoice-helper`,
+  two lines above the GAP rejecting it. A PASS line quoted out of context is how
+  a wrong verdict acquires real command output as its evidence; it now says
+  "uses a legal charset".
+- `REF_NO_TRIGGER` did not blank quoted spans, although `_strip_quoted` exists
+  for exactly that: the canon could not quote the "see references/" it forbids
+  without tripping its own linter.
+- Link findings now carry `file:line`, the house checks (`--house`) report PASS
+  as well as GAP — "the house rules were checked" has to be provable from the
+  output the canon tells the agent to cite — and a body over the line budget also
+  reports its token count instead of hiding it behind `elif`.
+
+### Fixed — release and budget
+
+- **`release.yml` now runs both `claude plugin validate … --strict` on the tag.**
+  The validate workflow also runs there, but it is a separate workflow: a red run
+  in it could not stop a release being cut and published.
+- **The body budget has a working limit.** v0.10.0 shipped at ~4995 of 5000 — 20
+  characters from a red build, which turns every future correction into a trade
+  against an existing section. The validator now fails past **4750** (5%
+  headroom); this release moved duplicated material into the references that
+  already carried it and landed at ~4671.
+- **The family pin is a stated non-negotiable of every release.** make-skill
+  0.10.0 was on npm and installed while `sshlg-skills list` still advertised
+  0.9.1 — the exact failure `distribution.md` describes, on this repo, found by
+  this audit.
+- `XML_TAG_RE` is now compared between `test/validate.py` and the shipped
+  auditor: one rule, one pattern, or a skill passes one gate and fails the other.
+
+### Notes
+
+The evaluation suite is still **authored and never executed against a model**
+(`test/evals/RESULTS.md`). Running it needs a fresh agent session per query on
+each model in scope, which no CI job here does and no single session can honestly
+fake. It remains the largest open gap, and `SKILL-CARD.md` says so to a reviewer.
+
 ## v0.10.0 — 2026-08-06
 
 ### Added

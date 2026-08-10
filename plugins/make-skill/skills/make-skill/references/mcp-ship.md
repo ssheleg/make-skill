@@ -19,14 +19,14 @@ schema is dated by design.
 
 ## Contents
 
-- [Mounting into an existing web app](#mounting-into-an-existing-web-app)
-- [Auth middleware and a health endpoint](#auth-middleware-and-a-health-endpoint)
-- [Client configuration](#client-configuration)
-- [Debugging a client that will not connect](#debugging-a-client-that-will-not-connect)
-- [Publishing to the MCP Registry](#publishing-to-the-mcp-registry)
-- [Registry name formats and who may claim them](#registry-name-formats-and-who-may-claim-them)
-- [Automating publication](#automating-publication)
-- [Versioning](#versioning)
+- Mounting into an existing web app
+- Auth middleware and a health endpoint
+- Client configuration
+- Debugging a client that will not connect
+- Publishing to the MCP Registry
+- Registry name formats and who may claim them
+- Automating publication
+- Versioning
 
 ---
 

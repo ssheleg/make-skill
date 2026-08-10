@@ -40,6 +40,7 @@ but did not write is not a fallback.
 | Capability | Buys you | Costs | Reach for it when |
 |---|---|---|---|
 | `scripts/` | determinism, and output instead of code in context | none until run | the agent re-derives the same logic every run |
+| `bin/` | a bundled script reachable **by name** — Claude Code puts it on the Bash tool's PATH | none until run | a documented command must work without a path variable (see *Scripts*) |
 | `hooks/` | enforcement at the moment of the action | runs on the user's machine, every matching tool call | a rule matters more than an instruction can guarantee |
 | `agents/` | a job done in a separate context window | ~100 always-on tokens per agent | the work would otherwise crowd out the main thread |
 | `commands/` | a user-typed entry point with arguments | ~50–100 always-on tokens | a human, not the model, decides when it runs |
@@ -154,19 +155,42 @@ carry the trigger phrases that reach the same behavior in plain language.
 
 The one accelerator that travels. Keep it inside the skill directory
 (`scripts/`), stdlib-only, and invoke it by a path the agent can actually
-resolve:
+resolve.
+
+**The trap that costs the most here: `${CLAUDE_PLUGIN_ROOT}` does not work in a
+command you tell the agent to run.** It is substituted into skill, command and
+agent *text*, and it is exported to *hook and monitor* processes — but it is
+**not** in the Bash tool's environment. Measured on Claude Code 2.1.220:
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/<skill>/scripts/x.py" <target>   # Claude Code
-python3 ~/.agents/skills/<skill>/scripts/x.py <target>                 # skills CLI
-python3 ~/.claude/skills/<skill>/scripts/x.py <target>                 # plain install
+$ echo "[${CLAUDE_PLUGIN_ROOT}]"
+[]
+$ python3 "${CLAUDE_PLUGIN_ROOT}/skills/x/scripts/x.py" .
+python3: can't open file '/skills/x/scripts/x.py': [Errno 2] No such file or directory
 ```
 
-**The absolute path differs per channel**, so the instruction that survives is
-"run the script from the skill directory you just read this file from", with
-`${CLAUDE_PLUGIN_ROOT}` offered as the Claude Code convenience. State the
-no-interpreter fallback too: the manual procedure, in the reference that the
-script implements.
+That failure is expensive out of proportion to its size: the agent was told to
+run a deterministic check, the check will not run, and reasoning through it
+instead — then reporting the result as if it had run — is the cheapest way out.
+
+**Ship a wrapper in the plugin's `bin/` instead.** Claude Code puts a plugin's
+`bin/` on the Bash tool's PATH while the plugin is enabled, so the script
+becomes reachable by name, with no variable in the command:
+
+```bash
+<plugin>-<verb> <target>          # Claude Code: bin/ is on PATH
+```
+
+Make the wrapper resolve its payload from **its own location** (`dirname "$0"`,
+following symlinks), never from an environment variable — then it also works
+copied, symlinked into an agents hub, or called by absolute path. Worked
+example: this plugin's `bin/make-skill-audit`.
+
+Everywhere else the absolute path differs per channel
+(`~/.agents/skills/<skill>/`, `~/.claude/skills/<skill>/`), so the instruction
+that survives is "run the script from the skill directory you just read this
+file from". State the no-interpreter fallback too: the manual procedure, in the
+reference that the script implements, and the items it leaves **NOT-RUN**.
 
 ## MCP servers and other plugins as dependencies
 
@@ -215,4 +239,6 @@ what the agent reads at the exact moment something is missing.
 - [ ] No command named after a skill; every `argument-hint` quoted
 - [ ] Plugin agents carry no `hooks` / `mcpServers` / `permissionMode`
 - [ ] Scripts are stdlib-only, inside the skill dir, invoked by a resolvable path
+- [ ] No command the agent is told to RUN contains `${CLAUDE_PLUGIN_ROOT}` — it is
+      empty in the Bash tool; ship a `bin/` wrapper and call it by name
 - [ ] MCP and sibling-skill dependencies declared in `compatibility` with a branch

@@ -51,6 +51,9 @@ the shape from `ssheleg/super-ux`:
 │   ├── skills/<skill>/SKILL.md  +  references/*.md  +  scripts/  +  assets/
 │   │                                   # skeletons live HERE, not at the repo root:
 │   │                                   # only the skill dir travels on every channel
+│   ├── bin/<exe>                       # Claude Code puts this on the Bash PATH:
+│   │                                   # the only reliable way to hand the agent
+│   │                                   # a runnable command (no path variable)
 │   ├── hooks/hooks.json + *.sh         # Claude Code only — see host-capabilities.md
 │   ├── agents/*.md                     # Claude Code only
 │   └── commands/*.md                   # never named after a skill
@@ -221,7 +224,10 @@ removes even that for every release after this one.
 3. House validator + functional tests + BOTH `claude plugin validate … --strict`
    runs green BEFORE publishing.
 4. **GitHub:** `gh repo create <owner>/<name> --public --source . --push`, then
-   `gh repo edit <owner>/<name> --homepage "https://www.npmjs.com/package/<name>"`.
+   set a homepage, description and topics — `gh repo edit <owner>/<name>
+   --homepage "<the npm page or the project site>"`. Pick one convention per
+   family and hold it; a retrofit should not keep "correcting" a deliberate
+   choice back and forth.
 5. **Badges day one:** npm (shields.io), CI
    (`actions/workflows/validate.yml/badge.svg`), license.
 6. **CI:** poll `gh run list --repo <owner>/<name> --limit 1` until
