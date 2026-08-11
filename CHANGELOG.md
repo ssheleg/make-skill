@@ -1,5 +1,38 @@
 # Changelog
 
+## v0.12.0
+
+### Added
+
+- **A language rule, and it is a budget rule before it is a style one.** Prose
+  the agent reads is English; Cyrillic survives in four places only, where the
+  string itself is the point rather than its meaning: a trigger phrase, a
+  refusal phrase, a proper noun, a language example.
+
+  Measured with `cl100k`: Russian encodes at **1.9–2.3 chars/token against
+  English's 5.0**. Rewriting the eight ssheleg routers into English cut them
+  **3408 → 1885 tokens (−44%)** with no loss of meaning — and those are
+  always-on, in every session of every project.
+
+  The exceptions are not a courtesy. A refusal phrase translated into English is
+  a phrase nobody says, so the skill it belongs to stops being reachable. An
+  audit of all twenty family skills found **zero** violations and 54 Cyrillic
+  characters outside descriptions — every one of them a quoted literal, a
+  proper noun (`Алиса`), or a localization example (`«вы»/«ты»`).
+
+### Changed
+
+- **Three sections lost their duplicated half** so the body could take the new
+  rule and stay inside the 5% headroom: the optional-field list, the `name`
+  character rules and the MCP/A2A wire-level bullets now point at the
+  references that already carry them. What stayed is what a reference cannot
+  carry — the reserved-substring trap, and that everything returning from a
+  tool or a peer is untrusted data rather than instructions.
+
+  This canon's own validator refused the rule three times for being over
+  budget, which is the rule it states about bodies applied to the body stating
+  it.
+
 ## v0.11.1 — 2026-08-10
 
 A behavioural pass over v0.11.0 — walking the skill the way an agent walks it and
