@@ -1,5 +1,34 @@
 # Changelog
 
+## v0.13.0
+
+### Fixed
+
+- **`BUNDLE_UNREACHABLE` read reachability as one hop and called 29 correctly-shipped
+  contracts dead weight.** The check asked whether `references/foo.md` appears as a
+  substring of `SKILL.md`. But a packager ships a skill's directory alone, so a
+  reference that links a sibling contract makes that sibling *required* — omit it and
+  the first arrives with a dangling link. Reachability is therefore the transitive
+  closure, which is exactly what `super-ux`'s own sync script computes, and the check
+  disagreed with the mechanism it was auditing.
+
+  Measured on `super-ux`: 29 → 0, with every other repository in the family byte-identical
+  before and after. Probed both ways — a planted orphan is still flagged, and a file
+  reachable only through another reference is not. The failing example was
+  `ux-flows/references/figma-structure.md`: no direct link from `SKILL.md`, linked by
+  `figma-integration.md`, `best-practices.md` and `system-map.md`, all three of which
+  `SKILL.md` links directly.
+
+- **The false positive was also masking real findings.** An entry flagged unreachable
+  `continue`d past the `REF_NO_TOC` check, so a 312-line reference with no `## Contents`
+  was invisible behind a gap that should never have fired. Fixing the reachability
+  surfaced four of those — the correct behaviour, and the reason a false positive is not
+  merely noise.
+
+**Minor rather than patch**: for a tool whose output *is* its product, changing what it
+reports changes what everyone downstream sees, and one of those changes is new findings
+appearing on repositories that were green.
+
 ## v0.12.0
 
 ### Added

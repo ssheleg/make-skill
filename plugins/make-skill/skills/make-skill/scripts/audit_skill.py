@@ -290,8 +290,53 @@ def _check_body_budget(a, body, rel):
              % (n_lines, est, BODY_MAX_LINES, BODY_MAX_TOKENS), rel)
 
 
+def _bundle_closure(skill_dir, skill_text):
+    """Bundled files reachable from SKILL.md, following links between them.
+
+    Reachability is transitive, not one hop. A reference that links a sibling contract
+    makes that sibling reachable, and shipping the first without the second is what
+    leaves a dangling link on the target agent — so a packager that computes what a
+    skill needs has to take the closure, and the check has to agree with it. Measured
+    against super-ux, where the one-hop reading called 29 transitively-linked contracts
+    dead weight.
+    """
+    available = {}
+    for sub in BUNDLE_DIRS:
+        d = os.path.join(skill_dir, sub)
+        if not os.path.isdir(d):
+            continue
+        for entry in os.listdir(d):
+            if os.path.isfile(os.path.join(d, entry)):
+                available["%s/%s" % (sub, entry)] = os.path.join(d, entry)
+
+    seen = set()
+    stack = [key for key in available if key in skill_text]
+    while stack:
+        key = stack.pop()
+        if key in seen:
+            continue
+        seen.add(key)
+        if not key.endswith(".md"):
+            continue
+        sub = key.split("/", 1)[0]
+        try:
+            txt = open(available[key], encoding="utf-8").read()
+        except (OSError, UnicodeDecodeError):
+            continue
+        for target in LINK_RE.findall(txt):
+            t = target.split("#", 1)[0].strip().lstrip("./")
+            if not t or "://" in t:
+                continue
+            # a bare name inside references/ means a sibling of that same directory
+            cand = t if "/" in t else "%s/%s" % (sub, t)
+            if cand in available and cand not in seen:
+                stack.append(cand)
+    return seen
+
+
 def _check_bundle(a, skill_dir, skill_text, dir_name):
     """references/ scripts/ assets/: one level deep, reachable, navigable."""
+    reachable = _bundle_closure(skill_dir, skill_text)
     for sub in BUNDLE_DIRS:
         d = os.path.join(skill_dir, sub)
         if not os.path.isdir(d):
@@ -304,10 +349,10 @@ def _check_bundle(a, skill_dir, skill_text, dir_name):
                       "deep, or the agent previews them instead of reading them"
                       % (sub, entry), rel)
                 continue
-            if "%s/%s" % (sub, entry) not in skill_text:
-                a.gap("BUNDLE_UNREACHABLE", "%s/%s is never referenced from SKILL.md — "
-                      "an unreachable file is dead weight the agent never opens"
-                      % (sub, entry), rel)
+            if "%s/%s" % (sub, entry) not in reachable:
+                a.gap("BUNDLE_UNREACHABLE", "%s/%s is not reachable from SKILL.md, "
+                      "directly or through another bundled file — an unreachable file "
+                      "is dead weight the agent never opens" % (sub, entry), rel)
                 continue
             if entry.endswith(".md"):
                 txt = open(full, encoding="utf-8").read()
