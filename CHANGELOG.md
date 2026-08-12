@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.13.1
+
+### Fixed
+
+- **`scripts/__pycache__/` shipped in v0.13.0.** Every other repository in the family
+  carries a `__pycache__/` rule in `.gitignore`; this one did not, so a byte-compile run
+  left an artifact and `git add -A` took it. The auditor's own `BUNDLE_NESTED` check
+  caught it — on the release that changed the auditor, which is the most useful moment
+  for a check to fire on its author.
+
 ## v0.13.0
 
 ### Fixed

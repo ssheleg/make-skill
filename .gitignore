@@ -2,3 +2,5 @@ node_modules/
 .DS_Store
 *.log
 graphify-out/
+__pycache__/
+*.pyc
