@@ -1,5 +1,31 @@
 # Changelog
 
+## v0.16.0
+
+### Changed
+
+- **The installer now offers the family's routing block** (closing B-06 in the
+  umbrella). Until now only `super-ux` delegated: install this skill on its own
+  and no router was written at all, so an agent had the skill and no rule saying
+  when to reach for it. The bundle installer wrote all eight, which is why
+  nothing looked broken — the gap only opened for someone installing one member.
+
+  Delegated to `npx sshlg-skills routers --member make-skill` rather than
+  reimplemented, for three reasons:
+
+  - The block describes what the machine actually has. A lone member rendering
+    the whole thing would print a table for routers nobody installed.
+  - `--member` scopes the write to this skill's own section. Verified by damaging
+    two sections of a real block and running this installer: its own was
+    repaired, the other left exactly as it was.
+  - The launcher is the only writer that copies the operator's global instruction
+    file before touching it. That file has no version control behind it.
+
+  `--no-install` keeps it from silently downloading a package nobody asked for.
+  When the launcher is absent the command is printed instead of failing: ending
+  an install in an error over an optional follow-up reads as a failed install.
+  Both paths were exercised.
+
 ## v0.15.0
 
 ### Fixed

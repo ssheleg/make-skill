@@ -63,6 +63,38 @@ function installOne(label, src, dest, isDir, force) {
   console.log(`Installed ${label} -> ${dest}`);
 }
 
+/**
+ * Ask the family launcher to write the routing block, for this member only.
+ *
+ * Delegated rather than reimplemented, for three reasons. The block describes
+ * what the machine actually has, so a lone member rendering the whole thing
+ * would produce a table for routers nobody installed. `--member` limits the
+ * write to the `make-skill` section and leaves everyone else's alone, which is
+ * what lets the bundle and a single installer both write. And the launcher is
+ * the only writer that copies the operator's global instruction file before
+ * touching it — that file has no version control behind it.
+ *
+ * `--no-install` keeps this from silently downloading a package nobody asked
+ * for. When the launcher is absent, print the command rather than fail: ending
+ * an install in an error because an OPTIONAL follow-up is missing reads as a
+ * failed install.
+ */
+function offerRouters() {
+  const { spawnSync } = require('child_process');
+  const r = spawnSync(
+    'npx',
+    ['--no-install', 'sshlg-skills', 'routers', '--member', 'make-skill'],
+    { stdio: 'inherit', shell: process.platform === 'win32' }
+  );
+  if (r.status !== 0) {
+    console.log(
+      '\nTo have this skill apply by default in every project, add the\n' +
+      "family's routing block to your agent's global instructions:\n\n" +
+      '  npx --yes sshlg-skills routers --member make-skill\n'
+    );
+  }
+}
+
 function main(argv) {
   const args = argv.slice(2);
   if (args.includes('--help') || args.includes('-h')) {
@@ -103,6 +135,11 @@ function main(argv) {
       '         claude plugin update make-skill@make-skill\n' +
       '       Pass --force if you really want both.'
     );
+    // Offered here too. The skill IS present on this machine — as the plugin —
+    // so the routing block is exactly as wanted as on the install path. Two
+    // doors into one install that behave differently is how a feature comes to
+    // exist for half its users.
+    offerRouters();
     return 0;
   }
 
@@ -113,6 +150,7 @@ function main(argv) {
     true,
     force
   );
+  offerRouters();
   return 0;
 }
 
