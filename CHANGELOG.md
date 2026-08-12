@@ -1,5 +1,26 @@
 # Changelog
 
+## v0.14.0
+
+### Fixed
+
+- **`LINK_ESCAPE` fired on every cross-skill link and called them all broken.** The
+  check rejected any `../` target on the stated grounds that "packagers ship that
+  directory alone, so it arrives broken on every agent." Measured against the packager:
+  `npx skills add ssheleg/task-pipeline --skills evidence-docs` installed the sibling
+  too, laid both under one `skills/` directory, and **all eleven** of `evidence-docs`'s
+  outbound links resolved. The rationale was false for the case it fired on most.
+
+  An escape that lands on a sibling in the same tree is a cross-skill link inside one
+  plugin, and `evidence-docs` is deliberately built that way — it says so in its own
+  body: *a navigator, not a second copy*. Twelve permanent findings nobody could ever
+  close is how an auditor teaches people to ignore it.
+
+  The check now fires only when the target resolves to **nothing**, which is the defect
+  it was always for. Probed both ways: a dangling `../nonexistent-skill/nope.md` is
+  still caught; the eleven real ones are not. Family-wide the count went 22 → 11 GAP,
+  and no repository gained a finding.
+
 ## v0.13.1
 
 ### Fixed

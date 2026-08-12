@@ -377,8 +377,16 @@ def _check_links(a, skill_dir, skill_text, rel):
             if target.startswith(("http://", "https://", "mailto:", "#")):
                 continue
             if target.startswith("../") or "/../" in target:
-                a.gap("LINK_ESCAPE", "link %r escapes the skill directory — packagers "
-                      "ship that directory alone, so it arrives broken on every agent"
+                # An escape that lands on a sibling skill in the same tree is a
+                # cross-skill link inside one plugin, and every packager measured
+                # ships those siblings together — `npx skills add <repo> --skills
+                # <one>` installed the sibling too, and all eleven links resolved.
+                # An escape that lands nowhere is the defect this check is for.
+                out = os.path.normpath(os.path.join(skill_dir, target.split("#")[0]))
+                if os.path.exists(out):
+                    continue
+                a.gap("LINK_ESCAPE", "link %r leaves the skill directory and resolves "
+                      "to nothing — a sibling would ship alongside, this will not"
                       % target, rel, i)
                 bad = True
                 continue
