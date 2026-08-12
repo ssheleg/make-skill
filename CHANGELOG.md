@@ -1,5 +1,25 @@
 # Changelog
 
+## v0.15.0
+
+### Fixed
+
+- **Reachability counted links and missed the files a skill leans on hardest.** After
+  v0.13.0 taught the check to follow links transitively, it still only followed *links* —
+  so four bundled scripts in `seo-aeo-audit` were reported as dead weight while `SKILL.md`
+  names them in the sentence that tells the agent what ships and the references name them
+  in the commands that run them: `` `gsc_pull.py` ``, `scripts/psi_pull.py`. A file the
+  body tells you to execute is the opposite of unopened.
+
+  Reachability is now by link, by path, or by bare filename, followed transitively.
+  Probed: a reference nobody mentions anywhere is still flagged. `seo-aeo-audit` 4 → 0,
+  family 11 → 7, nothing gained elsewhere.
+
+**Third false-positive class in three releases, all one shape**: the check asserted how
+a skill refers to its own files instead of measuring how these skills actually do it.
+Between them the three fired on 45 correct files — more than half of every finding this
+auditor reported across the family.
+
 ## v0.14.0
 
 ### Fixed

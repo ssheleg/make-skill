@@ -309,8 +309,30 @@ def _bundle_closure(skill_dir, skill_text):
             if os.path.isfile(os.path.join(d, entry)):
                 available["%s/%s" % (sub, entry)] = os.path.join(d, entry)
 
+    def named_in(text):
+        """Keys this text reaches: by link, by path, or by bare filename.
+
+        A script the body tells the agent to run is named in prose and a command —
+        `python3 scripts/gsc_pull.py`, or just `gsc_pull.py` in a list of what ships —
+        never as a markdown link. It is the opposite of dead weight, so matching only
+        link syntax reports the files a skill leans on hardest.
+        """
+        hits = set()
+        for key, _path in available.items():
+            base = key.split("/", 1)[1]
+            if key in text or base in text:
+                hits.add(key)
+        for target in LINK_RE.findall(text):
+            t = target.split("#", 1)[0].strip().lstrip("./")
+            if not t or "://" in t:
+                continue
+            for key in available:
+                if key == t or key.endswith("/" + t):
+                    hits.add(key)
+        return hits
+
     seen = set()
-    stack = [key for key in available if key in skill_text]
+    stack = list(named_in(skill_text))
     while stack:
         key = stack.pop()
         if key in seen:
@@ -318,19 +340,11 @@ def _bundle_closure(skill_dir, skill_text):
         seen.add(key)
         if not key.endswith(".md"):
             continue
-        sub = key.split("/", 1)[0]
         try:
             txt = open(available[key], encoding="utf-8").read()
         except (OSError, UnicodeDecodeError):
             continue
-        for target in LINK_RE.findall(txt):
-            t = target.split("#", 1)[0].strip().lstrip("./")
-            if not t or "://" in t:
-                continue
-            # a bare name inside references/ means a sibling of that same directory
-            cand = t if "/" in t else "%s/%s" % (sub, t)
-            if cand in available and cand not in seen:
-                stack.append(cand)
+        stack.extend(k for k in named_in(txt) if k not in seen)
     return seen
 
 
