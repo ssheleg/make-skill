@@ -1,5 +1,35 @@
 # Changelog
 
+## v0.17.1 — 2026-08-13
+
+Eight negative self-tests were healthy and had no way to prove it — and the first attempt
+to give them one proved the point by being wrong.
+
+### Added
+
+- **`test/plant_guard.py`** — one implementation of *did the plant actually land*, called
+  by every plant as `snap` before and `verify` after. It compares **content and mode**,
+  ignores `.git` churn, refuses when handed no tree or no snapshot, and keeps its manifest
+  outside the tree it measures. `test/plant_guard_test.py` covers nine cases, including
+  the one that named it.
+
+### Fixed
+
+- **Every file-editing plant now proves it landed**, `PLANT DID NOT LAND: <step>`. A plant
+  that edits nothing leaves the validator honestly passing, and the step then reports a
+  guard it never disarmed as broken — standing instruction #6's corollary, and what kept
+  `sheleg-dev`'s `main` red for two days over a guard that worked.
+- **The `hookexec` case was reported broken and was not.** Its plant drops a hook
+  script's executable bit, and the first guard compared bytes only, so it announced
+  `PLANT DID NOT LAND` about a plant that had landed. CI caught it; the local run had
+  truncated its output before that case. The helper exists because five hand-written
+  variants of this guard produced five different bugs, that one included.
+
+Verified by running every plant: 40 cases across eight steps, all green — `name`, `desc`,
+`key`, `ref`, `trigger`, `contrib`, `reserved`, `xmltag`, `person`, `toc`, `tokens`,
+`tplxml`, four eval cases, five host-capability cases including `hookexec`, and the rest.
+
+
 ## v0.17.0
 
 Following `task-pipeline` v1.53.0, which renamed the artifact root's default from

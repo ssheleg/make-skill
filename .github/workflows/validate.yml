@@ -15,18 +15,25 @@ jobs:
 
       - name: Structural validator
         run: python3 test/validate.py
+      - name: The plant guard itself (content AND mode, and the incident that named it)
+        run: python3 test/plant_guard_test.py
 
       - name: Negative self-test (validator must be able to fail)
         run: |
           set -eu
           rm -rf /tmp/corrupt-copy
           cp -R . /tmp/corrupt-copy
+          python3 test/plant_guard.py snap /tmp/corrupt-copy
           python3 - <<'PY'
           import pathlib, re
           p = pathlib.Path("/tmp/corrupt-copy/plugins/make-skill/.claude-plugin/plugin.json")
           p.write_text(re.sub(r'"version": "[0-9.]*"', '"version": "0.0.0-corrupt"',
                               p.read_text(encoding="utf-8")), encoding="utf-8")
           PY
+          # A plant that edits nothing leaves the validator honestly passing, and the step
+          # then blames a guard it never disarmed. Instruction #6's corollary: verify the
+          # file actually changed before believing the result.
+          python3 test/plant_guard.py verify /tmp/corrupt-copy "Negative self-test (validator must be able to fail)"
           if python3 /tmp/corrupt-copy/test/validate.py; then
             echo "ERROR: validator passed on a corrupted copy — it cannot fail"
             exit 1
@@ -52,11 +59,16 @@ jobs:
           set -eu
           rm -rf /tmp/noru-copy
           cp -R . /tmp/noru-copy
+          python3 test/plant_guard.py snap /tmp/noru-copy
           python3 - <<'PY'
           import pathlib, re
           p = pathlib.Path("/tmp/noru-copy/plugins/make-skill/skills/make-skill/SKILL.md")
           p.write_text(re.sub(r"[а-яё]", "x", p.read_text(encoding="utf-8"), flags=re.I), encoding="utf-8")
           PY
+          # A plant that edits nothing leaves the validator honestly passing, and the step
+          # then blames a guard it never disarmed. Instruction #6's corollary: verify the
+          # file actually changed before believing the result.
+          python3 test/plant_guard.py verify /tmp/noru-copy "Negative self-test (Russian-free description must fail)"
           if python3 /tmp/noru-copy/test/validate.py; then
             echo "ERROR: validator passed with no Russian trigger aliases"
             exit 1
@@ -70,6 +82,7 @@ jobs:
           for case in name desc key ref trigger contrib; do
             rm -rf "/tmp/spec-$case"
             cp -R . "/tmp/spec-$case"
+            python3 test/plant_guard.py snap "/tmp/spec-$case"
             CASE="$case" python3 - <<'PY'
           import os, pathlib, re
           case = os.environ["CASE"]
@@ -91,6 +104,7 @@ jobs:
           if case == "contrib":   # public repo must keep its contributor entry points
               (root / "CONTRIBUTING.md").unlink()
           PY
+            python3 test/plant_guard.py verify "/tmp/spec-$case" "Negative self-test (spec violations must fail)"
             if python3 "/tmp/spec-$case/test/validate.py"; then
               echo "ERROR: validator passed on spec violation '$case'"; exit 1
             fi
@@ -108,6 +122,7 @@ jobs:
             name="${case%%:*}"; expect="${case#*:}"
             rm -rf "/tmp/ap-$name"
             cp -R . "/tmp/ap-$name"
+            python3 test/plant_guard.py snap "/tmp/ap-$name"
             CASE="$name" python3 - <<'PY'
           import os, pathlib, re
           case = os.environ["CASE"]
@@ -131,6 +146,7 @@ jobs:
               p.write_text(p.read_text(encoding="utf-8").replace(
                   "name: skill-name-here", "name: <skill-name>", 1), encoding="utf-8")
           PY
+            python3 test/plant_guard.py verify "/tmp/ap-$name" "Negative self-test (Anthropic platform rules must fail)"
             if out=$(python3 "/tmp/ap-$name/test/validate.py" 2>&1); then
               echo "ERROR: validator passed on platform violation '$name'"; exit 1
             fi
@@ -151,6 +167,7 @@ jobs:
             name="${case%%:*}"; expect="${case#*:}"
             rm -rf "/tmp/ev-$name"
             cp -R . "/tmp/ev-$name"
+            python3 test/plant_guard.py snap "/tmp/ev-$name"
             CASE="$name" python3 - <<'PY'
           import json, os, pathlib
           case = os.environ["CASE"]
@@ -175,6 +192,7 @@ jobs:
                   s["scenarios"][1]["files"] = ["test/evals/fixtures/gone.md"]
               scen_p.write_text(json.dumps(s, indent=2), encoding="utf-8")
           PY
+            python3 test/plant_guard.py verify "/tmp/ev-$name" "Negative self-test (evaluation suite must stay real)"
             if out=$(python3 "/tmp/ev-$name/test/validate.py" 2>&1); then
               echo "ERROR: validator passed on eval violation '$name'"; exit 1
             fi
@@ -195,6 +213,7 @@ jobs:
             name="${case%%:*}"; expect="${case#*:}"
             rm -rf "/tmp/hc-$name"
             cp -R . "/tmp/hc-$name"
+            python3 test/plant_guard.py snap "/tmp/hc-$name"
             CASE="$name" python3 - <<'PY'
           import json, os, pathlib, re
           case = os.environ["CASE"]
@@ -218,6 +237,7 @@ jobs:
               (root / "templates").mkdir(exist_ok=True)
               (root / "templates/SKILL.template.md").write_text("---\nname: x\ndescription: y\n---\n")
           PY
+            python3 test/plant_guard.py verify "/tmp/hc-$name" "Negative self-test (host-capability rules must fail)"
             if out=$(python3 "/tmp/hc-$name/test/validate.py" 2>&1); then
               echo "ERROR: validator passed host-capability violation '$name'"; exit 1
             fi
@@ -233,6 +253,7 @@ jobs:
           for case in mktfield mktschema plgschema srcpath buried dupcmd plgdisplay mktdisplay; do
             rm -rf "/tmp/cc-$case"
             cp -R . "/tmp/cc-$case"
+            python3 test/plant_guard.py snap "/tmp/cc-$case"
             CASE="$case" python3 - <<'PY'
           import json, os, pathlib
           case = os.environ["CASE"]
@@ -264,6 +285,7 @@ jobs:
           mkt_p.write_text(json.dumps(mkt, indent=2) + "\n", encoding="utf-8")
           plg_p.write_text(json.dumps(plg, indent=2) + "\n", encoding="utf-8")
           PY
+            python3 test/plant_guard.py verify "/tmp/cc-$case" "Negative self-test (Claude Code manifest violations must fail)"
             if python3 "/tmp/cc-$case/test/validate.py"; then
               echo "ERROR: validator passed on Claude Code violation '$case'"; exit 1
             fi
@@ -284,6 +306,7 @@ jobs:
             name="${case%%:*}"; expect="${case#*:}"
             rm -rf "/tmp/cl-$name"
             cp -R . "/tmp/cl-$name"
+            python3 test/plant_guard.py snap "/tmp/cl-$name"
             CASE="$name" python3 - <<'PY'
           import os, pathlib, re
           case = os.environ["CASE"]
@@ -334,6 +357,7 @@ jobs:
                                   p.read_text(encoding="utf-8"), count=1, flags=re.M),
                            encoding="utf-8")
           PY
+            python3 test/plant_guard.py verify "/tmp/cl-$name" "Negative self-test (claims, budgets and runnable commands)"
             if out=$(python3 "/tmp/cl-$name/test/validate.py" 2>&1); then
               echo "ERROR: validator passed claim/command violation '$name'"; exit 1
             fi
