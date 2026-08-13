@@ -450,7 +450,7 @@ jobs:
           # name registers /make-skill twice (see `claude plugin details`)
           test ! -e "$HOME/.claude/commands/make-skill.md"
           # references must travel with the skill — relative links break otherwise
-          for r in agent-skills-spec authoring surfaces enterprise retrofit host-capabilities claude-code-plugin distribution mcp mcp-ship a2a; do
+          for r in agent-skills-spec authoring surfaces enterprise retrofit host-capabilities claude-code-plugin distribution mcp a2a; do
             test -f "$HOME/.claude/skills/make-skill/references/$r.md"
           done
           # scripts and skeletons must travel too — they are the half that works

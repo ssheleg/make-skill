@@ -116,7 +116,7 @@ Report the table before changing anything, then fix.
 12. **Gotcha compliance**: the list in `SKILL.md`, plus the installer traps in
     `references/distribution.md` when the repo ships a CLI or a validator.
 13. **Protocol dependencies** if it touches MCP or A2A (`references/mcp.md`,
-    `references/mcp-ship.md` once a server is being shipped, `references/a2a.md`):
+    `references/a2a.md`; the wire itself lives in the `agent-interop` skill):
     dependency and protocol version in `compatibility`, discovery instead of
     hardcoded tool names, the untrusted-output rule stated, interactive auth
     handled as a human step rather than a retry loop.
