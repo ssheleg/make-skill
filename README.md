@@ -258,7 +258,7 @@ test/validate.py                      # structural validator
 test/evals/                           # trigger set + behavioral scenarios (data)
 .github/workflows/{validate,release}.yml
 install.sh  README.md  CHANGELOG.md  CONTRIBUTING.md  SECURITY.md  SKILL-CARD.md  LICENSE
-docs/superpowers/{specs,plans}/       # historical design records
+docs/evidence/{specs,plans}/       # historical design records
 ```
 
 ## Contributing
