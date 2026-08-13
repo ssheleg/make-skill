@@ -5,7 +5,7 @@ license: MIT
 compatibility: Authoring works on any agent. The bundled scripts/ need python3. Publishing steps need git, gh, node and npm; the plugin gates need the claude CLI. Not usable on the Claude API surface, which has no network and no runtime package install.
 metadata:
   author: ssheleg
-  version: "0.17.1"
+  version: "0.18.0"
   homepage: https://github.com/ssheleg/make-skill
 ---
 
@@ -27,8 +27,8 @@ orchestrator, release automation). **make-skill itself** is built to this canon.
 | `references/host-capabilities.md` | shipping a **hook, subagent, command, script or MCP dependency** — what each buys and costs, hook events and exit codes, the degradation clauses |
 | `references/claude-code-plugin.md` | anything shipping as a **Claude Code plugin/marketplace** — manifest schemas, component layout, path variables, `validate` failures |
 | `references/distribution.md` | the repo layout, releases, and all five channels — plugin, skills CLI, npx, Cursor, umbrella family repo |
-| `references/mcp.md`, `references/mcp-ship.md` | skill vs **MCP** server, wrapping one — then shipping it: mounting, its 404, `server.json`, the registry |
-| `references/a2a.md` | the skill spans two autonomous agents (**A2A**): Agent Cards, task lifecycle, delegation |
+| `references/mcp.md` | skill vs **MCP** server, declaring the dependency, consent and untrusted-output rules |
+| `references/a2a.md` | the skill spans two autonomous agents (**A2A**) — choosing it, the two meanings of "skill", driving a peer safely |
 
 Missing from this copy? Raw fallback:
 `raw.githubusercontent.com/ssheleg/make-skill/main/plugins/make-skill/skills/make-skill/references/<file>`
@@ -240,12 +240,14 @@ review that approved it.
 
 ## Protocol-connected skills (MCP / A2A)
 
-A skill is instructions; it cannot grant capability. Teaching the agent HOW is a
-skill. New capability against a live system is an **MCP server** (`mcp.md`, then
-`mcp-ship.md` to mount and publish it). Delegating an outcome to another
-autonomous agent is **A2A** (`a2a.md`). Both references carry the wire-level
-rules — tool-name discovery per host, Agent Cards, and interactive auth as a
-human step rather than a retry loop.
+A skill is instructions; it cannot grant capability. New capability against a live
+system is an **MCP server** (`mcp.md`); delegating an outcome to another agent is
+**A2A** (`a2a.md`). Both carry only what changes *because you write a skill*.
+
+**The protocols have one home, and it is not this skill:** `agent-interop` in
+`ssheleg/agent-stack` — the wire, the registry, mounting, the gateway. Two
+descriptions of one protocol drift, and the stale one is indistinguishable from
+the current one.
 
 Two that stay here, because a skill written without them is unsafe rather than
 merely incomplete:

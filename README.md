@@ -149,9 +149,15 @@ agent opens only when the situation calls for them:
 | `host-capabilities.md` | hooks, subagents, commands, scripts and MCP dependencies — what each buys, what it costs in always-on tokens, hook events and exit-code semantics, and the degradation clauses that keep a skill working where none of them exist |
 | `claude-code-plugin.md` | the [Claude Code layer](https://code.claude.com/docs/en/plugins-reference) — `plugin.json` / `marketplace.json` schemas, plugin sources, component locations, host-only front-matter, path variables, cache and symlink rules, the `claude plugin` CLI |
 | `distribution.md` | the repo layout, every install channel, exact CLI flags, npm publishing traps, the release checklist |
-| `mcp.md` | [MCP](https://modelcontextprotocol.io) — skill vs server, primitives and methods, transports, consent and untrusted-output rules |
-| `mcp-ship.md` | shipping an MCP server — mounting it in an existing app and the double-path 404, auth middleware, the 404/307/401 bisect, `server.json` and the MCP Registry |
-| `a2a.md` | [A2A](https://a2a-protocol.org) — Agent Cards, task lifecycle, method mapping, v0.x→1.0 wire drift |
+| `mcp.md` | [MCP](https://modelcontextprotocol.io) for a **skill author** — skill vs server, declaring the dependency, consent and untrusted-output rules |
+| `a2a.md` | [A2A](https://a2a-protocol.org) for a **skill author** — choosing it over MCP, the two meanings of "skill", driving an opaque peer safely |
+
+The **protocols themselves** have one home, and it is not this skill: `agent-interop` in
+[`ssheleg/agent-stack`](https://github.com/ssheleg/agent-stack) carries MCP's wire surface
+and deprecation register, mounting and the double-path 404, the registry and `server.json`,
+A2A cards and task states, and the gateway layer. The two files above carry only what
+changes because the thing being written is a skill — because two descriptions of one
+protocol drift, and the stale one is indistinguishable from the current one.
 
 Plus six skeletons in `skills/make-skill/assets/` — inside the skill directory,
 so they reach every channel: `SKILL.template.md` with both rulebooks' limits

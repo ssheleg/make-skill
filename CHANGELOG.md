@@ -1,5 +1,41 @@
 # Changelog
 
+## v0.18.0 — 2026-08-14
+
+This skill had been describing somebody else's protocol, and the description had gone
+stale without anything on the page saying so.
+
+### Changed
+
+- **The protocol layer moves out; the skill-author delta stays.** `references/mcp.md` and
+  `references/a2a.md` now carry only what changes *because the thing being written is a
+  skill* — skill versus server, declaring the dependency in `compatibility`, tool-name
+  discovery per host, the untrusted-output rule, interactive auth as a human step, and the
+  two unrelated meanings of the word "skill". The wire itself — layers, methods,
+  lifecycles, transports, cards, task states — now lives in **one** place: the
+  `agent-interop` skill in `ssheleg/agent-stack`, where every reference carries a
+  `**Spec pinned:** … · read <date>` line that a validator enforces.
+
+- **`references/mcp.md` no longer describes a protocol MCP is not.** It was pinned to spec
+  revision `2025-11-25` and stated *"MCP is a **stateful** protocol"* with an `initialize`
+  → `notifications/initialized` handshake. `modelcontextprotocol.io/specification/latest`
+  now serves revision `2026-07-28`, whose own summary reads *"Stateless, self-contained
+  requests. Per-request capability negotiation."* The file's header said it had been read
+  on 2026-07-28 while its pin stayed on the older revision — which is exactly the failure
+  mode a single stamped home exists to prevent. It also documented `sampling` and `roots`
+  as current client primitives; both are now deprecated with a published removal window.
+
+### Removed
+
+- **`references/mcp-ship.md`** — relocated to `agent-interop`. Mounting a server, the
+  FastMCP double-path 404, the 404/307/401 bisect, `server.json` and the registry read
+  identically whether or not the reader is writing a skill, which is the test for which
+  side of the boundary a file belongs on. Nothing was lost in the move: the Ed25519 DNS
+  and HTTP namespace challenge and the two automated-publish rules were folded into
+  `agent-interop/references/registry.md`, and the operational half became
+  `agent-interop/references/mcp-ship.md`. The reference count drops 11 → 10, and the
+  installer test, the README table, `SKILL-CARD.md` and `retrofit.md` follow.
+
 ## v0.17.1 — 2026-08-13
 
 Eight negative self-tests were healthy and had no way to prove it — and the first attempt
