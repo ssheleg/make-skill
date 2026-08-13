@@ -66,7 +66,7 @@ the shape from `ssheleg/super-ux`:
 ├── README.md (English-first), CHANGELOG.md, LICENSE (MIT)
 ├── CONTRIBUTING.md + SECURITY.md       # public repo: how to check work, where to report
 ├── SKILL-CARD.md                       # the enterprise registry entry + risk-table pass
-└── docs/superpowers/{specs,plans}/
+└── docs/evidence/{specs,plans}/
 ```
 
 **Public-repo floor** (validator-enforced): a README saying what it does before

@@ -82,7 +82,7 @@ test/evals/                                # triggers.json + scenarios.json (dat
 .github/workflows/validate.yml (+ release.yml, off by default)
 install.sh, README.md (English-first), CHANGELOG.md, LICENSE (MIT)
 CONTRIBUTING.md + SECURITY.md              # required once the repo is public
-docs/superpowers/{specs,plans}/
+docs/evidence/{specs,plans}/
 ```
 
 ## Claude Code plugin conformance (Anthropic's own reference)

@@ -5,7 +5,7 @@ license: MIT
 compatibility: Authoring works on any agent. The bundled scripts/ need python3. Publishing steps need git, gh, node and npm; the plugin gates need the claude CLI. Not usable on the Claude API surface, which has no network and no runtime package install.
 metadata:
   author: ssheleg
-  version: "0.16.0"
+  version: "0.17.0"
   homepage: https://github.com/ssheleg/make-skill
 ---
 
@@ -49,7 +49,7 @@ or `plugins/*/skills/*/` in the current directory → run the Retrofit audit and
 report the gap table plus ONE next action. Nothing to detect → ask in one line
 what to create.
 
-Distributable work is a real project: spec (`docs/superpowers/specs/`) before
+Distributable work is a real project: spec (`docs/evidence/specs/`) before
 code, and the spec locks target-project file contracts FIRST — skills are
 written against that contract, never ad hoc.
 

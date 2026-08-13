@@ -735,9 +735,9 @@ if scen is not None:
 # "14-item", "ten files" beside eleven, "six groups" beside eight, a SKILL-CARD
 # pinned two releases back. None of them were catchable by any rule above,
 # because a number typed into prose is an assertion and nothing was comparing it
-# to the artifact. CHANGELOG.md and docs/superpowers/ are exempt: they are
+# to the artifact. CHANGELOG.md and docs/evidence/ are exempt: they are
 # history, and a past entry is allowed to quote the count that was true then.
-CLAIM_SKIP_DIRS = (os.path.join("docs", "superpowers"), os.path.join("test", "evals", "fixtures"))
+CLAIM_SKIP_DIRS = (os.path.join("docs", "evidence"), os.path.join("test", "evals", "fixtures"))
 CLAIM_SKIP_FILES = {"CHANGELOG.md"}
 
 
