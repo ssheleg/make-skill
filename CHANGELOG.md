@@ -1,5 +1,27 @@
 # Changelog
 
+## v0.17.1 — 2026-08-13
+
+Eight negative self-tests were healthy and had no way to prove it.
+
+### Fixed
+
+- **Every file-editing plant now asserts that it changed the tree.** A plant that edits
+  nothing leaves the validator honestly passing, and the step then reports a guard it
+  never disarmed as broken — the failure that kept `sheleg-dev`'s `main` red for two days
+  and the corollary of standing instruction #6. Eight steps gained
+  `PLANT DID NOT LAND: <tmp> is identical to the source tree`, placed inside each
+  case loop so a parameterized step proves every case rather than the step as a whole.
+- Verified by running all eight locally: **every case lands and every guard fires** —
+  `name`, `desc`, `key`, `ref`, `trigger`, `contrib`, `reserved`, `xmltag`, `person`,
+  `toc`, `tokens`, `tplxml`, four eval cases and the host-capability cases. None of this
+  repository's plants was broken; the point is that nothing could have told you.
+
+### Known residue
+
+The guard is step-level, so a step whose plant lands **partially** — three of four edits
+— still passes on the strength of the three. Recorded rather than implied.
+
 ## v0.17.0
 
 Following `task-pipeline` v1.53.0, which renamed the artifact root's default from
