@@ -4,3 +4,7 @@ node_modules/
 graphify-out/
 __pycache__/
 *.pyc
+
+# agent-sync — local credentials and run state, never committed
+.env.agent-sync
+.agent-sync/
