@@ -1,0 +1,29 @@
+{
+  "backend": "fs",
+  "leaseTtlSeconds": 2700,
+  "renewIntervalSeconds": 300,
+  "gated": true,
+  "idRegisters": {},
+  "guardedFiles": [
+    "CHANGELOG.md",
+    "package.json",
+    ".claude-plugin/marketplace.json",
+    "plugins/*/.claude-plugin/plugin.json",
+    "docs/evidence/backlog.md",
+    "docs/evidence/verification.md",
+    "docs/evidence/retro.md",
+    ".github/workflows/*.yml",
+    "test/validate.py",
+    "test/negatives.py"
+  ],
+  "claimTags": {},
+  "gates": [],
+  "mirror": {
+    "enabled": false,
+    "sources": []
+  },
+  "mergeLog": {
+    "file": "docs/MERGES.md",
+    "retentionDays": 7
+  }
+}
