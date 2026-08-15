@@ -110,7 +110,22 @@ level deep / `## Contents` past 100 lines, no command colliding with a skill
 name, `.mdc` free of relative links, **no stray `SKILL.md` outside
 `plugins/*/skills/*/`**, links that resolve and never escape the skill dir. Plus
 a negative self-test — corrupt a copy, expect FAIL — because a validator nobody
-has watched fail is decoration. Run `claude plugin validate --strict` as its OWN
+has watched fail is decoration.
+
+**And planting has a blind spot: a check that never runs.** Corrupting a copy
+proves a check asserts the *wrong* thing when it is wrong. It cannot see a check
+that neither passes nor fails, because *nothing happening* is indistinguishable
+from a clean suite. Two ways it happens, both shipped in `sheleg-design` on
+2026-08-16 inside the **same** check and within an hour of each other: a lookup
+returning `None` on a case mismatch — `NUMBER_WORDS` is keyed lowercase and the
+document capitalises — which short-circuited the guard; and a pattern anchored on
+a line wrap the file did not have, so the edit it was policing had already failed
+silently. **The check-count is not evidence either**: the total rose by four while
+the new check covered nothing.
+
+So the procedure has a second half. Plant the defect, then **read the failure you
+expected rather than the summary** — and if the suite still passes, suspect your
+check before you trust the artifact. Run `claude plugin validate --strict` as its OWN
 CI job so an upstream outage cannot mask a house failure, and treat `skills-ref
 validate <skill dir>` (from `agentskills/agentskills`) as the tie-breaker on the
 open standard.

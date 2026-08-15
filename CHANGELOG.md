@@ -1,5 +1,33 @@
 # Changelog
 
+## v0.19.0 — 2026-08-16
+
+### Added
+
+- **The validator failure mode planting does not catch**, in
+  `references/distribution.md` → *The house validator*. This canon already said a
+  validator nobody has watched fail is decoration — the right rule for a check that
+  asserts the *wrong* thing. It does not cover a check that **never runs**, which is
+  invisible to planting, because nothing happening looks exactly like a clean suite.
+
+  Both shipped in `sheleg-design` on 2026-08-16, inside the same check and within an
+  hour: a lookup returning `None` on a case mismatch (`NUMBER_WORDS` keyed lowercase,
+  the document capitalising) short-circuited the guard, and the pattern policing a
+  stale header had been anchored on a line wrap the file did not have. The suite
+  printed OK both times, and **the check-count rose by four while the new check
+  covered nothing** — so the counter is not evidence either. The procedure gains a
+  second half: plant the defect, then read the failure you expected rather than the
+  summary, and if the suite still passes, suspect your check before the artifact.
+
+### Note
+
+The first draft of this entry put the rule in `SKILL.md` and pushed the body from
+under the 4750-token working limit to 4855. The repo's own validator refused it and
+said what to do — move a section to `references/` before adding one. The rule went to
+`references/` instead, where the house-validator guidance already lives, and `SKILL.md`
+is byte-identical to v0.18.1. A canon that will not follow its own budget rule under
+mild inconvenience is a canon nobody else will follow either.
+
 ## v0.18.1 — 2026-08-14
 
 A red `validate` could not stop a publish anywhere in this family, and one member
