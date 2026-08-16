@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Structural validator for the make-skill plugin repo. Exit 0 = pass."""
 import glob, json, os, re, sys
+import subprocess
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 NAME = "make-skill"
@@ -912,6 +913,45 @@ for dirpath, dirnames, filenames in os.walk(ROOT):
             if not os.path.exists(tpath):
                 rel = os.path.relpath(fp, ROOT)
                 fail(f"broken relative link in {rel}: {target}")
+
+def _disclose_routing(msg):
+    """A check that could not run, said out loud rather than counted as a pass."""
+    print(f"  unlooked: {msg}")
+
+
+def check_routed_triggers_still_advertised():
+    """The family's routing hook fires on words this description has to keep.
+
+    B-54, 2026-08-16: `sheleg-design` 1.37.0 shipped green on its own gate having dropped
+    a phrase from its description that was a live trigger in the umbrella's
+    `lib/triggers.js`. This repository has no way to know that table exists, and it
+    releases BEFORE the umbrella re-pins, so the umbrella found out minutes after the tag.
+    A hook firing on a promise nobody made is the defect; a patch release was the cost.
+
+    **The table is not copied here.** The umbrella's own checker is asked, reading the
+    module the hook itself calls, so there is no duplicate to drift. When no umbrella sits
+    above this checkout — the ordinary state of a standalone clone, and of CI — this
+    discloses instead of passing, because a check that cannot look must never read as one
+    that looked.
+    """
+    script = os.path.join(str(ROOT), "..", "..", "test", "advertised_check.js")
+    if not os.path.isfile(script):
+        _disclose_routing("routed triggers — no sshlg-skills umbrella above this checkout")
+        return
+    try:
+        proc = subprocess.run(["node", script, "--member", "make-skill", "--root", str(ROOT)],
+                              capture_output=True, text=True, timeout=60)
+    except (OSError, subprocess.SubprocessError) as exc:
+        _disclose_routing(f"routed triggers — could not run the umbrella's checker ({exc})")
+        return
+    if proc.returncode == 1:
+        fail((proc.stdout + proc.stderr).strip())
+    elif proc.returncode != 0:
+        _disclose_routing(f"routed triggers — {(proc.stderr or 'the checker could not look').strip()}")
+
+
+check_routed_triggers_still_advertised()
+
 
 if errors:
     print("FAIL: make-skill structure invalid")
