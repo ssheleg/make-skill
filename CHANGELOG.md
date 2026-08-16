@@ -1,5 +1,53 @@
 # Changelog
 
+## v0.20.0 — the checker said 180 where the file said 1392
+
+**Both checkers dropped the continuation lines of a plain multi-line YAML
+description**, so a description whose real length was **1392 characters was
+measured at 180** and passed the 1024 spec cap, the 970 working limit and every
+`/skill-audit` this family issues. The standard-keeper handed a clean bill to a
+skill the Skills API rejects on upload, and `make-skill`'s own gate could not
+catch it either. A plain scalar may continue on indented lines and YAML folds
+them into one value with a space; `parse_frontmatter` discarded them, in both
+`scripts/audit_skill.py` and `test/validate.py`, byte for byte the same defect.
+
+**`allowed-tools: [Read, Write]` was read as the string `"[Read, Write]"`.**
+`TOOLS_TYPE` asks whether the value is a `str` and got yes, so the check written
+for exactly that form never fired — on the most common way authors write a tool
+list, and the one portability defect that costs a skill its tool grant on every
+host but Claude Code. A flow sequence now parses to a list, and the check fires.
+
+**The scalar is kept raw and finished at the end**, because a quoted scalar
+spanning lines carries its closing quote on the last one: unquoting the first
+line strips nothing and buries the quote in the middle of the folded value.
+
+**`--house` now applies the body's half of the 5% rule.** The canon states the
+headroom as one sentence for both fields, and this script applied it to the
+description only — so a body at 4999 tokens got `0 GAP` here and was refused by
+this repo's own validator. Two verdicts on one rule, and the permissive one was
+the one users got. `BODY_HEADROOM` is the new gap id; the `--house` help text
+and the module docstring said neither this nor `DESC_HEADROOM`, and now say both.
+
+**The guard against the two checkers drifting compared one of twelve rules.**
+It now compares all nine shared numeric limits by name plus both front-matter key
+sets, and a constant that exists on one side only is a failure rather than a
+silently skipped row — which is exactly how the missing 4750 shipped for four
+releases underneath it. Three limits that were literals at their use sites
+(`NAME_MAX`, `DESC_MAX`, `COMPAT_MAX`) are named, because a number with no name
+has no single home and cannot be compared against a second implementation.
+
+**`test/checker_parity_test.py`, 14 cases, joins `npm test`** — locally, not only
+in CI, since the checker it guards runs locally. Watched failing against the
+pre-fix code: **9 of 14 red**. It plants each defect and requires the checker to
+say so, rather than asserting that a correct file passes: a false negative in a
+checker is worse than no checker, because it is a green that gets quoted.
+
+**No shipped skill changes verdict.** All 24 in the family re-audited before and
+after: identical, and the one apparent difference was a `__pycache__` this run
+had just created.
+
+Found by the nine-repository audit of 2026-08-16 (umbrella `B-63`).
+
 ## v0.19.1 — 2026-08-16
 
 **This gate can now see an invariant it breaks one repository away.** The family umbrella

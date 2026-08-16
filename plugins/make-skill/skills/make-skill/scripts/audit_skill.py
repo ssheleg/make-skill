@@ -14,8 +14,12 @@ spends its context on the half that needs judgement.
   core      the Agent Skills open standard (agentskills.io/specification) plus the
             rules Anthropic's platform enforces on upload (reserved words, XML
             tags) and its authoring guidance (third person, tables of contents)
-  --house   adds the ssheleg canon: description starts "Use when …" and carries
-            English AND Russian trigger phrases
+  --house   adds the ssheleg canon: description starts "Use when …", carries
+            English AND Russian trigger phrases, and holds the 5% working
+            headroom on BOTH budgets — 970 of 1024 chars, 4750 of 5000 tokens.
+            The canon states the headroom as one rule for both fields; applying
+            it to one of them is how a body at 4999 tokens got a clean bill here
+            and was refused by the repo's own validator.
 
 Python 3.9+, standard library only: it has to run wherever the skill landed.
 """
@@ -37,6 +41,12 @@ DESC_TARGET = 970
 COMPAT_MAX = 500        # spec: compatibility is 1-500 characters
 BODY_MAX_LINES = 500    # spec + Anthropic: keep the body under 500 lines
 BODY_MAX_TOKENS = 5000  # spec + Anthropic: level-2 budget
+# House working limit, the body's half of the same 5% rule DESC_TARGET states.
+# The canon writes both as one sentence — "hold 5% headroom" — and for four
+# releases this script applied only the description half, so a body at 4999
+# tokens got 0 GAP here and was refused by the repo's own validator. Two
+# verdicts on one rule, and the permissive one was the one users got.
+BODY_TARGET_TOKENS = 4750
 # No tokenizer in the stdlib. 3.9 chars/token is measured, not assumed: tokenizing
 # this skill's own bundle gives 3.78-4.47. `claude plugin details` is far more
 # pessimistic (~2.8) and will always show a bigger number than this estimate.
@@ -95,8 +105,15 @@ def parse_frontmatter(text):
     Returns (data, line_of_key). A full YAML parser is not in the stdlib and a
     skill's frontmatter is a flat map by specification, so this is enough — and
     it keeps the script dependency-free, which is the point of shipping it.
+
+    A plain scalar may continue on indented lines and YAML folds them into one
+    value with a space. Dropping those lines is how a description whose real
+    length was 1392 characters got measured at 180 and passed both the 1024 cap
+    and the 970 working limit — a clean bill from the family's standard-keeper
+    for a skill the Skills API rejects on upload (2026-08-16, B-63).
     """
     data, lines, key, mode = {}, {}, None, None
+    scalars = set()
     for i, raw in enumerate(text.split("\n"), start=2):  # +2: the opening '---'
         if not raw.strip():
             continue
@@ -112,14 +129,39 @@ def parse_frontmatter(text):
             elif val == "":
                 data[key], mode = {}, "map"
             else:
-                data[key], mode = _unquote(val), None
+                # Kept RAW here and finished at the end: a quoted scalar that
+                # spans lines carries its closing quote on the last one, so
+                # unquoting the first line strips nothing and leaves the quote
+                # buried in the middle of the folded value.
+                data[key], mode = val, "scalar"
+                scalars.add(key)
         elif mode == "block":
+            data[key] = (data[key] + " " + raw.strip()).strip()
+        elif mode == "scalar":
             data[key] = (data[key] + " " + raw.strip()).strip()
         elif mode == "map":
             m = re.match(r"^\s+([A-Za-z0-9_-]+):\s*(.*)$", raw)
             if m:
                 data[key][m.group(1)] = _unquote(m.group(2).strip())
+    for k in scalars:
+        data[k] = _finish_scalar(data[k])
     return data, lines
+
+
+def _finish_scalar(v):
+    """A flow sequence is a LIST, not a string that happens to look like one.
+
+    `allowed-tools: [Read, Write]` read as the string "[Read, Write]" is why
+    TOOLS_TYPE never fired: it asks whether the value is a `str`, and the answer
+    was yes. The inline sequence is the most common way authors write a tool
+    list, and it is the portability defect the rule exists for — the skill works
+    in Claude Code and silently loses its tool grant on every other host.
+    """
+    v = v.strip()
+    if len(v) >= 2 and v[0] == "[" and v[-1] == "]":
+        inner = v[1:-1].strip()
+        return [] if not inner else [_unquote(p.strip()) for p in inner.split(",")]
+    return _unquote(v)
 
 
 def _unquote(v):
@@ -156,7 +198,7 @@ def audit(skill_dir, house=False):
     _check_description(a, fm, fm_lines, rel, house)
     _check_optional_fields(a, fm, fm_lines, rel)
     _check_keys(a, fm, fm_lines, rel)
-    _check_body_budget(a, body, rel)
+    _check_body_budget(a, body, rel, house)
     _check_bundle(a, skill_dir, text, name_on_disk)
     _check_links(a, skill_dir, text, rel)
     _check_prose(a, body, rel)
@@ -271,7 +313,7 @@ def _check_keys(a, fm, lines, rel):
         a.ok("FM_UNKNOWN_KEY", "no frontmatter key outside spec ∪ host extensions", rel)
 
 
-def _check_body_budget(a, body, rel):
+def _check_body_budget(a, body, rel, house=False):
     n_lines = body.count("\n") + 1
     est = int(len(body) / CHARS_PER_TOKEN)
     # Both, not either: a body over the line budget still has to report its
@@ -288,6 +330,17 @@ def _check_body_budget(a, body, rel):
     if not over:
         a.ok("BODY_BUDGET", "body is %d lines / ~%d tokens (budget %d / %d)"
              % (n_lines, est, BODY_MAX_LINES, BODY_MAX_TOKENS), rel)
+    # The house half, and it is the same rule DESC_HEADROOM applies to the other
+    # field: a body at the ceiling cannot absorb the next paragraph, so it gets
+    # absorbed into a reference that should have been split instead.
+    if house and not over and est >= BODY_TARGET_TOKENS:
+        a.gap("BODY_HEADROOM", "body is ~%d tokens — inside the %d budget but past the "
+              "%d working limit (house rule): the next section will breach it, and the "
+              "answer then is a split, not a trim"
+              % (est, BODY_MAX_TOKENS, BODY_TARGET_TOKENS), rel)
+    elif house and not over:
+        a.ok("BODY_HEADROOM", "body is ~%d/%d tokens, inside the working limit"
+             % (est, BODY_TARGET_TOKENS), rel)
 
 
 def _bundle_closure(skill_dir, skill_text):
@@ -451,7 +504,9 @@ def main(argv):
         description="Audit a skill directory against the Agent Skills standard.")
     p.add_argument("skill_dir", help="the directory containing SKILL.md")
     p.add_argument("--house", action="store_true",
-                   help="also apply the ssheleg canon (Use-when opener, EN+RU triggers)")
+                   help="also apply the ssheleg canon: Use-when opener, EN+RU triggers, "
+                        "and the 5%% working headroom on BOTH the description (970 of "
+                        "1024) and the body (4750 of 5000)")
     p.add_argument("--json", action="store_true", help="emit results as JSON")
     p.add_argument("--quiet", action="store_true", help="print GAP lines only")
     args = p.parse_args(argv[1:])

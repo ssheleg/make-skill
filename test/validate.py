@@ -179,6 +179,12 @@ CC_SKILL_KEYS = {
     "background", "hooks", "paths", "shell",
 }
 NAME_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+# Named rather than inlined so the drift guard below can compare them against
+# the shipped auditor's copies. A limit written as a literal at its use site
+# has no single home and cannot be checked against a second implementation.
+NAME_MAX = 64           # spec: name is 1-64 characters
+DESC_MAX = 1024         # spec: description is 1-1024 characters
+COMPAT_MAX = 500        # spec: compatibility is 1-500 characters
 BODY_MAX_LINES = 500
 BODY_MAX_TOKENS = 5000
 # The working limits: 5% under each ceiling. See the budget checks for why.
@@ -197,9 +203,36 @@ def strip_quotes(v):
     return v
 
 
+def finish_scalar(v):
+    """A flow sequence is a LIST, not a string that happens to look like one.
+
+    `allowed-tools: [Read, Write]` read as the string "[Read, Write]" is why the
+    check written to catch exactly that form never fired: it asks
+    `isinstance(v, str)`, and the answer was yes. The inline sequence is the most
+    common way authors write a tool list, and it is the portability defect the
+    rule exists for — the skill works in Claude Code and silently loses its tool
+    grant everywhere else.
+    """
+    v = v.strip()
+    if len(v) >= 2 and v[0] == "[" and v[-1] == "]":
+        inner = v[1:-1].strip()
+        return [] if not inner else [strip_quotes(p.strip()) for p in inner.split(",")]
+    return strip_quotes(v)
+
+
 def parse_frontmatter(text):
-    """YAML subset: top-level scalars, folded/literal blocks, one nested map."""
+    """YAML subset: top-level scalars — plain multi-line and inline flow
+    sequences included — folded/literal blocks, one nested map.
+
+    The multi-line case is not a nicety. A plain scalar may continue on indented
+    lines and YAML folds them into one value with a space; this parser dropped
+    them, so a description whose real length was 1392 characters was measured at
+    180 and passed both the 1024 cap and the 970 working limit. The family's own
+    standard-keeper handed a clean bill to a skill the Skills API rejects on
+    upload, and its own gate could not catch it either (2026-08-16, B-63).
+    """
     data, key, mode = {}, None, None
+    scalars = set()
     for raw in text.split("\n"):
         if not raw.strip():
             continue
@@ -214,13 +247,22 @@ def parse_frontmatter(text):
             elif val == "":
                 data[key], mode = {}, "map"
             else:
-                data[key], mode = strip_quotes(val), None
+                # Kept RAW here and finished at the end: a quoted scalar that
+                # spans lines carries its closing quote on the last one, so
+                # unquoting the first line strips nothing and leaves the quote
+                # buried in the middle of the folded value.
+                data[key], mode = val, "scalar"
+                scalars.add(key)
         elif mode == "block":
+            data[key] = (data[key] + " " + raw.strip()).strip()
+        elif mode == "scalar":
             data[key] = (data[key] + " " + raw.strip()).strip()
         elif mode == "map":
             m = re.match(r"^\s+([A-Za-z0-9_-]+):\s*(.*)$", raw)
             if m:
                 data[key][m.group(1)] = strip_quotes(m.group(2).strip())
+    for k in scalars:
+        data[k] = finish_scalar(data[k])
     return data
 
 
@@ -251,7 +293,7 @@ else:
             fail("SKILL.md: empty/missing name")
             fm_name = None
         else:
-            if len(fm_name) > 64:
+            if len(fm_name) > NAME_MAX:
                 fail(f"SKILL.md: name is {len(fm_name)} chars, spec max is 64")
             if not NAME_RE.match(fm_name):
                 fail(f"SKILL.md: name {fm_name!r} violates the spec charset "
@@ -273,8 +315,8 @@ else:
         if not isinstance(desc, str) or not desc.strip():
             fail("SKILL.md: empty/missing description")
         else:
-            if len(desc) > 1024:
-                fail(f"SKILL.md: description is {len(desc)} chars, spec max is 1024")
+            if len(desc) > DESC_MAX:
+                fail(f"SKILL.md: description is {len(desc)} chars, spec max is {DESC_MAX}")
             elif len(desc) > DESC_TARGET_CHARS:
                 # The description is the entire triggering budget, and it is the field
                 # that has to grow when a near-miss skill appears (authoring.md: "say
@@ -307,8 +349,8 @@ else:
         if compat is not None:
             if not isinstance(compat, str) or not compat.strip():
                 fail("SKILL.md: compatibility must be a non-empty string")
-            elif len(compat) > 500:
-                fail(f"SKILL.md: compatibility is {len(compat)} chars, spec max is 500")
+            elif len(compat) > COMPAT_MAX:
+                fail(f"SKILL.md: compatibility is {len(compat)} chars, spec max is {COMPAT_MAX}")
         if "license" in fm and not isinstance(fm["license"], str):
             fail("SKILL.md: license must be a string")
         if "allowed-tools" in fm and not isinstance(fm["allowed-tools"], str):
@@ -877,7 +919,14 @@ if os.path.isdir(plugin_bin):
             fail(f"bin/{entry}: not executable (chmod +x)")
 
 # one rule, one implementation: the shipped auditor and this validator must apply
-# the same XML-tag test, or a skill passes one gate and fails the other
+# the same tests, or a skill passes one gate and fails the other.
+#
+# This compared exactly ONE of the rules the two files duplicate, and the twelfth
+# — the 4750-token body working limit, which the auditor simply did not have —
+# shipped for four releases underneath it. A guard covering 1 of 12 is not a
+# guard against drift; it is a guard against one particular drift that already
+# happened. Every shared constant is compared now, by name, and a name that
+# vanishes from either side is a failure rather than a silently skipped row.
 aud_src = open(os.path.join(SKILL_DIR, "scripts", "audit_skill.py"), encoding="utf-8").read()
 am = re.search(r'^XML_TAG_RE = re\.compile\(r"(.+)"\)$', aud_src, re.M)
 if not am:
@@ -886,6 +935,44 @@ elif am.group(1) != XML_TAG_PATTERN:
     fail(f"XML_TAG_RE differs: audit_skill.py has {am.group(1)!r}, validate.py has "
          f"{XML_TAG_PATTERN!r} — one rule, two implementations, and a skill that "
          "passes one gate fails the other")
+
+# (name in audit_skill.py, name here, value here). Numbers only: a regex or a set
+# is compared by its own guard, because a mismatch there needs its own message.
+SHARED_LIMITS = [
+    ("NAME_MAX", "NAME_MAX", NAME_MAX),
+    ("DESC_MAX", "DESC_MAX", DESC_MAX),
+    ("DESC_TARGET", "DESC_TARGET_CHARS", DESC_TARGET_CHARS),
+    ("COMPAT_MAX", "COMPAT_MAX", COMPAT_MAX),
+    ("BODY_MAX_LINES", "BODY_MAX_LINES", BODY_MAX_LINES),
+    ("BODY_MAX_TOKENS", "BODY_MAX_TOKENS", BODY_MAX_TOKENS),
+    ("BODY_TARGET_TOKENS", "BODY_TARGET_TOKENS", BODY_TARGET_TOKENS),
+    ("CHARS_PER_TOKEN", "CHARS_PER_TOKEN", CHARS_PER_TOKEN),
+    ("TOC_MIN_LINES", "REF_TOC_MIN_LINES", REF_TOC_MIN_LINES),
+]
+for aud_name, here_name, here_val in SHARED_LIMITS:
+    m = re.search(r"^%s\s*=\s*([0-9.]+)" % re.escape(aud_name), aud_src, re.M)
+    if not m:
+        fail(f"scripts/audit_skill.py: {aud_name} not found — this validator compares it "
+             f"against {here_name}; a rule that exists on one side only is the drift "
+             "this guard is for")
+    elif float(m.group(1)) != float(here_val):
+        fail(f"{aud_name} differs: audit_skill.py has {m.group(1)}, validate.py has "
+             f"{here_val} as {here_name} — one rule, two implementations, and a skill "
+             "that passes one gate fails the other")
+
+# The key sets decide which front-matter fields are legal at all, so a name in one
+# and not the other means two answers to "is this field allowed".
+for aud_name, here_set in (("SPEC_KEYS", SPEC_KEYS), ("HOST_KEYS", CC_SKILL_KEYS)):
+    m = re.search(r"^%s = \{(.*?)\}" % re.escape(aud_name), aud_src, re.M | re.S)
+    if not m:
+        fail(f"scripts/audit_skill.py: {aud_name} not found — this validator compares it")
+    else:
+        theirs = set(re.findall(r'"([^"]+)"', m.group(1)))
+        if theirs != set(here_set):
+            only_a = sorted(theirs - set(here_set))
+            only_v = sorted(set(here_set) - theirs)
+            fail(f"{aud_name} differs: only in audit_skill.py {only_a}, only in "
+                 f"validate.py {only_v} — one rule, two implementations")
 
 # required root files — a public repo also owes contributors an entry point and
 # a place to report something exploitable privately
