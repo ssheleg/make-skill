@@ -15,6 +15,21 @@ from a CHANGELOG entry, because a claim restated is not a claim verified.
 
 ---
 
+## Shipped state — v0.20.0
+
+Released: `@ssheleg/make-skill@0.20.0` (npm), tag `v0.20.0` (**annotated**).
+CI on the tag: `validate` and `release` both `completed success`, read after the
+push rather than assumed from it.
+
+| REQ | Requirement | Verified by | Result | Status |
+|---|---|---|---|---|
+| 011 | Both checkers measure a multi-line YAML description at its real length | planted a description whose real length is 1392 chars as a plain multi-line scalar; ran the shipped auditor | before: `DESC_LENGTH … is 180/1024 chars` **PASS**; after: `GAP DESC_LENGTH … is 1392 chars, the maximum is 1024` | **verified** |
+| 012 | An inline flow sequence fires `TOOLS_TYPE` | same fixture with `allowed-tools: [Read, Write]` | before: 0 gaps on that field; after: `GAP TOOLS_TYPE` | **verified** |
+| 013 | `--house` applies the 4750 body working limit | `test/checker_parity_test.py` cases 9-11 | `BODY_HEADROOM` fires past 4750, is silent inside it, and is absent without `--house` | **verified** |
+| 014 | The drift guard compares every shared rule, not one | three planted divergences: a constant deleted, a value changed, a key-set entry removed | all three refused, including the exact one that shipped (`BODY_TARGET_TOKENS not found`) | **verified** |
+| 015 | No shipped skill's verdict changed | re-audited all 24 family skills before and after | identical; the one apparent difference was a `__pycache__` this run had just created | **verified** |
+| 016 | The new suite fails against the pre-fix code | `git stash` the two checkers, run `test/checker_parity_test.py` | **9 of 14 red**, green again on restore | **verified** |
+
 ## Shipped state — v0.18.1, `main` at `ba01f8f`
 
 Released: `@ssheleg/make-skill@0.18.1` (npm), tag `v0.18.1`.
