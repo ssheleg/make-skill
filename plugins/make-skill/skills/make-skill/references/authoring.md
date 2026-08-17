@@ -20,6 +20,7 @@ and [agentskills.io](https://agentskills.io/skill-creation/best-practices).
 - Workflows and feedback loops
 - Content guidelines (terminology, time, paths, table of contents)
 - Scripts — the rules that separate a script from a liability
+- A gate's self-test runs in both directions
 - Evaluation and iteration — evals before prose
 - Quality checklist
 
@@ -186,6 +187,43 @@ verdicts, handles its own missing-file and bad-frontmatter cases, and its first
 run flagged a false positive on the very document that teaches the anti-pattern —
 which is why it now ignores quoted spans. Hooks, subagents and commands that wrap
 it, plus the fallbacks they owe, are in `references/host-capabilities.md`.
+
+## A gate's self-test runs in both directions
+
+*"A validator that can't fail is decoration"* is half the rule. The planted defect
+proves the gate **can** fire. Nothing in it proves the gate fires only where it
+should — and a gate that flags correct code is switched off within a day, taking
+the real check with it. **A false positive does not arrive as a bug report. It
+arrives as an argument about your gate**, from someone whose code was fine.
+
+So a self-test carries two kinds of case:
+
+| Direction | The case | What its absence costs |
+|---|---|---|
+| **Must catch** | the planted defect, watched failing | a check that cannot fail, green forever |
+| **Must NOT flag** | the legal spelling, the empty input, the near-miss that only resembles the defect | a check that is correct and unusable, removed by the first person it wrongly blocks |
+
+**The counter-shapes are also where a gate's design gets decided, not just
+verified.** A pattern that reads *"no key may start with a mounted namespace"*
+finds five hits and all five are correct — they pass absolute keys to a translator
+that prefixes nothing. Written as a pattern the gate is wrong; written as a parser
+that binds each translator variable to its namespace, it is right. The counter-case
+is what tells the two apart, and only running it reveals which one you built.
+
+Two shapes recur and both belong in every gate's fixtures:
+
+- **The input that cannot be resolved.** A resolver returning nothing must be a
+  loud failure, never a silent skip — *a check that cannot run is not a check that
+  passed*. A slug resolver anchored on `github.com` returned nothing for npm's
+  `github:owner/repo` shorthand, so the check printed `skip` and reported success
+  for work it never did.
+- **The word inside another word.** Any matcher over prose needs the near-miss:
+  `lease` inside *please*, `аудит` inside *аудитория*, `seo` inside *Seoul*. These
+  are found by running the gate over a real corpus, not by reading it.
+
+**Count the cases, do not restate the count.** A summary line saying *"5 cases"*
+while thirteen run is the same class of defect the gate exists to prevent, in the
+gate's own output.
 
 ## Evaluation and iteration — evals before prose
 

@@ -1,5 +1,37 @@
 # Changelog
 
+## v0.21.0 — a gate's self-test runs in both directions
+
+*"A validator that can't fail is decoration"* has been the rule here since the standard was
+written. It is **half** the rule, and the missing half is the expensive one.
+
+The planted defect proves a gate CAN fire. Nothing in it proves the gate fires only where it
+should — and a gate that flags correct code is switched off within a day, taking the real check
+with it. **A false positive does not arrive as a bug report. It arrives as an argument about
+your gate**, from someone whose code was fine.
+
+`references/authoring.md` gains *A gate's self-test runs in both directions*: the two kinds of
+case, what each one's absence costs, and the point that counter-shapes **decide** a gate's
+design rather than merely verifying it — a pattern that finds five hits and is wrong about all
+five is a parser you have not written yet.
+
+Two recurring shapes are named because both have shipped:
+
+- **The input that cannot be resolved** must fail loudly, never skip — *a check that cannot run
+  is not a check that passed*. A slug resolver anchored on `github.com` returned nothing for
+  npm's `github:owner/repo` shorthand, so its check printed `skip` and reported success for work
+  it never did.
+- **The word inside another word** — `lease` in *please*, `аудит` in *аудитория*, `seo` in
+  *Seoul*. Found by running the gate over a real corpus, never by reading it.
+
+And: **count the cases, do not restate the count.** A summary saying *"5 cases"* while thirteen
+run is the defect the gate exists to prevent, in the gate's own output.
+
+**The doctrine went to the reference rather than the body, and the body's own gate decided
+that.** `SKILL.md` measured 4738 of a 4750 working limit — twelve tokens of headroom — so every
+draft that stated the rule inline failed the budget check. `authoring.md` is linked from
+`SKILL.md` twice, so the rule is reachable without spending a body it does not have. Closes #5.
+
 ## v0.20.0 — the checker said 180 where the file said 1392
 
 **Both checkers dropped the continuation lines of a plain multi-line YAML
