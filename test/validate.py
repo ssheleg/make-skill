@@ -503,6 +503,85 @@ def check_release_gates_on_validate():
 
 check_release_gates_on_validate()
 
+
+# ------------------- the ledger may not describe an artifact that is not there
+#
+# MS-03. `docs/evidence/verification.md` headed its newest section *"Unshipped — `main` at
+# `16a9682`, no release cut"* and said *"the artifact on npm is still `0.21.0` and does not
+# contain any of it"* — while v0.22.0 was tagged, on npm, and was the commit at `HEAD`. The
+# board carried the same claim as *"local, unreleased"*. Both were true when written and
+# false from the moment the tag was cut, and nothing re-read either one.
+#
+# `docs/evidence/` is deliberately exempt from the counted-claims sweep above, because a
+# past row is allowed to quote the count that was true then. That exemption is what let this
+# through, so the ledger gets its own rule instead: a DATED row may say anything, a
+# statement about the CURRENT artifact may not be behind the release the CHANGELOG carries.
+LEDGER_REL = os.path.join("docs", "evidence", "verification.md")
+BOARD_REL = os.path.join("docs", "evidence", "backlog.md")
+# A quoted passage is evidence, not an assertion: `*"…"*` is how a fixed row cites the
+# sentence it replaced, and refusing that refuses the record of the fix. **That form is the
+# convention, and it is the only one recognised** — a phrase in plain italics reads as a
+# claim, which this check demonstrated by refusing the very row that documents it. Cite a
+# refused phrase as `*"like this"*`, or expect to be refused for recording your own fix.
+QUOTATION_RE = re.compile(r'\*"[^"]*"\*', re.S)
+STILL_AT_RE = re.compile(r"(?:on npm is still|version stays|no release cut|"
+                         r"local, unreleased)[^\n]{0,40}?`?v?(\d+\.\d+\.\d+)?`?")
+SHIPPED_STATE_RE = re.compile(r"(?m)^##\s+Shipped state\s+—\s+v(\d+\.\d+\.\d+)")
+
+
+def _vtuple(s):
+    return tuple(int(x) for x in s.split("."))
+
+
+def check_the_ledger_matches_what_shipped():
+    lpath = os.path.join(ROOT, LEDGER_REL)
+    if not os.path.isfile(lpath):
+        fail(f"{LEDGER_REL}: missing — an absent ledger and a clean one are "
+             "indistinguishable from the number alone, which is the reading it exists to "
+             "prevent")
+        return
+    released = set(re.findall(r"(?m)^##+\s+\[?v?(\d+\.\d+\.\d+)", 
+                             open(os.path.join(ROOT, "CHANGELOG.md"),
+                                  encoding="utf-8").read())) \
+        if os.path.isfile(os.path.join(ROOT, "CHANGELOG.md")) else set()
+    if not released:
+        return
+    newest = max(_vtuple(v) for v in released)
+    newest_s = ".".join(str(n) for n in newest)
+
+    for rel in (LEDGER_REL, BOARD_REL):
+        path = os.path.join(ROOT, rel)
+        if not os.path.isfile(path):
+            continue
+        text = QUOTATION_RE.sub(" ", open(path, encoding="utf-8").read())
+        for m in STILL_AT_RE.finditer(text):
+            at = m.group(1)
+            if at and _vtuple(at) < newest:
+                fail(f"{rel}: says {m.group(0).strip()[:48]!r} while the CHANGELOG has "
+                     f"released v{newest_s}. The claim was true when it was written and "
+                     "false from the moment the tag was cut — a ledger a release behind its "
+                     "own tree is read as the record of what is true")
+            elif not at:
+                fail(f"{rel}: says {m.group(0).strip()[:48]!r} with no version beside it, "
+                     f"and the CHANGELOG has released v{newest_s}. A no-release claim that "
+                     "names no version cannot be checked against anything, which is how "
+                     "this one survived a release")
+
+    ledger = open(lpath, encoding="utf-8").read()
+    states = SHIPPED_STATE_RE.findall(ledger)
+    for claimed in sorted(set(states)):
+        if claimed not in released:
+            fail(f"{LEDGER_REL}: a `## Shipped state — v{claimed}` section names a version "
+                 "the CHANGELOG does not carry — the ledger announces a release nobody cut")
+    if states and _vtuple(states[0]) < newest:
+        fail(f"{LEDGER_REL}: the newest `## Shipped state` section is v{states[0]} while "
+             f"v{newest_s} has shipped. Every section here names the artifact it was "
+             "measured on, so the newest one naming an older artifact means the release was "
+             "never re-confirmed against anything")
+
+
+check_the_ledger_matches_what_shipped()
+
 if len(distinct) > 1:
     fail(f"version mismatch across manifests: {vers}")
 

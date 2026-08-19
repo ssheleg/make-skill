@@ -306,7 +306,9 @@ jobs:
           # layout this validator rejects.
           for case in claim:'claims' cardver:'SKILL-CARD' readmeref:'README' \
                       bodyvar:'substituted' cmdvar:'cannot run' mdclayout:'templates' \
-                      headroom:'headroom' deschead:'working limit' xmldrift:'XML_TAG_RE'; do
+                      headroom:'headroom' deschead:'working limit' xmldrift:'XML_TAG_RE' \
+                      ledgerunship:'no version beside it' boardunship:'backlog.md' \
+                      ledgerbehind:'newest' ledgeruncut:'nobody cut'; do
             name="${case%%:*}"; expect="${case#*:}"
             rm -rf "/tmp/cl-$name"
             cp -R . "/tmp/cl-$name"
@@ -354,6 +356,38 @@ jobs:
               d = re.search(r"^description: (.+?)(?=\nlicense:)", t, re.S | re.M).group(1)
               pad = " padding phrase." * 6                      # lands between 970 and 1024
               skill.write_text(t.replace(d, (d + pad)[:1000], 1), encoding="utf-8")
+          elif case == "ledgerunship":
+              # MS-03 exactly: the ledger's newest section headed `no release cut` while
+              # the release it describes is tagged, on npm and at HEAD. `docs/evidence/`
+              # is exempt from the counted-claims sweep — a past row may quote a past
+              # count — which is why the ledger needs its own rule rather than that one.
+              p = root / "docs/evidence/verification.md"
+              s = p.read_text(encoding="utf-8")
+              out = re.sub(r"(?m)^## Shipped state — v[\d.]+ \(MS-01[^\n]*$",
+                           "## Unshipped — no release cut", s, count=1)
+              assert out != s, "PLANT DID NOT LAND: no shipped-state heading to reverse"
+              p.write_text(out, encoding="utf-8")
+          elif case == "boardunship":
+              # The board carried the same claim, in its own words.
+              p = root / "docs/evidence/backlog.md"
+              s = p.read_text(encoding="utf-8")
+              out = s.replace("shipped in v0.22.0", "local, unreleased", 1)
+              assert out != s, "PLANT DID NOT LAND: no shipped claim on the board"
+              p.write_text(out, encoding="utf-8")
+          elif case == "ledgerbehind":
+              # The newest section naming an older artifact — the release re-confirmed
+              # against nothing, which is the state MS-03 was found in.
+              p = root / "docs/evidence/verification.md"
+              s = p.read_text(encoding="utf-8")
+              out = re.sub(r"(?m)^(## Shipped state — )v[\d.]+", r"\g<1>v0.19.0", s, count=1)
+              assert out != s, "PLANT DID NOT LAND: no shipped-state version to lower"
+              p.write_text(out, encoding="utf-8")
+          elif case == "ledgeruncut":
+              p = root / "docs/evidence/verification.md"
+              s = p.read_text(encoding="utf-8")
+              out = re.sub(r"(?m)^(## Shipped state — )v[\d.]+", r"\g<1>v9.9.9", s, count=1)
+              assert out != s, "PLANT DID NOT LAND: no shipped-state version to falsify"
+              p.write_text(out, encoding="utf-8")
           else:                      # the two validators disagreeing on one rule
               p = root / "plugins/make-skill/skills/make-skill/scripts/audit_skill.py"
               p.write_text(re.sub(r'^XML_TAG_RE = re\.compile\(r".+"\)$',

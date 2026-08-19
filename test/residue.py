@@ -4,15 +4,25 @@
 A run produces more than a diff. `test/checker_parity_test.py` copied this whole
 repository into `$TMPDIR` to plant a defect into the copy, and `test/plant_guard_test.py`
 built a small tree per case; neither removed anything, and — the part that matters —
-nothing said so. Measured on 2026-08-19 with
+nothing said so. Measured with
 
     find "$TMPDIR" -maxdepth 4 -type f -path '*/copy/sub/b.sh' | wc -l
     find "$TMPDIR" -maxdepth 3 -type f -path '*/planted/SKILL.md' | wc -l
     find "$TMPDIR" -maxdepth 2 -type d -name repo | while read -r d; \
         do [ -d "$d/plugins/make-skill" ] && echo x; done | wc -l
 
-the answer was **1856 abandoned directories, 47.3 MB** — 1760 plant-guard trees, 60
-planted skill dirs and 36 repository copytrees, accumulated silently over ~220 gate runs.
+**These are samples, and they carry their date.** On **2026-08-19**, before the fix: 1760
+plant-guard trees, 60 planted skill dirs, 36 repository copytrees — 1856 directories, 47.3
+MB, accumulated silently over ~220 gate runs. Re-run on **2026-08-20**: 2592 / 60 / 36 =
+2688 directories, 83.6 MB.
+
+**The two halves of that pile behave differently, and only one of them is this
+repository's.** Split by the fix's own commit time, `-newermt "$(git log -1 --format=%cI
+16a9682)"` — 2026-08-19T13:55:15+02:00: **0** planted dirs and **0** repository copytrees
+were created after it, both frozen at 60 and 36, while **784** plant-guard trees were, from
+the three siblings shipping the identical fixture. Running the whole gate on 2026-08-20
+moved all three counts by exactly **0**. Quote the split, not the total: a total restated as
+a current state is the defect this module exists to report on.
 
 A `TemporaryDirectory` around each one closes the leak. It does not close the defect,
 because the defect is that a completed run said nothing about what it left, so the next
@@ -28,9 +38,15 @@ that is not an assertion — keeps its workspace; the report names the path, nam
 that owns it, and prints the `rm -rf` that ends it. A clean case's tree goes at exit.
 
 The prefix is part of the mechanism: `make-skill-test-…` makes any future residue
-attributable to this suite by name. The 1856 directories measured above are plain
-`tmpXXXXXXXX` and are indistinguishable from every other program's — which is why they
-have to be reported and left alone rather than swept.
+attributable to this suite by name. The directories counted above are plain `tmpXXXXXXXX`
+and indistinguishable from every other program's — which is why they have to be reported
+and left alone rather than swept.
+
+**What this ledger does NOT see.** It accounts for trees `workspace()` handed out. A bare
+`tempfile.mkdtemp()` anywhere in this suite is invisible to it, and the report then prints
+*left nothing* over a live leak — watched happening in `agent-stack`, which ported this
+module and closed the hole with a source check over its own `test/*.py`. There is no such
+check here: board row **MS-05**.
 
     import residue
     residue.open_case(name)
