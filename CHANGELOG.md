@@ -1,5 +1,41 @@
 # Changelog
 
+## v0.22.0 — the gate left 47 MB in $TMPDIR and never said what it left
+
+**Two suites copied the tree to plant defects into it and never removed the copy.** The
+conformance audit named one; the sweep found the other, and it was the larger half by two
+orders of magnitude. Measured on this machine at the time of the fix: **1904 abandoned
+mkdtemp roots, 47.3 MB** — 60 planted skill dirs and 36 repo copytrees unambiguously this
+repository's, and 1808 plant-guard trees ambiguous, because four family repos ship the
+byte-identical fixture at the same line and nothing in the content distinguishes them.
+
+### `test/residue.py`
+
+A shared ledger in this repo's `plant_guard.py` idiom: `workspace()` hands out a
+`make-skill-test-` prefixed mkdtemp, `open_case` / `close_case` bind each tree to a case,
+and `report()` — wired to `atexit`, so no exit path skips it — removes what may go, keeps
+what a failure needs, and **prints one line either way**. A clean run says
+`residue: this run left nothing — N temp tree(s) created, N removed`, because the
+requirement is that completion *records* residue, not merely that there is none. A leak is
+then visible the first time the line changes.
+
+**The failure path keeps its tree, by decision and stated in three places.** A planted
+defect here is debugged by reading the copy the plant landed in, and a cleanup that runs
+only on the pass path removes the evidence exactly when you want it. The report names the
+kept path, its owning case, and the `rm -rf` that ends it — a kept tree with no stated
+remedy is a leak with better manners. A tree that refuses to delete is counted as **kept**,
+never as removed: the report does not claim a teardown it did not achieve.
+
+`test/residue_test.py` joins the gate with 8 cases, including the one that matters — stash
+the two fixes and it exits 1 naming both suites, then prints
+`residue: 2 of 2 temp tree(s) KEPT` with both paths. The failure path demonstrating itself.
+
+### Not swept
+
+The 1904 pre-existing directories were **left in place** and reported. Ownership of 1808
+of them cannot be established from their contents, and deleting state you cannot prove is
+yours is the one thing this kind of cleanup must not do.
+
 ## v0.21.0 — a gate's self-test runs in both directions
 
 *"A validator that can't fail is decoration"* has been the rule here since the standard was

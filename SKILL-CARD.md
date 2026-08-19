@@ -11,7 +11,7 @@ table. Written so somebody who did not build this can decide.
 |---|---|
 | **Purpose** | Create, retrofit, audit and publish agent skills and Claude Code plugins: the Agent Skills open standard, Anthropic's platform rules, the plugin reference, multi-channel distribution, and the release pipeline |
 | **Owner** | ssheleg ([github.com/ssheleg/make-skill](https://github.com/ssheleg/make-skill)) |
-| **Version** | 0.21.0 |
+| **Version** | 0.22.0 |
 | **Surface** | Claude Code (plugin) and the vercel `skills` CLI (70+ agents). **Not** uploaded to the Skills API: its workflows shell out to `git`, `gh`, `npm` and the `claude` CLI, and the API container has no network and no runtime package install |
 | **Dependencies** | None required. `python3` for the bundled auditor; `git`/`gh`/`npm`/`node` for the publishing steps; the `claude` CLI for the two `plugin validate --strict` gates. Every one of them degrades to a written manual path |
 | **Evaluation status** | Suite authored — 20 trigger queries, 4 behavioural scenarios. **Never executed against a model.** See [`test/evals/RESULTS.md`](test/evals/RESULTS.md) |
