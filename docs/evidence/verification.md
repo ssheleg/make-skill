@@ -15,6 +15,39 @@ from a CHANGELOG entry, because a claim restated is not a claim verified.
 
 ---
 
+## Unshipped — `main` at `16a9682`, no release cut
+
+**These rows are deliberately not `verified`, and the distinction is this file's whole
+point.** Nothing was published, tagged or version-bumped for this change: the artifact on
+npm is still `0.21.0` and does not contain any of it. Every row below was watched on the
+working tree at `16a9682` and says so. When it ships, each moves into a `## Shipped state`
+section re-confirmed against the released artifact — not promoted on the strength of
+having been green here.
+
+Closes board row **MS-01** (`docs/evidence/backlog.md`), which arrived from the
+Proof-of-Done conformance audit as requirement **M-49**: *a run produces more than a
+diff, and Proof of Done records what remains.*
+
+| REQ | Requirement | Verified by | Result | Status |
+|---|---|---|---|---|
+| 017 | Every temp tree the suites create is gone after a passing run | `python3 test/residue_test.py` — case 1 asserts the path itself no longer exists; two more run the real suites as processes in an isolated `$TMPDIR` and read the directory afterwards | `PASS: residue — 8 cases`; both suites leave `[]` in their own `TMPDIR`, where the pre-fix code left 8 entries each | **verified locally, unshipped** |
+| 018 | The new assertions fail against the pre-fix code | `git stash push test/checker_parity_test.py test/plant_guard_test.py` then `python3 test/residue_test.py` | `FAIL: 2 of 8` — *"plant_guard_test left 8 entr(y\|ies) in its TMPDIR"* and the same for `checker_parity_test`; green again after `git stash pop` | **verified locally, unshipped** |
+| 019 | A failing case keeps its tree, named, with its remedy | the same red run, reading its own residue line | `residue: 2 of 2 temp tree(s) KEPT`, each path followed by the case that owns it and a `rm -rf` naming both — the failure path demonstrating itself rather than being described | **verified locally, unshipped** |
+| 020 | A crash that is not an `AssertionError` still reports and still keeps | `test/residue_test.py` case 4 — a child interpreter raises `RuntimeError` after taking a workspace | non-zero exit, the tree survives, `KEPT` printed: the report is wired to `atexit`, so no exit path skips it | **verified locally, unshipped** |
+| 021 | Every gate command says what it left, `nothing` included | `npm test` | four `residue:` lines — `0 created, 0 removed` (validator), `8/8`, `8/8`, `2/2` — and exit `0` with `PASS` from all four commands, 9 + 14 + 8 cases | **verified locally, unshipped** |
+| 022 | The pre-existing pile was counted and left alone | the three `find` commands quoted in `test/residue.py`'s docstring, run before the fix and again after | **1888 abandoned directories, 47.3 MB** (60 `planted/`, 36 `repo/`, 1792 plant-guard trees); unchanged by anything this repository ran after the fix, and `0` trees carrying the new `make-skill-test-` prefix remain. It did keep growing — see REQ-023 — which is the evidence that the 1792 are not ours to sweep | **verified locally, unshipped** |
+| 023 | 1792 of those 1888 are ambiguously owned, so they stay | `grep -rl 'sub/b.sh' --include='*.py'` across the family; two counts a minute apart | four repositories ship the identical fixture — this one, `sshlg-skills`, `agent-stack`, `seo-aeo-audit`, each `tempfile.mkdtemp()` at line 34 — and the pile grew **1792 → 1800 → 1808** across three samples minutes apart, from siblings' runs, while this repository's own two counts stayed frozen at **60** and **36** — which is both the proof that the fix holds and the reason the rest is not ours to delete. `manifesto.md:366`: ambiguously owned state is reported and left alone | **verified locally, unshipped** |
+
+### What these rows do not cover
+
+- **The three sibling repositories.** They leak identically and are not this
+  repository's to change. Referred to the `sshlg-skills` board rather than fixed here.
+- **CI.** The gate was run locally; `.github/workflows/validate.yml` was not touched and
+  no run exists for this commit, because nothing was pushed.
+- **The validator's own plants.** `test/validate.py` gained residue accounting and
+  nothing else; whether each of its rules has been watched failing is a separate row
+  (deferred as MS-02) and is not claimed here.
+
 ## Shipped state — v0.20.0
 
 Released: `@ssheleg/make-skill@0.20.0` (npm), tag `v0.20.0` (**annotated**).
