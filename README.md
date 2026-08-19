@@ -261,10 +261,13 @@ plugins/make-skill/
 cursor/rules/make-skill.mdc           # self-contained Cursor rule
 bin/make-skill.js + package.json      # zero-dep npx installer
 test/validate.py                      # structural validator
+test/{plant_guard,checker_parity,residue}_test.py   # the gate's three suites
+test/{plant_guard,residue}.py         # did the plant land · what did the run leave
 test/evals/                           # trigger set + behavioral scenarios (data)
 .github/workflows/{validate,release}.yml
 install.sh  README.md  CHANGELOG.md  CONTRIBUTING.md  SECURITY.md  SKILL-CARD.md  LICENSE
 docs/evidence/{specs,plans}/       # historical design records
+docs/evidence/{backlog,verification}.md   # what is owed · what confirmed what
 ```
 
 ## Contributing

@@ -38,6 +38,23 @@ python3 test/validate.py
 
 Exit 0 prints `PASS: …`. Every failure names the file and the rule.
 
+`npm test` is the gate proper — the validator, then the three suites, in order:
+
+```bash
+npm test        # validate.py · plant_guard_test.py · checker_parity_test.py · residue_test.py
+```
+
+**Every one of those four commands ends by saying what it left on disk**, `nothing`
+included, and that line is a check rather than a courtesy: until 2026-08-19 two of the
+suites abandoned a copy of this repository in `$TMPDIR` on every run — 1888 directories,
+47.3 MB — and no output anywhere said so. `test/residue.py` is the ledger they go
+through. Read it before adding a test that writes outside the repository.
+
+**A case that fails keeps its temp tree, deliberately.** A planted defect is debugged by
+reading the tree it landed in, so cleanup on the pass path only would delete the evidence
+exactly when you want it. The report names the path, the case that owns it, and the
+`rm -rf` that ends it; a case that passes loses its tree at exit.
+
 To run the entire CI suite locally exactly as GitHub does — validator, 9
 negative self-test groups, installer functional tests against a throwaway `HOME`,
 and YAML parsing:

@@ -3,6 +3,18 @@
 import glob, json, os, re, sys
 import subprocess
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+try:
+    # Accounts for what this run leaves on disk and prints it at exit, `nothing`
+    # included — see test/residue.py. Tolerant on purpose: a gate that refuses to start
+    # because a helper is absent is worse than one that runs and discloses that it could
+    # not account for itself. Nothing here writes to $TMPDIR today; the import is what
+    # makes the next thing that does visible in this command's own output.
+    import residue  # noqa: F401
+except ImportError:
+    print("  unlooked: residue — test/residue.py is absent, so this run cannot say what "
+          "it left on disk")
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 NAME = "make-skill"
 errors = []

@@ -6,10 +6,11 @@ pull request compared content only, against a plant whose entire effect is `chmo
 the mode case below is not an edge case, it is the incident.
 """
 import os
-import shutil
 import subprocess
 import sys
-import tempfile
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import residue  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 GUARD = os.path.join(HERE, "plant_guard.py")
@@ -22,16 +23,23 @@ def run(*args):
 
 
 def case(name, fn):
+    residue.open_case(name)
     try:
         fn()
-        print(f"  ok  {name}")
     except AssertionError as e:
+        # Left open on purpose: `residue` keeps a failing case's tree, and the tree plus
+        # the manifest beside it is how a guard verdict nobody expected gets read.
         failures.append(f"{name}: {e}")
         print(f"FAIL  {name}: {e}")
+    else:
+        print(f"  ok  {name}")
+        residue.close_case(name)
 
 
 def tree():
-    d = tempfile.mkdtemp()
+    # The workspace, not the tree, is what gets accounted for: `plant_guard.py` writes its
+    # manifest BESIDE the tree it measures, so only the parent holds both halves.
+    d = residue.workspace("plant-guard")
     root = os.path.join(d, "copy")
     os.makedirs(os.path.join(root, "sub"))
     with open(os.path.join(root, "a.txt"), "w") as fh:

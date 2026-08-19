@@ -29,7 +29,6 @@ import re
 import shutil
 import subprocess
 import sys
-import tempfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 AUDITOR = os.path.join(ROOT, "plugins/make-skill/skills/make-skill/scripts/audit_skill.py")
@@ -37,6 +36,7 @@ VALIDATOR = os.path.join(ROOT, "test/validate.py")
 
 sys.path.insert(0, os.path.join(ROOT, "plugins/make-skill/skills/make-skill/scripts"))
 import audit_skill  # noqa: E402
+import residue  # noqa: E402  — sys.path[0] is this file's directory
 
 cases = 0
 failures = []
@@ -46,18 +46,23 @@ def case(name):
     def deco(fn):
         global cases
         cases += 1
+        residue.open_case(name)
         try:
             fn()
-            print("  ok  %s" % name)
         except AssertionError as e:
+            # The workspace stays open — a planted defect is debugged by reading the
+            # tree it landed in, and `residue` keeps the trees of a case that failed.
             failures.append("%s: %s" % (name, e))
             print("  FAIL  %s: %s" % (name, e))
+        else:
+            print("  ok  %s" % name)
+            residue.close_case(name)
         return fn
     return deco
 
 
 def skill_dir(frontmatter, body="# s\n\nBody.\n"):
-    d = os.path.join(tempfile.mkdtemp(), "planted")
+    d = os.path.join(residue.workspace("planted"), "planted")
     os.makedirs(d)
     with open(os.path.join(d, "SKILL.md"), "w", encoding="utf-8") as f:
         f.write("---\n" + frontmatter.rstrip("\n") + "\n---\n\n" + body)
@@ -157,7 +162,7 @@ def _():
 
 def validator_says(mutate):
     """Run the real validator against a copy of the repo with the auditor mutated."""
-    tmp = os.path.join(tempfile.mkdtemp(), "repo")
+    tmp = os.path.join(residue.workspace("repo"), "repo")
     shutil.copytree(ROOT, tmp, ignore=shutil.ignore_patterns(".git", "node_modules", "__pycache__"))
     aud = os.path.join(tmp, "plugins/make-skill/skills/make-skill/scripts/audit_skill.py")
     with open(aud, encoding="utf-8") as f:

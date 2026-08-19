@@ -45,6 +45,6 @@
     "node": ">=16"
   },
   "scripts": {
-    "test": "python3 test/validate.py && python3 test/plant_guard_test.py && python3 test/checker_parity_test.py"
+    "test": "python3 test/validate.py && python3 test/plant_guard_test.py && python3 test/checker_parity_test.py && python3 test/residue_test.py"
   }
 }
