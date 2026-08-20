@@ -18,6 +18,18 @@ the release the CHANGELOG carries (MS-03).
 
 ---
 
+## Shipped state — v0.23.0 (2026-08-20)
+
+Measured on the tree this release tags, at `34d35ab`, before the tag existed — which is the
+only order available, since the tag cannot precede the commit that bumps to it.
+
+| REQ | What shipped | How it was confirmed | Confirmed |
+|---|---|---|---|
+| REQ-026 | The ledger can no longer say *unshipped* over a release commit | `check_the_ledger_matches_what_shipped` + four plants, each watched at **exit 1**; it refused the row documenting itself once, because only `*"…"*` counts as a citation to it | **planted** + **observed** |
+| REQ-027 | The pile figure carries its measurement date and its split | recounted **2688 directories, 83.6 MB**, and split at the fix's commit time: **0** `planted/` and **0** `repo/` trees after it against **784 of 2592** plant-guard trees, so the scoped claim holds by timestamp rather than by two samples a minute apart | **observed** |
+| REQ-028 | The MS-01 referral is discharged, and recorded as observed rather than claimed | `grep -c 'tempfile.mkdtemp()'` → **0** in all four repositories that shipped the identical fixture (`sshlg-skills` `b371301`, `seo-aeo-audit` `c859cba`, `agent-stack` porting `test/residue.py` from here) | **observed** |
+| REQ-025 | *Not shipped.* `residue.report()` sees only what `workspace()` handed out, so a re-introduced bare `mkdtemp` prints *left nothing* over a live leak — watched happening in `agent-stack` before its port | the closing mechanism exists in `agent-stack`; bringing it back here is a code change this release did not make | **never** |
+
 ## Shipped state — v0.22.0 (MS-01, re-confirmed on the released artifact 2026-08-20)
 
 **Shipped.** `@ssheleg/make-skill@0.22.0` on npm, tag `v0.22.0` released

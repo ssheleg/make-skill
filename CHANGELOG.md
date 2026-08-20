@@ -1,5 +1,33 @@
 # Changelog
 
+## v0.23.0 — 2026-08-20 — the ledger said unshipped over the release commit
+
+The newest ledger section read *"Unshipped … no release cut"* and *"npm is still 0.21.0"*
+while HEAD **was** the v0.22.0 release commit and the registry served 0.22.0. Re-run against
+the artifact rather than re-graded, and `check_the_ledger_matches_what_shipped` now refuses
+the state: four plants, each watched at exit 1. It refused the row documenting itself once,
+because only `*"…"*` counts as a citation to it — which is now stated where the pattern
+lives rather than learned by whoever trips on it next.
+
+**The pile figure was a sample presented as a state.** MS-01 recorded *"1888 abandoned
+directories, 47.3 MB … unchanged by anything this repository ran after the fix"*. Recounted:
+**2688 directories, 83.6 MB** — and split at the fix's own commit time, which is the part
+that matters: **0** `planted/` and **0** `repo/` trees created after it, against **784 of
+2592** plant-guard trees. So the scoped claim holds, now by timestamp rather than by two
+samples taken a minute apart, and the total carries its measurement date.
+
+**The referral is discharged rather than claimed.** MS-01 left three sibling repositories
+shipping the identical leaking fixture. All three fixed it while this ran — the umbrella at
+`b371301`, `seo-aeo-audit` at `c859cba`, `agent-stack` porting `test/residue.py` from here —
+and `grep -c 'tempfile.mkdtemp()'` is now 0 in all four. Recorded as observed, not as work
+this release did.
+
+**Left open, and it is the honest kind.** `residue.report()` sees only what `workspace()`
+handed out, so a re-introduced bare `mkdtemp` prints *left nothing* over a live leak. That
+was watched happening in `agent-stack` before its port. The closing mechanism exists there;
+REQ-025 sits at `never` until it comes back here.
+
+
 ## v0.22.0 — the gate left 47 MB in $TMPDIR and never said what it left
 
 **Two suites copied the tree to plant defects into it and never removed the copy.** The

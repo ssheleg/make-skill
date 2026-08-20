@@ -5,7 +5,7 @@ license: MIT
 compatibility: Authoring works on any agent. The bundled scripts/ need python3. Publishing steps need git, gh, node and npm; the plugin gates need the claude CLI. Not usable on the Claude API surface, which has no network and no runtime package install.
 metadata:
   author: ssheleg
-  version: "0.22.0"
+  version: "0.23.0"
   homepage: https://github.com/ssheleg/make-skill
 ---
 
