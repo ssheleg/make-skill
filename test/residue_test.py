@@ -163,12 +163,51 @@ def this_gate_run_left_nothing_behind():
     check must not report a cause it did not establish.
     """
     box = os.environ.get("TMPDIR") or "/tmp"
-    strays = [n for n in os.listdir(box) if n.startswith(residue.PREFIX)]
+    names = os.listdir(box)
     mine = {os.path.basename(p) for p, _ in residue._created}
-    strays = [n for n in strays if n not in mine]
-    assert not strays, ("%d ledger-prefixed tree(s) left in the shared TMPDIR — a suite "
-                        "here is leaking, or a concurrent gate run is in flight: %s"
-                        % (len(strays), strays[:5]))
+    ours, foreign = residue.strays_for_run(names, mine)
+    # Disclose what was deliberately excluded. The old version hedged in its FAILURE message
+    # that a concurrent run might be the cause, then failed anyway — so another session's
+    # work, and this repository's own kept evidence trees, both read as a leak here.
+    print("    (shared TMPDIR holds %d ledger-prefixed tree(s); %d belong to another run "
+          "and are not this run's to answer for)" % (len(ours) + len(foreign), len(foreign)))
+    assert not ours, ("%d tree(s) tagged with THIS run were left in the shared TMPDIR — a "
+                      "suite here is leaking: %s" % (len(ours), ours[:5]))
+
+
+def a_tree_from_another_run_is_not_this_run_s_leak():
+    """The defect this split exists for, as a fixture: another session's tree, and an earlier
+    run's kept evidence, must not be reported as a leak by the run that is looking."""
+    mine = {residue.PREFIX + residue.RUN_TAG + "abc-tree"}
+    names = sorted(mine) + [
+        residue.PREFIX + "999999-kept-by-a-failing-case",   # an earlier run, kept on purpose
+        residue.PREFIX + "424242-another-session",          # a concurrent gate run
+        "unrelated-tmp-dir",
+    ]
+    ours, foreign = residue.strays_for_run(names, mine)
+    assert ours == [], "reported %s as this run's leak" % ours
+    assert len(foreign) == 2, "foreign trees must be counted, not silently dropped: %s" % foreign
+
+
+def this_run_s_own_leak_is_still_a_failure():
+    """The split must not become a way of never failing: a tree tagged with THIS run that the
+    ledger does not account for is exactly the leak the check exists for."""
+    ours, foreign = residue.strays_for_run(
+        [residue.PREFIX + residue.RUN_TAG + "leaked"], mine=set())
+    assert ours == [residue.PREFIX + residue.RUN_TAG + "leaked"], (
+        "a tree tagged with this run and unaccounted for must be reported: %s" % ours)
+    assert foreign == [], foreign
+
+
+def the_run_tag_is_in_the_name_a_workspace_gets():
+    """If `workspace()` stopped embedding the tag, both checks above would pass while the real
+    scan compared against a tag no directory carries — green, and blind."""
+    p = residue.workspace("tagcheck")
+    try:
+        assert os.path.basename(p).startswith(residue.PREFIX + residue.RUN_TAG), os.path.basename(p)
+    finally:
+        shutil.rmtree(p, ignore_errors=True)
+        residue._created[:] = [c for c in residue._created if c[0] != p]
 
 
 for n, f in [
@@ -180,6 +219,9 @@ for n, f in [
     ("plant_guard_test leaves an empty TMPDIR", the_real_plant_guard_suite_leaves_nothing),
     ("checker_parity_test leaves an empty TMPDIR", the_real_parity_suite_leaves_nothing),
     ("this gate run left nothing in the shared TMPDIR", this_gate_run_left_nothing_behind),
+    ("a tree from another run is not this run's leak", a_tree_from_another_run_is_not_this_run_s_leak),
+    ("this run's own leak is still a failure", this_run_s_own_leak_is_still_a_failure),
+    ("workspace() embeds the run tag", the_run_tag_is_in_the_name_a_workspace_gets),
 ]:
     case(n, f)
 

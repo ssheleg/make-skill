@@ -18,6 +18,16 @@ the release the CHANGELOG carries (MS-03).
 
 ---
 
+## Shipped state — v0.23.1 (2026-08-25)
+
+Measured on the tree this release tags, at `44c22f5`, before the tag existed — which is the
+only order available, since the tag cannot precede the commit that bumps to it.
+
+| REQ | What shipped | How it was confirmed | Confirmed |
+|---|---|---|---|
+| R-31 | `test/residue.py` tags each workspace with the process group that made it, so the gate-wide scan answers for ONE run | the scan read the shared `$TMPDIR` by prefix and failed on two things that are not this run's leak: another session's trees, and a tree a FAILING case kept on purpose. Demonstrated on identical state — a planted foreign tree makes the old logic FAIL and the new suite pass while printing what it excluded | **planted** + **observed** |
+| R-32 | The split is a pure function with fixtures in both directions | `strays_for_run()` — a foreign tree is not reported, a tree tagged with this run and unaccounted for still is, and `workspace()` is asserted to embed the tag so the two fixtures cannot pass against a tag no directory carries | **planted** |
+
 ## Shipped state — v0.23.0 (2026-08-20)
 
 Measured on the tree this release tags, at `34d35ab`, before the tag existed — which is the

@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.23.1 — the residue scan stops answering for other runs
+
+`test/residue.py` now tags every workspace with the process group that made it, and the
+gate-wide scan reads only that tag. Scanning the shared `$TMPDIR` by prefix reported two
+things that are not this run's leak: another session's trees — 37,301 entries under the
+shared directory on 2026-08-24 turned a green suite red — and a tree a FAILING case in an
+earlier run kept ON PURPOSE as its evidence, which poisoned every run after it. The split is
+a pure function with fixtures for both directions, and what it excludes is printed rather
+than dropped in silence.
+
+
 ## v0.23.0 — 2026-08-20 — the ledger said unshipped over the release commit
 
 The newest ledger section read *"Unshipped … no release cut"* and *"npm is still 0.21.0"*
