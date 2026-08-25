@@ -7,6 +7,10 @@
 
 **[Docs, and every skill →](https://skills.sshlg.me/)** · [this skill's page](https://skills.sshlg.me/skills/make-skill/) · [follow @sshlg93 on X](https://x.com/intent/follow?screen_name=sshlg93)
 
+Loads in **DeepSeek Harness** (`dsh`) with **no plugin to write**: it reads the
+Agent Skills standard directly, scanning `~/.agents/skills` — where `npx skills
+add` puts this pack — at rank 500.
+
 **A skill that builds skills.** Install it and your coding agent knows how to
 create, audit, and ship [Agent Skills](https://agentskills.io/specification) and
 Claude Code plugins properly — conforming to the open standard, validated in CI,
