@@ -5,7 +5,7 @@
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![site](https://img.shields.io/badge/docs-skills.sshlg.me-8ab0ff)](https://skills.sshlg.me/skills/make-skill/)
 
-**[Docs, and all 8 skills →](https://skills.sshlg.me/)** · [this skill's page](https://skills.sshlg.me/skills/make-skill/) · [follow @sshlg93 on X](https://x.com/intent/follow?screen_name=sshlg93)
+**[Docs, and every skill →](https://skills.sshlg.me/)** · [this skill's page](https://skills.sshlg.me/skills/make-skill/) · [follow @sshlg93 on X](https://x.com/intent/follow?screen_name=sshlg93)
 
 **A skill that builds skills.** Install it and your coding agent knows how to
 create, audit, and ship [Agent Skills](https://agentskills.io/specification) and
