@@ -3,9 +3,9 @@
 [![npm](https://img.shields.io/npm/v/@ssheleg/make-skill)](https://www.npmjs.com/package/@ssheleg/make-skill)
 [![validate](https://github.com/ssheleg/make-skill/actions/workflows/validate.yml/badge.svg)](https://github.com/ssheleg/make-skill/actions/workflows/validate.yml)
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
-[![site](https://img.shields.io/badge/docs-ssheleg.github.io-8ab0ff)](https://ssheleg.github.io/sshlg-skills/skills/make-skill/)
+[![site](https://img.shields.io/badge/docs-skills.sshlg.me-8ab0ff)](https://skills.sshlg.me/skills/make-skill/)
 
-**[Docs, and all 8 skills →](https://ssheleg.github.io/sshlg-skills/)** · [this skill's page](https://ssheleg.github.io/sshlg-skills/skills/make-skill/) · [follow @sshlg93 on X](https://x.com/intent/follow?screen_name=sshlg93)
+**[Docs, and all 8 skills →](https://skills.sshlg.me/)** · [this skill's page](https://skills.sshlg.me/skills/make-skill/) · [follow @sshlg93 on X](https://x.com/intent/follow?screen_name=sshlg93)
 
 **A skill that builds skills.** Install it and your coding agent knows how to
 create, audit, and ship [Agent Skills](https://agentskills.io/specification) and
