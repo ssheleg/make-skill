@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.23.2 — the standard is applied to the skill that states it
+
+Every family repository can now run the same auditor from a commit-pinned CI job,
+and release inherits that gate through the existing callable workflow. The eval
+data has a portable validator with an in-memory negative self-test, the README
+opens with one install and one request, and the generated social preview is
+checked in. Existing model results remain explicitly absent.
+
 ## v0.23.1 — the residue scan stops answering for other runs
 
 `test/residue.py` now tags every workspace with the process group that made it, and the

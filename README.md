@@ -5,6 +5,16 @@
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![site](https://img.shields.io/badge/docs-skills.sshlg.me-8ab0ff)](https://skills.sshlg.me/skills/make-skill/)
 
+**Create, audit and publish Agent Skills and Claude Code plugins against one enforced repository standard.**
+
+```bash
+npx skills add ssheleg/make-skill
+```
+
+Ask: `Make a distributable skill from our incident runbooks.`
+
+**[Detailed docs →](https://skills.sshlg.me/skills/make-skill/)**
+
 **[Docs, and every skill →](https://skills.sshlg.me/)** · [this skill's page](https://skills.sshlg.me/skills/make-skill/) · [follow @sshlg93 on X](https://x.com/intent/follow?screen_name=sshlg93)
 
 Loads in **DeepSeek Harness** (`dsh`) with **no plugin to write**: it reads the

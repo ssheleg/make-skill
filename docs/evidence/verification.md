@@ -18,6 +18,15 @@ the release the CHANGELOG carries (MS-03).
 
 ---
 
+## Shipped state — v0.23.2 (2026-08-26)
+
+Measured on the release-candidate tree before the tag exists.
+
+| REQ | What ships | How it was confirmed | Confirmed |
+|---|---|---|---|
+| R-33 | The public contract, eval fixtures, and social-preview dimensions are checked in the same gate as the skill | `SKILL-CARD.md`; `python3 test/evals_validate.py`; `python3 test/evals_validate.py --self-test`; `python3 test/social_preview.py` | **planted** + **observed** |
+| R-34 | Downstream repositories can pin the house auditor to an immutable revision | all member workflows use commit `991cbb415be3e856f05c974e631423df552883e3` and invoke `audit_skill.py --house` | **read** |
+
 ## Shipped state — v0.23.1 (2026-08-25)
 
 Measured on the tree this release tags, at `44c22f5`, before the tag existed — which is the
