@@ -18,6 +18,14 @@ the release the CHANGELOG carries (MS-03).
 
 ---
 
+## Shipped state — v0.23.3 (2026-08-26)
+
+Measured on the release-candidate tree before the tag exists.
+
+| REQ | What ships | How it was confirmed | Confirmed |
+|---|---|---|---|
+| R-35 | Both copied public-contract validators name their umbrella-owned shared mechanism | the umbrella structural validator refuses the nine-file family when the header is absent | **observed** |
+
 ## Shipped state — v0.23.2 (2026-08-26)
 
 Measured on the release-candidate tree before the tag exists.

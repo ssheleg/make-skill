@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.23.3 — the copied public-contract guards name their canon
+
+Both portable validators now carry explicit shared-mechanism identifiers. The
+umbrella can therefore enforce byte-level family drift without guessing whether
+nine similar files are intentionally aligned.
+
 ## v0.23.2 — the standard is applied to the skill that states it
 
 Every family repository can now run the same auditor from a commit-pinned CI job,
