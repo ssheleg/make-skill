@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.23.4 — the shared seam is explicit
+
+Both copied public-contract validators now declare `diverges: none`, completing
+the family drift header they introduced in v0.23.3.
+
 ## v0.23.3 — the copied public-contract guards name their canon
 
 Both portable validators now carry explicit shared-mechanism identifiers. The

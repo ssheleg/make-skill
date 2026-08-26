@@ -18,6 +18,14 @@ the release the CHANGELOG carries (MS-03).
 
 ---
 
+## Shipped state — v0.23.4 (2026-08-26)
+
+Measured on the release-candidate tree before the tag exists.
+
+| REQ | What ships | How it was confirmed | Confirmed |
+|---|---|---|---|
+| R-36 | Both shared validator headers explicitly state that this repository has no divergence from the umbrella mechanism | the umbrella structural validator requires `# diverges:` beside every `# shared-mechanism:` declaration | **observed** |
+
 ## Shipped state — v0.23.3 (2026-08-26)
 
 Measured on the release-candidate tree before the tag exists.
