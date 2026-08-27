@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.23.5 — the channel that sends the installs, on npm too
+
+- The `skills.sh` badge and the canonical `homepage` reached GitHub in the previous cycle and stopped
+  there: npm serves the README and the metadata from the last **publish**, so the package
+  page still showed a badge-less README and a homepage pointing at GitHub.
+  This release carries both across.
+- No behaviour changes. Cut because a change that lands on `main` and never publishes is a
+  change the package's own readers cannot see.
+
 ## v0.23.4 — the shared seam is explicit
 
 Both copied public-contract validators now declare `diverges: none`, completing
