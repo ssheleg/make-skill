@@ -18,6 +18,14 @@ the release the CHANGELOG carries (MS-03).
 
 ---
 
+## Shipped state — v0.23.5 (2026-08-27)
+
+Measured on the release-candidate tree before the tag exists.
+
+| REQ | What ships | How it was confirmed | Confirmed |
+|---|---|---|---|
+| R-37 | The `skills.sh` badge and the canonical `homepage` reach the package page, not only `main` | npm serves README and metadata from the last **publish**; both landed on `main` in the previous cycle and the published package still showed a badge-less README and a GitHub homepage. Re-read from the registry after this release | **observed** |
+
 ## Shipped state — v0.23.4 (2026-08-26)
 
 Measured on the release-candidate tree before the tag exists.
