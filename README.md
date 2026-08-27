@@ -4,6 +4,7 @@
 [![validate](https://github.com/ssheleg/make-skill/actions/workflows/validate.yml/badge.svg)](https://github.com/ssheleg/make-skill/actions/workflows/validate.yml)
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![site](https://img.shields.io/badge/docs-skills.sshlg.me-8ab0ff)](https://skills.sshlg.me/skills/make-skill/)
+[![skills.sh](https://skills.sh/b/ssheleg/make-skill)](https://skills.sh/ssheleg/make-skill)
 
 **Create, audit and publish Agent Skills and Claude Code plugins against one enforced repository standard.**
 
