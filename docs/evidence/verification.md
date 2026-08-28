@@ -18,6 +18,15 @@ the release the CHANGELOG carries (MS-03).
 
 ---
 
+## Shipped state — v0.24.0 (2026-08-28)
+
+Measured on the release-candidate tree before the tag exists.
+
+| REQ | What ships | How it was confirmed | Confirmed |
+|---|---|---|---|
+| R-38 | The plugin reference describes the sources Claude Code actually supports | re-read against 2.1.236; `archive`, `command`, entry-level `headersHelper`, `metadata.pluginRoot` and `"skills": ["."]` were absent and are now present, each with the version that introduced it | **observed** |
+| R-39 | An installer states how the next version arrives | `known_marketplaces.json` read on one machine: 2 of 20 marketplaces carry `autoUpdate`, and both were installed by a third-party tool rather than by `claude plugin marketplace add` | **observed** |
+
 ## Shipped state — v0.23.5 (2026-08-27)
 
 Measured on the release-candidate tree before the tag exists.
