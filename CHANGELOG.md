@@ -1,5 +1,33 @@
 # Changelog
 
+## v0.24.0 — the plugin surface as it is now, and how updates reach a machine
+
+- **Four plugin features that landed after this skill last read the docs.** Re-read
+  2026-08-28 against Claude Code 2.1.236; the previous pass was 2026-07-30 against 2.1.212.
+  `archive` sources install a zip over HTTPS with no git and no npm (2.1.224); `command`
+  sources let a local command print the plugin directory (2.1.229) and are the one class an
+  organisation can switch off wholesale with `disableCommandPluginSources`; entry-level
+  `headersHelper` mints registry headers and **requires `strict: false`** (2.1.238); a
+  `skills` path of `"."` scans the plugin root instead of `skills/` (2.1.221). Bare-name
+  sources under `metadata.pluginRoot` are in too (2.1.239).
+- The `headersHelper` contract is written out because every clause of it is a way to fail
+  silently — ten seconds, 500 ASCII characters, stdout JSON — and because Claude Code
+  **strips every environment variable whose name contains `TOKEN`, `SECRET`, `KEY` or
+  `AUTH`** before running it. A helper that reads its credential from one of those is handed
+  nothing, and the failure surfaces as a permissions error at the registry.
+- **`distribution.md` gains "How updates reach the machine — decide it, then SAY it".** An
+  installer that never mentions updates has still chosen a model, and the model is *never*.
+  Claude Code carries a per-marketplace `autoUpdate` flag in `known_marketplaces.json` that
+  is **not in the documented settings surface**; `/plugin` writes it and third-party
+  installers write it directly. Measured on one machine 2026-08-28: of 20 marketplaces, the
+  2 installed by `vercel-labs/plugins` carry it and 18 do not, because
+  `claude plugin marketplace add` never sets it.
+- The section states the trap rather than a preference: for packs that **compose**,
+  per-marketplace auto-update moves each on its own clock and produces a combination nobody
+  tested — the same reason a family launcher refuses a per-member argument. For packs that
+  stand alone it is the better answer. Either way the installer's last line says how the
+  next version arrives, because "Installed" is not a complete sentence.
+
 ## v0.23.5 — the channel that sends the installs, on npm too
 
 - The `skills.sh` badge and the canonical `homepage` reached GitHub in the previous cycle and stopped

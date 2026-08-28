@@ -10,7 +10,10 @@ Upstream (read against these, not from memory — the schema grows every release
 - Marketplaces — <https://code.claude.com/docs/en/plugin-marketplaces>
 - Skills — <https://code.claude.com/docs/en/skills>
 
-*Read from the docs on 2026-07-30 against Claude Code 2.1.212. Re-read before
+*Read from the docs on 2026-07-30 against Claude Code 2.1.212, and again 2026-08-28
+against 2.1.236 — that pass added the `archive` and `command` sources, entry-level
+`headersHelper`, bare-name sources under `metadata.pluginRoot`, and `"skills": ["."]`,
+all of which landed between the two readings. Re-read before
 trusting a version-gated field in a new quarter.*
 
 The [Agent Skills spec](https://agentskills.io/specification) (see
@@ -128,6 +131,12 @@ marketplace-only `source`, `category`, `tags`, `strict`, `relevance`,
 | `url` | `{"source":"url","url":"https://…​.git","ref?":…,"sha?":…}` |
 | `git-subdir` | `{"source":"git-subdir","url":"…","path":"packages/x","ref?":…,"sha?":…}` — sparse clone |
 | `npm` | `{"source":"npm","package":"@scope/pkg","version?":…,"registry?":…}` — no git SHA to fall back on, so set `version` in the manifest or the entry, else it resolves to `unknown` and updates never fire |
+| `archive` **2.1.224+** | `{"source":"archive","url":"https://…/x-2.1.0.zip","sha256?":"<64 hex>"}` — a zip over HTTPS, **no git and no npm on the machine**. The digest is optional and is the only thing standing between a URL and whatever is behind it today; set it |
+| `command` **2.1.229+** | `{"source":"command","command":"my-tool plugin-path","timeout?":60,"mode?":"copy"}` — a local command prints the directory. `timeout` defaults to 60s, max 600; `mode` is `copy` (default) or `link`. An organisation can be configured to refuse this entire class with `disableCommandPluginSources`, so it is the one source that may be unavailable for reasons no error in your repo explains |
+
+**Bare-name sources, 2.1.239+.** With `metadata.pluginRoot` set on the marketplace,
+an entry may write `"source": "my-plugin"` and have it resolve under that root — the
+`./` requirement above applies only without it.
 
 `sha` beats `ref` when both are set. **Marketplace source ≠ plugin source**: the
 first says where `marketplace.json` lives (supports `ref` only), the second where
@@ -137,6 +146,23 @@ each plugin comes from (`ref` and `sha`).
 to it. `strict: false` makes the entry the entire definition — and a
 `plugin.json` that also declares components is then a load error.
 
+**`headersHelper` on an entry, 2.1.238+ — and it needs `strict: false`.** Beside
+`source`, it names a command that mints HTTP headers for a private registry, and it runs
+**only** when that one plugin is installed or updated. The marketplace-level form is
+different: declared in `extraKnownMarketplaces` on a `url` marketplace, it runs before
+every catalog fetch and archive download on that origin, and one run is reused for 60
+seconds. Both are separate from the MCP `headersHelper` documented later in this file.
+
+The command's contract, because each clause is a way to fail silently: one JSON object of
+header names to string values on stdout, exit 0, **within 10 seconds**; at most 500
+printable ASCII characters with no run of four spaces; run through `sh` (or `cmd.exe`)
+from `~/.claude`. Claude Code **strips every variable whose name contains `TOKEN`,
+`SECRET`, `KEY` or `AUTH`** from its environment — so a helper that reads its credential
+from one of those is handed nothing, and the failure looks like a permissions problem at
+the registry. It receives `CLAUDE_CODE_MARKETPLACE_URL`, `CLAUDE_CODE_MARKETPLACE_NAME`,
+`CLAUDE_CODE_PLUGIN_NAME` and `CLAUDE_CODE_PLUGIN_ARCHIVE_URL` instead. The user has to
+accept the command before it runs at all.
+
 Version resolution order: `plugin.json` → marketplace entry → git SHA →
 `unknown`.
 
@@ -145,7 +171,7 @@ Version resolution order: `plugin.json` → marketplace entry → git SHA →
 | Component | Default location |
 |---|---|
 | manifest | `.claude-plugin/plugin.json` |
-| skills | `skills/<name>/SKILL.md` |
+| skills | `skills/<name>/SKILL.md` — and **`"skills": ["."]` is legal from 2.1.221**: it scans the plugin ROOT for `<name>/SKILL.md` instead of `skills/`, which is what a repository whose skills sit at the top level needs |
 | commands | `commands/*.md` (flat skills; prefer `skills/` for new plugins) |
 | agents | `agents/*.md` |
 | workflows | `workflows/*.js` |

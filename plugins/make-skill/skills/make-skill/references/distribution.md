@@ -212,7 +212,40 @@ package's own repo, `npx` resolves the local package and reports a false
 - **`npx` inside the package's own repo** resolves the local package → a false
   `command not found`. Always e2e-test from another cwd.
 
-### Installer implementation traps (read while WRITING the CLI)
+### How updates reach the machine — decide it, then SAY it
+
+An installer that never mentions updates has still chosen an update model: **never**. The
+operator installs once, the pack drifts, and nothing tells them. Decide between three, and
+print the answer at the end of the install.
+
+**Claude Code's own switch is a per-marketplace `autoUpdate` flag** in
+`~/.claude/plugins/known_marketplaces.json`. It is real and it is **not in the documented
+settings surface** — not in the settings reference, not in the marketplace page; `/plugin`
+writes it, and third-party installers write it directly. `vercel-labs/plugins` prompts
+`Enable auto-updates? [Y/n]`, defaults to yes, and only asks when the marketplace is new,
+the target is Claude Code or Cursor, and the install did **not** go through the official
+CLI. Measured on one machine 2026-08-28: of 20 marketplaces, the 2 installed by that tool
+carry `autoUpdate: true` and the other 18 have no such key — **`claude plugin marketplace
+add` does not set it**, so a plugin installed the official way never auto-updates unless
+somebody turns it on.
+
+| Model | Who updates | Right when |
+|---|---|---|
+| **Per-marketplace `autoUpdate`** | Claude Code, in the background, each marketplace on its own clock | packs are **independent** — one can move without the others meaning anything |
+| **A launcher command** (`npx <name> update`) | the operator, in one pass, whole set | packs **compose** — they are released and tested together |
+| **Nothing** | nobody | never; this is the default you get by not choosing |
+
+**The trap, and it is the whole reason this section exists.** For a FAMILY that composes,
+per-marketplace auto-update is actively wrong: each member moves on its own schedule and
+the machine ends up in a combination the maintainers never tested together. That is the
+same reason a family launcher refuses a per-member argument. If your packs are
+independent, `autoUpdate` is the better answer and you should offer it; if they compose,
+offer the launcher and say plainly that auto-update is off **on purpose**.
+
+Either way the last thing the installer prints is how the next version arrives. "Installed"
+is not a complete sentence.
+
+## Installer implementation traps (read while WRITING the CLI)
 
 - **Piped stdin + readline:** sequential `rl.question()` drops buffered lines.
   Use ONE persistent-listener prompter for the whole flow (super-ux
