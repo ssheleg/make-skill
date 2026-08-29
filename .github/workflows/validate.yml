@@ -472,48 +472,16 @@ jobs:
           test "$(node bin/make-skill.js --version)" = "$(node -p "require('./package.json').version")"
           node bin/make-skill.js --help | grep -q -- '--force'
 
-      - name: npm installer functional test (fresh / rerun-skip / --force)
-        run: |
-          set -eu
-          # Start from an empty HOME. On a CI runner it always is; on a developer
-          # machine running this suite locally (CONTRIBUTING promises that works)
-          # a previous run's copy is still there, and "fresh install" silently
-          # becomes "rerun-skip".
-          export HOME=/tmp/fakehome
-          rm -rf "$HOME"
-          mkdir -p "$HOME"
-          node bin/make-skill.js
-          test -f "$HOME/.claude/skills/make-skill/SKILL.md"
-          # no ~/.claude/commands/make-skill.md: a command sharing the skill's
-          # name registers /make-skill twice (see `claude plugin details`)
-          test ! -e "$HOME/.claude/commands/make-skill.md"
-          # references must travel with the skill — relative links break otherwise
-          for r in agent-skills-spec authoring surfaces enterprise retrofit host-capabilities claude-code-plugin distribution mcp a2a; do
-            test -f "$HOME/.claude/skills/make-skill/references/$r.md"
-          done
-          # scripts and skeletons must travel too — they are the half that works
-          # on agents with no hooks, no subagents and no /commands
-          test -x "$HOME/.claude/skills/make-skill/scripts/audit_skill.py"
-          for t in SKILL.template.md plugin.template.json marketplace.template.json \
-                   hooks.template.json agent.template.md command.template.md; do
-            test -f "$HOME/.claude/skills/make-skill/assets/$t"
-          done
-          node bin/make-skill.js | grep -q '^skip:'
-          node bin/make-skill.js --force | grep -q '^Installed'
-          if node bin/make-skill.js --wat; then
-            echo "ERROR: unknown arg accepted"; exit 1
-          fi
-          # One channel per agent: with the plugin present, a plain copy would
-          # shadow it and the stale copy wins. Both installers must refuse.
-          mkdir -p "$HOME/.claude/plugins/marketplaces/make-skill"
-          rm -rf "$HOME/.claude/skills/make-skill"
-          node bin/make-skill.js | grep -q 'already installed as a Claude Code plugin'
-          test ! -e "$HOME/.claude/skills/make-skill"
-          ./install.sh | grep -q 'already installed as a Claude Code plugin'
-          test ! -e "$HOME/.claude/skills/make-skill"
-          node bin/make-skill.js --force | grep -q '^Installed'
-          rm -rf "$HOME/.claude/plugins/marketplaces"
-          echo "OK: npm installer behaves, and neither installer creates a shadow"
+      - name: npm installer functional test (fresh / rerun-skip / --force / plugin-present refusal)
+        # The cases live in test/installer_test.js — one home for the logic, so
+        # `npm test` locally and this job exercise the same assertions. The one
+        # this step exists for is PLUGIN-PRESENT: a fake HOME whose
+        # installed_plugins.json declares make-skill, asserting the non-zero
+        # exit, the remedy in the output, and that nothing was written. Every
+        # member's CI tested only a fresh HOME until 2026-08-29, which is how
+        # nine installers shipped a shadow-writer nobody had ever run against a
+        # plugin (telegram-dev, reproduced live that day).
+        run: node test/installer_test.js
 
       - name: Workflow YAML parses (validate + release)
         run: |

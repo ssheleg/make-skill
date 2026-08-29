@@ -38,13 +38,20 @@ python3 test/validate.py
 
 Exit 0 prints `PASS: …`. Every failure names the file and the rule.
 
-`npm test` is the gate proper — the validator, then the three suites, in order:
+`npm test` is the gate proper — the validator, then the four suites, in order:
 
 ```bash
-npm test        # validate.py · plant_guard_test.py · checker_parity_test.py · residue_test.py
+npm test        # validate.py · plant_guard_test.py · checker_parity_test.py · residue_test.py · installer_test.js
 ```
 
-**Every one of those four commands ends by saying what it left on disk**, `nothing`
+`test/installer_test.js` runs both installers against throwaway HOMEs — fresh,
+rerun-skip, `--force`, and above all **plugin-present**: a fake HOME whose
+`installed_plugins.json` declares the make-skill plugin must produce a refusal
+(exit 3, remedy named, nothing written). That case was missing from every
+member's CI until 2026-08-29, which is how nine installers shipped a
+shadow-writer nobody had ever run against a plugin.
+
+**Every one of those five commands ends by saying what it left on disk**, `nothing`
 included, and that line is a check rather than a courtesy: until 2026-08-19 two of the
 suites abandoned a copy of this repository in `$TMPDIR` on every run — 1888 directories,
 47.3 MB — and no output anywhere said so. `test/residue.py` is the ledger they go
