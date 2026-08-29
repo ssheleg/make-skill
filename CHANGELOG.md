@@ -1,5 +1,37 @@
 # Changelog
 
+## v0.25.0 — the installer refuses the shadow it documents, loudly
+
+- **The family audit of 2026-08-29 reproduced the shadow live:** a bare
+  `npx @ssheleg/telegram-dev` created three plain copies in `~/.claude/skills/` while the
+  telegram-dev plugin was enabled. Every member's bin installer had the same hole, and every
+  member's CI tested only a fresh `HOME`, so the plugin-present case had never run anywhere.
+  This is the standards repository, so the canon lands here first and its own installer is
+  the reference implementation.
+- **This repository's own check was the fail-open class, and the new canon names it.** Both
+  installers detected the plugin by the `~/.claude/plugins/marketplaces/make-skill`
+  directory alone — which under-reports (a `directory`-sourced marketplace has no dir
+  there; plugin names differ from marketplace names) — and the refusal exited **0**, which
+  reads as success to every script above it. `distribution.md` gains "The installer must
+  refuse the shadow it documents": detect from the TARGET home's
+  `installed_plugins.json` (keys are `<name>@<marketplace>`), refuse with the remedy and a
+  non-zero exit, offer `--force` as the recorded deliberate choice, fail open on a missing
+  or corrupt JSON, and gate only the `~/.claude` write — no other agent has plugins.
+- **`bin/make-skill.js` and `install.sh` implement it:** exit `3` on refusal, the remedy
+  names the spec read from the JSON (`claude plugin update make-skill@<marketplace>`) plus
+  the family launcher, `--force` overrides, absence/corruption of the JSON installs as
+  before, and the marketplaces-dir read is kept as the fallback signal. The last line of a
+  successful install now says how the next version arrives (the v0.24.0 canon, applied to
+  this repo's own CLI).
+- **`test/installer_test.js` joins `npm test` and CI** — 11 cases against throwaway HOMEs:
+  fresh / rerun-skip / `--force` / unknown-arg, plugin-present refusal (exit code, remedy
+  text, nothing written), a differently-named marketplace in the spec, corrupt JSON failing
+  open, no false refusal on other plugins or a `make-skill-extra` prefix-collider, the
+  marketplaces-dir fallback, and the same matrix for `install.sh`. Watched failing before
+  trusted: **6 of 11 red** against the pre-fix installers (`git stash` the two, run, pop).
+  The suite follows the house residue rule — a failing case keeps its HOME, and the run
+  ends by saying what it left.
+
 ## v0.24.0 — the plugin surface as it is now, and how updates reach a machine
 
 - **Four plugin features that landed after this skill last read the docs.** Re-read

@@ -18,6 +18,16 @@ the release the CHANGELOG carries (MS-03).
 
 ---
 
+## Shipped state — v0.25.0 (2026-08-29)
+
+Measured on the release-candidate tree before the tag exists.
+
+| REQ | What ships | How it was confirmed | Confirmed |
+|---|---|---|---|
+| R-40 | Both installers refuse to write a plain copy over an installed plugin, reading `installed_plugins.json` from the target home, with a non-zero exit and the remedy naming the spec from the JSON | `node test/installer_test.js` → `PASS: installer — 11 case(s)` with `residue: this run left nothing — 11 temp home(s) created, 11 removed`; the plugin-present cases assert exit `3`, the `claude plugin update make-skill@<marketplace>` line, and that `~/.claude/skills/make-skill` was not created | **planted** + **observed** |
+| R-41 | The suite fails against the pre-fix installers, so the guard has been watched failing | `git stash push bin/make-skill.js install.sh` → `node test/installer_test.js` → `FAIL: installer — 6 case(s) red` (every plugin-present and exit-code case, and the update-line case) → `git stash pop` → green again | **planted** |
+| R-42 | The canon names the fail-open class it replaces | `references/distribution.md`, "The installer must refuse the shadow it documents": a presence check keyed on the `marketplaces/` dir alone that exits 0 — this repository's own shipped behaviour until this release — plus the 2026-08-29 telegram-dev reproduction as the incident line | **read** |
+
 ## Shipped state — v0.24.0 (2026-08-28)
 
 Measured on the release-candidate tree before the tag exists.
