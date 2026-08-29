@@ -10,7 +10,8 @@ API or claude.ai instead is `references/surfaces.md`.
 - The distributable repo layout (tree, public-repo floor, version sync, gates)
 - 1. Claude Code plugin
 - 2. vercel-labs skills CLI
-- 3. npx installer — npm gotchas, installer implementation traps
+- 3. npx installer — npm gotchas; the installer must refuse the shadow it
+  documents; how updates reach the machine; implementation traps
 - First publish — the 11-step sequence
 - 4. Cursor
 - 5. Ship a FAMILY via an umbrella repo
@@ -212,6 +213,50 @@ package's own repo, `npx` resolves the local package and reports a false
 - **`npx` inside the package's own repo** resolves the local package → a false
   `command not found`. Always e2e-test from another cwd.
 
+### The installer must refuse the shadow it documents
+
+The shadow rule at the top of this file is not only about the skills CLI: **a member's
+own `npx @scope/<name>` installer is the other machine that recreates the shadow.** It
+writes `~/.claude/skills/<name>` on request, and on a machine where the same skill is
+installed as a Claude Code plugin, that write is a plain copy that outranks the plugin
+and serves the version it was copied from forever. Measured 2026-08-29: a bare
+`npx @ssheleg/telegram-dev` created three plain copies in `~/.claude/skills/` while the
+`telegram-dev` plugin was enabled — and every bin installer in the family had the same
+hole, because every member's CI tested a fresh `HOME` only, so the plugin-present case
+had never run anywhere.
+
+The canon, for every bin installer that targets `~/.claude/skills/`:
+
+- **Detect the plugin from the TARGET home before writing.** Read that home's
+  `~/.claude/plugins/installed_plugins.json` and look for a plugin whose name matches
+  the skill under ANY marketplace — the keys are `<name>@<marketplace>`, and the two
+  names differ often. A `~/.claude/plugins/marketplaces/<name>` directory also signals
+  the plugin channel, but only as the fallback read: it **under-reports** — a
+  marketplace added from a local `directory` source has no dir there at all, and a
+  differently-named marketplace never matches the skill name. A presence check keyed on
+  that directory alone stays green while the shadow lands, which is the fail-open
+  class: it looks at the wrong file and then exits 0.
+- **Refuse, and exit non-zero.** Print what was found, why the plain copy is refused,
+  and the plugin-channel remedy — `claude plugin marketplace update <name>` then
+  `claude plugin update <name>@<marketplace>` with the spec read from the JSON, or the
+  family launcher (`npx --yes sshlg-skills@latest update`) for a member that composes
+  with its family. A refusal that exits 0 reads as success to every script above it:
+  this repository's own installer shipped exactly that half-measure until v0.25.0 —
+  marketplace-dir check, a `skip:` message, exit 0.
+- **`--force` is the deliberate override**, named inside the refusal itself. Two
+  channels on one agent is a choice someone may make on purpose, and the flag is where
+  that choice gets recorded instead of happening by accident.
+- **Absence fails open; corruption never crashes.** A missing or unparsable
+  `installed_plugins.json` reads as "no plugin" — the fresh HOME is the common case,
+  and an installer that dies on a parse error refuses the machines that need it most.
+- **Only Claude Code has plugins.** The check gates the `~/.claude` write alone;
+  installs into other agents' skill directories are untouched by it.
+- **CI runs the plugin-present case, not only a fresh HOME.** A fake HOME whose
+  `installed_plugins.json` declares the plugin, asserting all three at once: the
+  non-zero exit, the remedy in the output, and that nothing was written — plus the
+  `--force` path installing and the fresh HOME still installing. Reference
+  implementation: this repository's `bin/make-skill.js` and `test/installer_test.js`.
+
 ### How updates reach the machine — decide it, then SAY it
 
 An installer that never mentions updates has still chosen an update model: **never**. The
@@ -245,7 +290,7 @@ offer the launcher and say plainly that auto-update is off **on purpose**.
 Either way the last thing the installer prints is how the next version arrives. "Installed"
 is not a complete sentence.
 
-## Installer implementation traps (read while WRITING the CLI)
+### Installer implementation traps (read while WRITING the CLI)
 
 - **Piped stdin + readline:** sequential `rl.question()` drops buffered lines.
   Use ONE persistent-listener prompter for the whole flow (super-ux
@@ -356,7 +401,8 @@ claude plugin update <name>@<name>             # full id required
    `claude plugin validate ./plugins/<name> --strict` and
    `claude plugin validate . --strict` → both exit 0.
 3. Functional tests: installer against a scratch `HOME` (fresh / rerun-skip /
-   `--force`), `node --check` on the CLI, piped-menu tests.
+   `--force` / **plugin-present refusal**, per the canon in §3), `node --check`
+   on the CLI, piped-menu tests.
 4. Conventional commit; push; confirm CI `success`; tag `v<ver>` and push the tag;
    `gh release create` from the CHANGELOG section (or let the release workflow
    below do it).

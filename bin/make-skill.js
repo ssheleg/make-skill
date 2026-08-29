@@ -18,6 +18,44 @@ const os = require('os');
 const ROOT = path.resolve(__dirname, '..');
 const REPO = 'ssheleg/make-skill';
 
+// Exit codes are the contract: 0 installed or skipped, 1 corrupted package,
+// 2 usage error, 3 refused — the plugin channel owns this agent (--force overrides).
+const EXIT_PLUGIN_PRESENT = 3;
+
+/**
+ * The plugin spec (`<name>@<marketplace>`) installed for `name` in this home,
+ * or null.
+ *
+ * `installed_plugins.json` is the record of what is actually installed. The
+ * `plugins/marketplaces/<name>` directory — the only thing this installer read
+ * until v0.25.0 — under-reports: a marketplace added from a local `directory`
+ * source has no dir there at all, and plugin names differ from marketplace
+ * names, so a check keyed on it stays green while the shadow lands. Absence
+ * and corruption both read as "no plugin": the fresh HOME is the common case,
+ * and an installer that crashes on a parse error refuses the machines that
+ * need it most.
+ */
+function installedPluginSpec(home, name) {
+  try {
+    const raw = fs.readFileSync(
+      path.join(home, '.claude', 'plugins', 'installed_plugins.json'), 'utf8');
+    const parsed = JSON.parse(raw);
+    const plugins =
+      parsed && typeof parsed === 'object' &&
+      parsed.plugins && typeof parsed.plugins === 'object'
+        ? parsed.plugins
+        : parsed;
+    if (!plugins || typeof plugins !== 'object') return null;
+    for (const spec of Object.keys(plugins)) {
+      if (spec === name) return `${name}@${name}`;
+      if (spec.startsWith(name + '@')) return spec;
+    }
+  } catch {
+    // missing or corrupt = no plugin — fail open on absence, never crash
+  }
+  return null;
+}
+
 function version() {
   try {
     return require(path.join(ROOT, 'package.json')).version;
@@ -34,6 +72,12 @@ Usage:
                                       ~/.claude (skip existing unless --force)
   npx @ssheleg/make-skill --version
   npx @ssheleg/make-skill --help
+
+Exit codes:
+  0 installed or skipped   2 usage error
+  1 corrupted package      3 refused: the make-skill PLUGIN is installed in
+                             this home — a plain copy would shadow it (pass
+                             --force to write it anyway)
 
 Other install paths:
   Claude Code plugin:  /plugin marketplace add ${REPO}
@@ -123,24 +167,39 @@ function main(argv) {
 
   // One channel per agent. A plain ~/.claude/skills/make-skill beside an
   // installed plugin is two listings of the same skill, and the stale copy wins
-  // — the exact trap this canon documents. Refuse rather than create it.
+  // — the exact shadow this canon forbids. Refuse rather than create it, and
+  // refuse LOUDLY: until v0.25.0 this check keyed on the marketplaces/ dir
+  // alone and exited 0 — the fail-open class. A directory-sourced marketplace
+  // has no dir there, plugin names differ from marketplace names, and a refusal
+  // that exits 0 reads as success to every script above it. Reproduced live
+  // 2026-08-29: a bare `npx @ssheleg/telegram-dev` shipped three shadows past
+  // exactly this hole while the plugin was enabled.
+  const spec = installedPluginSpec(home, 'make-skill');
   const marketplace = path.join(home, '.claude', 'plugins', 'marketplaces', 'make-skill');
-  if (fs.existsSync(marketplace) && !force) {
-    console.log(
-      'skip: make-skill is already installed as a Claude Code plugin\n' +
-      `       (${marketplace}).\n` +
-      '       Installing a plain copy into ~/.claude/skills would shadow it, and the\n' +
-      '       stale copy is the one that wins. Update the plugin instead:\n' +
-      '         claude plugin marketplace update make-skill\n' +
-      '         claude plugin update make-skill@make-skill\n' +
-      '       Pass --force if you really want both.'
+  const viaMarketplaceDir = !spec && fs.existsSync(marketplace);
+  if ((spec || viaMarketplaceDir) && !force) {
+    const found = spec
+      ? `installed as the Claude Code plugin ${spec}\n` +
+        '         (declared in ~/.claude/plugins/installed_plugins.json)'
+      : `registered as a Claude Code marketplace\n         (${marketplace})`;
+    console.error(
+      `refused: make-skill is already ${found}.\n` +
+      '         A plain copy in ~/.claude/skills/make-skill would shadow the plugin\n' +
+      '         and serve this frozen version forever. Update the plugin channel\n' +
+      '         instead:\n' +
+      '           claude plugin marketplace update make-skill\n' +
+      `           claude plugin update ${spec || 'make-skill@make-skill'}\n` +
+      '         Family launcher (updates every member, prunes shadow copies):\n' +
+      '           npx --yes sshlg-skills@latest update\n' +
+      '         Pass --force to write the plain copy anyway — a deliberate choice\n' +
+      '         to run two channels, where the stale one wins.'
     );
     // Offered here too. The skill IS present on this machine — as the plugin —
     // so the routing block is exactly as wanted as on the install path. Two
     // doors into one install that behave differently is how a feature comes to
     // exist for half its users.
     offerRouters();
-    return 0;
+    return EXIT_PLUGIN_PRESENT;
   }
 
   installOne(
@@ -151,6 +210,15 @@ function main(argv) {
     force
   );
   offerRouters();
+  // The last line says how the next version arrives — "Installed" is not a
+  // complete sentence. Auto-update is off on purpose: this member composes
+  // with its family, and per-marketplace autoUpdate moves each member on its
+  // own clock, into combinations nobody tested together.
+  console.log(
+    '\nUpdates: rerun `npx @ssheleg/make-skill@latest --force`, or refresh the\n' +
+    'whole family with `npx --yes sshlg-skills@latest update` (every channel,\n' +
+    'and it prunes plain copies that would shadow a plugin).'
+  );
   return 0;
 }
 
