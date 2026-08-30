@@ -140,7 +140,10 @@ through a quoted `"${CLAUDE_PLUGIN_ROOT}/…"` with a `timeout`; hook scripts ex
 0 silently when the event is not theirs and when the interpreter is missing;
 `PreToolUse` blocks (exit 2 sends stderr to the model), `PostToolUse` advises via
 `systemMessage`; plugin agents may not carry `hooks`, `mcpServers` or
-`permissionMode`; a command is never named after a skill in the same plugin.
+`permissionMode`; a command is never named after a skill in the same plugin —
+unless the collision is on the recorded, dated exception list in the skill's
+`references/host-capabilities.md` (the ssheleg family, operator decision
+2026-08-30), which an audit reports as deliberate and recorded, not as a gap.
 
 ## Hard rules
 
