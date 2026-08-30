@@ -143,7 +143,17 @@ body receives `$ARGUMENTS`. Two rules cost a debugging round each:
 
 - **Never name a command after a skill in the same plugin.** Commands are skills
   now: both claim `/<name>`, the skill wins, the command is unreachable always-on
-  cost visible only in `claude plugin details`.
+  cost visible only in `claude plugin details`. That is the default for every new
+  plugin. **One recorded exception (operator decision, 2026-08-30): the ssheleg
+  family ships same-named commands deliberately** — `task-pipeline`,
+  `project-audit`, `seo-aeo-audit`, `sheleg-design`, `agent-sync`, and
+  `super-ux`'s `vision`, `ux-foundation`, `ux-flows`, `ux-audit`. The cost is
+  accepted, not waived: the skill wins the trigger, and each command stays an
+  always-on token cost that may be unreachable in the picker. An audit that finds
+  a collision on this list reports it as *deliberate, recorded — no change
+  needed*; a collision NOT on a dated, recorded exception list is still the gap
+  this rule names. A rule's exception is enumerated, dated, and carries its cost
+  — never implied.
 - **Quote `argument-hint`.** Bare `[a | b]` is a YAML flow sequence; a comma
   inside it drops the entire frontmatter block, leaving a command with no
   description and no warning.
@@ -236,7 +246,8 @@ what the agent reads at the exact moment something is missing.
 - [ ] `PostToolUse` advises (`systemMessage`), `PreToolUse` blocks — not the reverse
 - [ ] Hook commands quote `"${CLAUDE_PLUGIN_ROOT}"` and set a `timeout`
 - [ ] Hook scripts are executable, have a shebang, and need no `jq`
-- [ ] No command named after a skill; every `argument-hint` quoted
+- [ ] No command named after a skill — or the collision is on a recorded, dated
+      exception list (see *Commands*); every `argument-hint` quoted
 - [ ] Plugin agents carry no `hooks` / `mcpServers` / `permissionMode`
 - [ ] Scripts are stdlib-only, inside the skill dir, invoked by a resolvable path
 - [ ] No command the agent is told to RUN contains `${CLAUDE_PLUGIN_ROOT}` — it is
