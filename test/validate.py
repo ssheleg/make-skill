@@ -935,9 +935,19 @@ wf_path = os.path.join(ROOT, ".github/workflows/validate.yml")
 wf_txt = open(wf_path, encoding="utf-8").read() if os.path.isfile(wf_path) else ""
 selftest_groups = wf_txt.count("name: Negative self-test")
 
+# eval-suite sizes quoted in prose (SKILL-CARD.md said "20 trigger queries" over a
+# triggers.json holding 22 — MSK-02); RESULTS.md gets the same comparison from
+# test/evals_validate.py, so both statements of the count are computed, not typed
+eval_queries_n = len((trig or {}).get("queries") or [])
+eval_scenarios_n = len((scen or {}).get("scenarios") or [])
+
 COUNTED_CLAIMS = [
     (re.compile(r"(\d+)-item checklist"), retrofit_items,
      "numbered items in references/retrofit.md"),
+    (re.compile(r"(\d+) trigger queries"), eval_queries_n,
+     "queries in test/evals/triggers.json"),
+    (re.compile(r"(\d+) behaviou?ral scenarios"), eval_scenarios_n,
+     "scenarios in test/evals/scenarios.json"),
     (re.compile(r"the (\d+) files under `skills/make-skill/references/`"), len(ref_files),
      "*.md in the skill's references/"),
     (re.compile(r"(\d+) groups of negative self-tests"), selftest_groups,

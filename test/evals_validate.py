@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # shared-mechanism: sshlg-skills/public-contract-evals-v1
-# diverges: none
+# diverges: RESULTS.md stated counts are compared against the artifacts (MSK-02)
 """Validate the portable behavioral-evaluation data in test/evals."""
 
 from __future__ import annotations
@@ -8,6 +8,7 @@ from __future__ import annotations
 import argparse
 import copy
 import json
+import re
 from pathlib import Path
 
 
@@ -16,6 +17,40 @@ def load(path: Path):
         return json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         raise ValueError(f"{path}: {exc}") from exc
+
+
+# A number typed into RESULTS.md is an assertion until something compares it to
+# the artifact: this file shipped "20 queries" over a triggers.json holding 22
+# (MSK-02) — the exact drift class the skill's own gotcha list forbids. Each
+# claim must both parse and match; a RESULTS.md that stopped stating a count
+# is refused rather than passed vacuously.
+RESULTS_COUNT_CLAIMS = (
+    (re.compile(r"`triggers\.json`\s*\((\d+)\s+queries\)"),
+     "queries", "queries in triggers.json"),
+    (re.compile(r"`scenarios\.json`\s*\((\d+)\s+(?:behaviou?ral\s+)?scenarios\)"),
+     "scenarios", "scenarios in scenarios.json"),
+)
+
+
+def results_count_gaps(results_text: str, actual: dict) -> list[str]:
+    gaps: list[str] = []
+    for pattern, key, label in RESULTS_COUNT_CLAIMS:
+        claims = pattern.findall(results_text)
+        if not claims:
+            gaps.append(
+                f"RESULTS.md: no parseable count claim for {label} — this "
+                "comparison would pass vacuously; state the count in the "
+                "`<file>` (N ...) form so it stays checkable"
+            )
+            continue
+        for claimed in claims:
+            if int(claimed) != actual[key]:
+                gaps.append(
+                    f"RESULTS.md: claims {claimed} {label} where the artifact "
+                    f"holds {actual[key]} — a hand-typed count is an assertion; "
+                    "update the sentence, this check keeps it from drifting again"
+                )
+    return gaps
 
 
 def validate(root: Path, trigger_override=None) -> list[str]:
@@ -109,6 +144,11 @@ def validate(root: Path, trigger_override=None) -> list[str]:
                     gaps.append(f"scenarios.json: {sid} fixture does not resolve: {rel!r}")
     if len(scenario_ids) != len(set(scenario_ids)):
         gaps.append("scenarios.json: scenario ids must be unique")
+
+    results_text = (root / "RESULTS.md").read_text(encoding="utf-8")
+    gaps.extend(results_count_gaps(
+        results_text, {"queries": len(queries), "scenarios": len(scenarios)}
+    ))
     return gaps
 
 
@@ -119,6 +159,23 @@ def self_test(root: Path) -> None:
     if not any("should_trigger must be boolean" in gap for gap in gaps):
         raise SystemExit("negative self-test failed: planted invalid boolean was accepted")
     print("OK: negative self-test planted and caught an invalid trigger class")
+
+    actual = {
+        "queries": len(load(root / "triggers.json")["queries"]),
+        "scenarios": len(load(root / "scenarios.json")["scenarios"]),
+    }
+    results_text = (root / "RESULTS.md").read_text(encoding="utf-8")
+    wrong = re.sub(r"\((\d+)(\s+queries\))",
+                   lambda m: f"({int(m.group(1)) + 1}{m.group(2)}",
+                   results_text, count=1)
+    gaps = results_count_gaps(wrong, actual)
+    if not any("where the artifact holds" in gap for gap in gaps):
+        raise SystemExit("negative self-test failed: planted off-by-one count was accepted")
+    gaps = results_count_gaps("a RESULTS.md that states no counts at all", actual)
+    if sum("no parseable count claim" in gap for gap in gaps) != len(RESULTS_COUNT_CLAIMS):
+        raise SystemExit("negative self-test failed: a claim-free RESULTS.md passed vacuously")
+    print("OK: negative self-test caught a planted off-by-one count and refused a "
+          "claim-free RESULTS.md")
 
 
 def main() -> int:
