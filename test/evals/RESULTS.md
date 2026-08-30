@@ -2,7 +2,7 @@
 
 **Status: authored, never executed against a model.**
 
-`triggers.json` (20 queries) and `scenarios.json` (4 behavioural scenarios) exist
+`triggers.json` (22 queries) and `scenarios.json` (4 behavioural scenarios) exist
 and are validated for shape on every commit — query count, both classes present
 on both sides of the split, three or more scenarios, every referenced fixture on
 disk. None of that measures behaviour.
