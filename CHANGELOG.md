@@ -1,5 +1,33 @@
 # Changelog
 
+## v0.25.1 — the rule keeps its default, and the family's exception is written down
+
+- **The same-name command rule now carries its recorded exception** (operator
+  decision, 2026-08-30: no renames anywhere in the family). The default in
+  `references/host-capabilities.md` is unchanged — never name a command after a
+  skill in the same plugin — and the one recorded exception is enumerated beside
+  it: the ssheleg family ships same-named commands deliberately (`task-pipeline`,
+  `project-audit`, `seo-aeo-audit`, `sheleg-design`, `agent-sync`, and
+  `super-ux`'s `vision` / `ux-foundation` / `ux-flows` / `ux-audit`), with the
+  cost stated rather than waived: the skill wins the trigger, and each command
+  stays an always-on token cost that may be unreachable in the picker.
+  `retrofit.md` item 14 and the Cursor rule teach the auditor the same path, so
+  family audits report ASY-02 / SEO-02 / TPA-02 / SHD-06 / SUX-03 as
+  *deliberate, recorded — no change needed* instead of open gaps. A collision
+  NOT on a dated, recorded exception list is still the gap the rule names.
+- **A hand-typed eval count drifted, exactly as this skill's own gotcha predicts**
+  (MSK-02). `test/evals/RESULTS.md` said "20 queries" and `SKILL-CARD.md` said
+  "20 trigger queries" over a `triggers.json` holding 22. Both corrected — and
+  both statements are now compared, not typed: `test/evals_validate.py` parses
+  RESULTS.md's stated counts against the artifacts and refuses a claim-free
+  RESULTS.md rather than passing vacuously, with negative self-tests planting an
+  off-by-one count and a claim-free file; `test/validate.py`'s counted-claims
+  sweep gains the `N trigger queries` / `N behavioural scenarios` patterns for
+  every other document. Both guards were watched failing against the real
+  20-vs-22 defect before the numbers were corrected.
+- The `SKILL.md` body is untouched on purpose: at ~4742/5000 tokens it has 8
+  tokens of headroom, so the whole amendment lives in the references.
+
 ## v0.25.0 — the installer refuses the shadow it documents, loudly
 
 - **The family audit of 2026-08-29 reproduced the shadow live:** a bare

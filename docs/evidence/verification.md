@@ -18,6 +18,16 @@ the release the CHANGELOG carries (MS-03).
 
 ---
 
+## Shipped state — v0.25.1 (2026-08-30)
+
+Measured on the release-candidate tree before the tag exists.
+
+| REQ | What ships | How it was confirmed | Confirmed |
+|---|---|---|---|
+| R-43 | The same-name command rule keeps its default and enumerates the recorded family exception — dated 2026-08-30, listed member by member, with the accepted cost stated (the skill wins the trigger; the command is always-on token cost, possibly unreachable in the picker) | `grep -n "operator decision" plugins/make-skill/skills/make-skill/references/host-capabilities.md plugins/make-skill/skills/make-skill/references/retrofit.md cursor/rules/make-skill.mdc` → one hit in each: the rule itself, auditor checklist item 14, and the Cursor rule all carry the exception and its remedy path (*deliberate, recorded — no change needed*) | **read** |
+| R-44 | Eval counts are compared, not typed: `RESULTS.md` and `SKILL-CARD.md` both say 22 where `triggers.json` holds 22, and two validators keep it that way | `python3 test/evals_validate.py` → `OK: 22 trigger cases and 4 scenarios validate`; `python3 test/evals_validate.py --self-test` → `OK: negative self-test caught a planted off-by-one count and refused a claim-free RESULTS.md` | **planted** + **observed** |
+| R-45 | Both new guards were watched failing against the real defect before the numbers were corrected — not only against a plant | with the old prose still in place: `python3 test/evals_validate.py` → `GAP: RESULTS.md: claims 20 queries in triggers.json where the artifact holds 22` (exit 1); `python3 test/validate.py` → `FAIL … SKILL-CARD.md: claims 20 where the repo has 22 (queries in test/evals/triggers.json)` | **planted** |
+
 ## Shipped state — v0.25.0 (2026-08-29)
 
 Measured on the release-candidate tree before the tag exists.
@@ -192,8 +202,12 @@ reads as coverage it does not have.
 
 - **The skill's advice, as advice.** Every row above is about the *artifact* — that it
   is structurally valid, budgeted, linked and released. Nothing here measures whether
-  the doctrine in `SKILL.md` produces a better skill when an agent follows it. The
-  repository has no behavioural eval suite; `task-pipeline` has one and this does not.
+  the doctrine in `SKILL.md` produces a better skill when an agent follows it. This
+  bullet used to say *"The repository has no behavioural eval suite; `task-pipeline`
+  has one and this does not"* — since then a suite was authored (`test/evals/`, 22
+  trigger queries and 4 scenarios, shape-validated on every commit), but as of
+  2026-08-30 it has **never been executed against a model** (MSK-01 on the board), so
+  the coverage gap this bullet names is unchanged: still nothing behavioural.
 - **The installer's effect on a real `~/.claude`.** REQ-008 reads its banner. CI runs
   the fresh / rerun-skip / `--force` paths against a fake `HOME`; that is exercised
   there and not re-confirmed here.
