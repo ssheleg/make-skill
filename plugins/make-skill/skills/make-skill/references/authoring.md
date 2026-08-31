@@ -155,6 +155,11 @@ the body.
   first 100 lines and never learn the rest exists.
 - **One level deep from `SKILL.md`.** A file reachable only through another file
   gets partially read or missed entirely. Every reference links from the body.
+- **English prose is a budget rule before a style one** (the house rule in
+  `SKILL.md` states which four literals stay Cyrillic). The measured cost:
+  Russian encodes at 1.9–2.3 chars/token against English's 5.0 (`cl100k`), and
+  rewriting the eight ssheleg routers into English cut them **3408 → 1885
+  tokens** with no loss of meaning.
 
 ## Scripts — the rules that separate a script from a liability
 

@@ -5,7 +5,7 @@ license: MIT
 compatibility: Authoring works on any agent. The bundled scripts/ need python3. Publishing steps need git, gh, node and npm; the plugin gates need the claude CLI. Not usable on the Claude API surface, which has no network and no runtime package install.
 metadata:
   author: ssheleg
-  version: "0.25.1"
+  version: "0.25.2"
   homepage: https://github.com/ssheleg/make-skill
 ---
 
@@ -27,8 +27,8 @@ orchestrator, release automation). **make-skill itself** is built to this canon.
 | `references/host-capabilities.md` | shipping a **hook, subagent, command, script or MCP dependency** — what each buys and costs, hook events and exit codes, the degradation clauses |
 | `references/claude-code-plugin.md` | anything shipping as a **Claude Code plugin/marketplace** — manifest schemas, component layout, path variables, `validate` failures |
 | `references/distribution.md` | the repo layout, releases, and all five channels — plugin, skills CLI, npx, Cursor, umbrella family repo |
-| `references/mcp.md` | skill vs **MCP** server, declaring the dependency, consent and untrusted-output rules |
-| `references/a2a.md` | the skill spans two autonomous agents (**A2A**) — choosing it, the two meanings of "skill", driving a peer safely |
+| `references/mcp.md` | skill vs **MCP** server, declaring the dependency, consent and untrusted-output rules; the protocol wire itself → `agent-interop` (agent-stack) |
+| `references/a2a.md` | the skill spans two autonomous agents (**A2A**) — choosing it, the two meanings of "skill", driving a peer safely; the wire itself → `agent-interop` (agent-stack) |
 
 Missing from this copy? Raw fallback:
 `raw.githubusercontent.com/ssheleg/make-skill/main/plugins/make-skill/skills/make-skill/references/<file>`
@@ -81,8 +81,8 @@ differences and the checklist: `references/agent-skills-spec.md`.
   99% of budget turns the next correction into a fight with the validator.
   Heavier material goes to `references/`, `scripts/`, `assets/` INSIDE the skill
   dir, one level deep, each linked from the body with a stated load trigger
-  ("read X when Y") — never a bare "see references/". Reference files >100 lines
-  open with a `## Contents` list: a partial `head` read is what agents get.
+  ("read X when Y") — never a bare "see references/". Long-file and layout rules:
+  `references/authoring.md` → *Content guidelines*.
 - Gotchas stay in `SKILL.md`: the agent can't know to open a file about a trap
   it doesn't know exists.
 - **Write for the weakest surface you claim** (`references/surfaces.md`): the
@@ -97,9 +97,8 @@ House additions on top of the spec:
   survives in four places only, where the string itself is the point: a
   **trigger phrase**, a **refusal phrase** (the operator types both — translated,
   they no longer match what was said), a **proper noun**, a **language example**
-  (`«вы»/«ты»`). A budget rule before a style one: Russian encodes at 1.9–2.3
-  chars/token against English's 5.0 (`cl100k`), and rewriting the eight ssheleg
-  routers into English cut them **3408 → 1885 tokens** with no loss of meaning.
+  (`«вы»/«ты»`). A budget rule before a style one — the measured cost of
+  Cyrillic prose is in `references/authoring.md` → *Content guidelines*.
 - `description` starts "Use when …" and lists concrete trigger phrases — English
   AND Russian (user works in both). A skill nobody triggers is dead weight. Hold
   **5% headroom here too** (≤970 of 1024): a near-miss neighbour forces a "NOT
@@ -153,10 +152,9 @@ A fallback you know but did not write is not a fallback.
 Retrofit), wrapped as `bin/make-skill-audit` for Claude Code. Beside them:
 `hooks/` (PostToolUse, silent unless a `SKILL.md` was written),
 `commands/skill-audit.md` (deliberately NOT the skill's name),
-`agents/skill-auditor.md`, and six skeletons: `assets/SKILL.template.md`,
-`assets/plugin.template.json`, `assets/marketplace.template.json`,
-`assets/hooks.template.json`, `assets/agent.template.md`,
-`assets/command.template.md`.
+`agents/skill-auditor.md`, and six `assets/*.template.*` skeletons — one per
+component, filenames in `references/distribution.md` → *The distributable repo
+layout*.
 
 ## Create (personal)
 
@@ -196,8 +194,7 @@ regardless:
 Take it ALL the way, no half-done handoffs. Only the first publish needs a human
 (npm 2FA); **arming CI publishing is part of shipping**, so the second does not.
 **The 11-step sequence is in `references/distribution.md` → *First publish*.**
-Done = five VERIFIED facts: repo + CI green, npm resolvable via npx, plugin
-installed, skills-CLI discovery working, next tag publishing without a human.
+Done = the five VERIFIED facts in that sequence's step 10 — nothing assumed.
 
 ## Retrofit (bring an existing skill/repo up to standard)
 
@@ -310,9 +307,8 @@ session:
 - everything green BEFORE the tag: `python3 test/validate.py` plus BOTH
   `claude plugin validate … --strict` runs;
 - **refresh THIS machine's global installs as Definition of Done** (per global
-  `~/.claude/CLAUDE.md`): `claude plugin marketplace update <name>` →
-  `claude plugin update <name>@<name>` → `npx skills update <name> --global
-  --yes && rm -f ~/.claude/skills/<name>`, then remind about the restart;
+  `~/.claude/CLAUDE.md`) — the exact three-command sequence is checklist step 6;
+  then remind about the restart;
 - **move the family pin in the SAME session.** A member released without its
   umbrella pin bumped is invisible: `list` advertises the old version and
   `update` installs it (seen here 2026-08-10);
