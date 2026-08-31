@@ -98,11 +98,13 @@ Report the table before changing anything, then fix.
 7. **Validator**: present, green, and able to fail — run the negative test. CI
    present, last run `success`, with `claude plugin validate --strict` as its own
    job so an upstream outage cannot mask a house failure.
-8. **Evaluations** exist in `test/evals/` (`references/authoring.md`): ≥3
+8. **Evaluations** exist and have been executed (`references/authoring.md`): ≥3
    behavioral scenarios, a trigger set whose negatives are near-misses, both
    classes on both sides of the train/validation split, coexistence checked
    against the skills already installed, and a re-run on every model the skill
-   claims support for.
+   claims support for. Try `claude plugin eval` first and record what it did —
+   authored-but-never-executed is the state this item exists to catch, and the
+   house layout in `test/evals/` is the fallback for when that runner is gated.
 9. **README**: badges (npm/CI/license), install + update matrix, English-first
    prose, and the bundled `references/` listed so a reader sees what ships.
 10. **Distribution live-checks** (`references/distribution.md`): `npx --yes

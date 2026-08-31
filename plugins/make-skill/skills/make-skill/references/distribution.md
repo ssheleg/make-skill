@@ -65,7 +65,7 @@ the shape from `ssheleg/super-ux`:
 ├── cursor/rules/*.mdc                  # if agent-rules make sense for Cursor
 ├── bin/<name>.js + package.json        # npx installer (zero-dep Node)
 ├── test/validate.py                    # consistency validator (stdlib only)
-├── test/evals/                         # triggers.json + scenarios.json (data, run by a human)
+├── test/evals/                         # triggers.json + scenarios.json (driven here; `claude plugin eval` is gated, authoring.md)
 ├── .github/workflows/validate.yml      # validator on push+PR (+ release.yml, off by default)
 ├── install.sh                          # POSIX fallback
 ├── README.md (English-first), CHANGELOG.md, LICENSE (MIT)

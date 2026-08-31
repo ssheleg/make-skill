@@ -964,6 +964,58 @@ for rel, txt in tracked_docs():
                      "— compute the number or have this validator compare it, but do "
                      "not type it")
 
+# --- a claim about someone else's tool carries the date it was checked -------
+# v0.25.3: references/authoring.md told authors "there is no built-in runner, so
+# keep them in the repo as data and run them yourself" for four weeks after
+# `claude plugin eval` had shipped, and prescribed a home-rolled suite on that
+# basis. An absence is the most perishable thing a document can assert: it is
+# falsified on a machine nobody here controls, and no file in this repository
+# changes on the day it stops being true. The skill's own rule at
+# references/authoring.md forbids exactly this ("No time-sensitive statements"),
+# 100 lines above the sentence that broke it, and nothing enforced it.
+#
+# A generic detector was built and MEASURED before this registry, then rejected
+# with the number: over the shipped doctrine it flagged 10 lines of which about
+# half are legitimate — the fallback rows of host-capabilities.md ("on any other
+# host there are no subagents") are made of that sentence shape by design. ~50%
+# false positives is over-defense, and the guard would be switched off. So the
+# registry is explicit: a load-bearing claim about a third party is listed here
+# beside the command that re-checks it, and this asserts the three stay together.
+# Adding a row is the author's act; the guard's job is that a row cannot rot.
+THIRD_PARTY_CLAIMS = [
+    ("plugins/make-skill/skills/make-skill/references/authoring.md",
+     r"currently in early access",
+     "claude plugin eval --help",
+     "whether `claude plugin eval` runs for the reader"),
+]
+
+for rel, claim_rx, proof_cmd, what in THIRD_PARTY_CLAIMS:
+    path = os.path.join(ROOT, rel)
+    if not os.path.isfile(path):
+        fail(f"{rel}: registered in THIRD_PARTY_CLAIMS and missing from the tree")
+        continue
+    body = open(path, encoding="utf-8").read()
+    lines = body.split("\n")
+    # prose wraps, so the claim is matched over the whole file with any run of
+    # whitespace standing in for a single space — a line-by-line search misses a
+    # sentence broken across two lines, which is most of them in this repository
+    wrapped = re.compile(r"\s+".join(re.escape(w) for w in claim_rx.split()))
+    m = wrapped.search(body)
+    hit = body[:m.start()].count("\n") if m else None
+    if hit is None:
+        fail(f"{rel}: THIRD_PARTY_CLAIMS expects a claim matching {claim_rx!r} about "
+             f"{what}, and the file no longer carries it — delete the row here in the "
+             "same change that deletes the claim, or the registry outlives the doctrine")
+        continue
+    window = "\n".join(lines[max(0, hit - 8):hit + 9])
+    if not re.search(r"20\d\d-\d\d-\d\d", window):
+        fail(f"{rel}:{hit + 1}: states {what} with no ISO date within 8 lines — a claim "
+             "about a third party's behaviour is a measurement, and a measurement "
+             "carries the day it was taken")
+    if proof_cmd not in window:
+        fail(f"{rel}:{hit + 1}: states {what} without naming `{proof_cmd}` within 8 "
+             "lines — a reader who cannot re-run the check has to trust the date")
+
 # every shipped reference must be listed in the README too: v0.10.0 added
 # mcp-ship.md to SKILL.md alone, so the README's "what ships with it" table told
 # a reader the instruction surface was one file smaller than it is

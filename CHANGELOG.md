@@ -1,5 +1,50 @@
 # Changelog
 
+## v0.25.3 — the runner we said did not exist, and the date a claim about someone else now carries
+
+- **B-122 closed: `references/authoring.md` told authors for four weeks that
+  there was no built-in eval runner, and prescribed a home-rolled suite on that
+  basis.** `claude plugin eval` had shipped. The section now names it, its case
+  format (`evals/<case>/case.yaml`, or `prompt.md` beside `graders/*.md`), and
+  the fact that `--ablation with-without` performs steps 3 and 5 of the very
+  procedure the paragraph prescribes by hand — plus the detail that it publishes
+  its HTML report to claude.ai unless `--no-publish` is passed, which is the
+  wrong default for an unreleased skill. **The replacement is a measurement, not
+  a correction of one absence into another**: on 2026-08-31, Claude Code 2.1.236,
+  every path (`eval`, `eval init`, `eval init --bare`, `eval <target>`) prints
+  ``plugin eval` is currently in early access`, writes nothing and exits 1, with
+  no settings key, environment variable or feature flag turning it on. That is
+  why `test/evals/` remains what runs here, and the paragraph says which day it
+  should be migrated. Two derived statements went with it: `distribution.md`'s
+  layout comment called the suite *"run by a human"*, and `retrofit.md`'s item 8
+  asked only that evaluations *exist* — the state MSK-01 had just spent a whole
+  run closing.
+- **The class, not the sentence: `THIRD_PARTY_CLAIMS` in `test/validate.py`.**
+  A load-bearing claim about someone else's tool is registered beside the command
+  that re-checks it, and the guard fails unless the claim, that command and an
+  ISO date still sit within eight lines of each other — and fails equally when a
+  registered claim has been deleted from the doctrine but left in the registry,
+  so the registry cannot outlive what it describes. The skill's own rule *"No
+  time-sensitive statements"* sits 100 lines above the sentence that broke it and
+  nothing enforced it; this is the enforcement.
+- **A generic detector was built first, measured, and rejected with the number.**
+  Over the shipped doctrine a pattern for absence-claims flagged **10 lines, of
+  which roughly half are legitimate** — the fallback rows of
+  `host-capabilities.md` ("on any other host there are no subagents") are made of
+  that sentence shape on purpose. A guard with a ~50% false-positive rate is the
+  over-defense that gets switched off, so the explicit registry replaced it; the
+  reasoning is recorded in the code beside the table rather than lost.
+- **The three plants are in CI, and the group count still computes.** Added as
+  cases to the existing *claims, budgets and runnable commands* step rather than
+  as a new step, so `grep -c 'name: Negative self-test'` stays at **9** and
+  `CONTRIBUTING.md`'s *"9 negative self-test groups"* — a claim this validator
+  compares against the workflow — remains true. Each case asserts its own
+  expected message. The first local run of the guard **passed its plants for the
+  wrong reason**: the claim wraps a line break and the check was line-anchored,
+  so all three plants tripped the registry-rot branch instead of their own. The
+  matcher is whitespace-tolerant now, and every plant in the block asserts it
+  changed something before the validator is asked anything.
+
 ## v0.25.2 — the evals have been run, and the discovery check runs somewhere
 
 - **MSK-01 closed: the evaluation suite was executed against two models, and the
