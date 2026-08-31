@@ -12,7 +12,7 @@ model's behavior with the skill installed, which no unit test can stand in for.
 
 | File | What it holds |
 |---|---|
-| `triggers.json` | 20 realistic queries, half `should_trigger: true`, half near-misses that share keywords but need something else |
+| `triggers.json` | 22 trigger queries, half `should_trigger: true`, half near-misses that share keywords but need something else |
 | `scenarios.json` | behavioral evaluations in Anthropic's shape — `skills`, `query`, `files`, `expected_behavior` |
 | `fixtures/` | inputs a scenario points at (never named `SKILL.md`: the skills CLI ships every one it finds) |
 
