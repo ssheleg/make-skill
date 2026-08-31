@@ -51,7 +51,11 @@ the shape from `ssheleg/super-ux`:
 │   ├── .claude-plugin/plugin.json      # ONLY the manifest lives in .claude-plugin/
 │   ├── skills/<skill>/SKILL.md  +  references/*.md  +  scripts/  +  assets/
 │   │                                   # skeletons live HERE, not at the repo root:
-│   │                                   # only the skill dir travels on every channel
+│   │                                   # only the skill dir travels on every channel.
+│   │                                   # make-skill ships six: SKILL.template.md,
+│   │                                   # plugin.template.json, marketplace.template.json,
+│   │                                   # hooks.template.json, agent.template.md,
+│   │                                   # command.template.md
 │   ├── bin/<exe>                       # Claude Code puts this on the Bash PATH:
 │   │                                   # the only reliable way to hand the agent
 │   │                                   # a runnable command (no path variable)
