@@ -510,6 +510,40 @@ jobs:
           claude plugin validate ./plugins/make-skill --strict
           claude plugin validate . --strict
 
+  # SKILL.md's stray-SKILL.md gotcha ends "verify with `npx skills add <repo>
+  # --list`" — and until this job nothing ran it anywhere: the operator
+  # machine's hygiene guard refuses the bare skills CLI on family members (by
+  # design — a local add would plant a shadow copy), and CI never asked
+  # (MSK-03). Its own job, like claude-plugin-validate above: a registry or
+  # GitHub outage must not be able to mask an offline-validator failure.
+  # The skills CLI reads the repository's DEFAULT BRANCH, not this checkout —
+  # on a pull request this asserts the published baseline; the push run after
+  # the merge asserts the merged tree, before any tag can fire the release.
+  skills-cli-discovery:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Exactly one skill is discoverable, and it is make-skill
+        run: |
+          set -eu
+          if ! out="$(npx --yes skills add ssheleg/make-skill --list 2>&1)"; then
+            printf '%s\n' "$out"
+            echo "ERROR: skills CLI discovery run failed"; exit 1
+          fi
+          printf '%s\n' "$out"
+          # The CLI decorates with ANSI when it thinks it has a TTY — strip
+          # before asserting, so the check reads the words, not the colours.
+          clean="$(printf '%s\n' "$out" | sed -E 's/\x1b\[[0-9;?]*[A-Za-z]//g')"
+          printf '%s\n' "$clean" | grep -qE 'Found 1 skills?' || {
+            echo "ERROR: discovery did not report exactly one skill — a stray"
+            echo "SKILL.md anywhere in the tree ships as a real skill"; exit 1; }
+          printf '%s\n' "$clean" | tr -d '│' | grep -qE '^[[:space:]]*make-skill[[:space:]]*$' || {
+            echo "ERROR: the one discovered skill is not named make-skill"; exit 1; }
+          echo "OK: skills-CLI discovery serves exactly one skill: make-skill"
+
   skill-audit:
     name: House skill audit
     runs-on: ubuntu-latest
