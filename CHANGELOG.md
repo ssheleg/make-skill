@@ -1,5 +1,60 @@
 # Changelog
 
+## v0.25.2 — the evals have been run, and the discovery check runs somewhere
+
+- **MSK-01 closed: the evaluation suite was executed against two models, and the
+  numbers live in `test/evals/RESULTS.md` as a dated run (2026-08-31), not a
+  claim.** All 22 trigger queries probed blind per model — haiku 22/22, sonnet
+  20/22 (q01 and q10 answered "none": under-triggering on positives, ZERO false
+  positives on the near-miss negatives across both models) — and all four
+  behavioural scenarios executed and scored per `expected_behavior` line (sonnet
+  31/35, haiku 24/35; the s01 repositories were re-audited with the bundled
+  auditor rather than trusted from the agent's report). The Method section
+  states the harness and its limits: one probe per query instead of the
+  README's fired/3, Agent-tool subagents on the author's machine whose global
+  config carries the family routing map (a bias that makes the clean negatives
+  the strongest result), model aliases rather than exact ids, and two probes
+  counted with a stated non-compliance caveat. Headline finding: the standing
+  worry (turn-stealing) did not materialize; the observed failure is sonnet
+  under-triggering on two positive categories, and s03-haiku answered a
+  surfaces question without consulting the installed skill — selection and
+  consultation measured apart, on purpose.
+- **MSK-03 closed: the discovery check the body demands now runs in CI.**
+  SKILL.md's stray-SKILL.md gotcha ends "verify with the skills CLI's `--list`"
+  — and nothing ran it anywhere: the operator machine's hygiene guard refuses
+  the bare skills CLI on family members by design, and CI never asked. The new
+  `skills-cli-discovery` job in `validate.yml` runs the listing against
+  `ssheleg/make-skill` and asserts it serves exactly ONE skill, named
+  make-skill, with ANSI stripped before asserting. Its own job, like
+  `claude-plugin-validate`, so a registry outage cannot mask an
+  offline-validator failure; it reads the repository's default branch, so the
+  post-merge push run and the release's `workflow_call` on the tag assert the
+  published tree.
+- **MSK-04 closed: body headroom restored by displacement — the words moved,
+  none were lost.** The Cyrillic budget measurement (1.9–2.3 chars/token,
+  3408→1885) moved to `authoring.md` → *Content guidelines*; the six skeleton
+  filenames moved into `distribution.md`'s layout tree; the five verified facts
+  and the machine-refresh command sequence are now referenced at their single
+  home in `distribution.md`'s checklists instead of being restated; the
+  long-file rule already lived in `authoring.md` and the body now points there.
+  Re-measured with the bundled auditor: body ~4742/4750 tokens (8 spare) →
+  ~4677/4750 (73 spare), after also paying for the next bullet. The
+  description is untouched at 965/970 — its headroom is spent only on trigger
+  changes, and this release makes none.
+- **XF-10: the MCP/A2A carve-out now runs both directions at the layer an agent
+  reads first.** The References-table rows for `mcp.md` and `a2a.md` carry "the
+  protocol wire itself → `agent-interop` (agent-stack)" — the two reference
+  files' own headers already said it, and now the router-level table says it
+  too, so a reader deciding what to load learns the boundary before opening
+  either file.
+- Also: `test/evals/README.md`'s file table said "20 realistic queries" over a
+  `triggers.json` holding 22 — the same drift class as MSK-02, in a wording no
+  guard could parse. Reworded to the checkable "22 trigger queries" form, which
+  puts the sentence under `test/validate.py`'s counted-claims sweep instead of
+  under anyone's memory. `SKILL-CARD.md`'s evaluation status and posture
+  sections now describe the executed run and the replication still owed,
+  instead of "never executed".
+
 ## v0.25.1 — the rule keeps its default, and the family's exception is written down
 
 - **The same-name command rule now carries its recorded exception** (operator

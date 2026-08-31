@@ -18,6 +18,17 @@ the release the CHANGELOG carries (MS-03).
 
 ---
 
+## Shipped state — v0.25.2 (2026-08-31)
+
+Measured on the release-candidate tree before the tag exists.
+
+| REQ | What ships | How it was confirmed | Confirmed |
+|---|---|---|---|
+| R-46 | The eval suite has a dated executed run: 22 trigger probes per model (haiku, sonnet) plus all 4 scenarios scored per line, with a Method section stating the harness, the one-probe limit, the routing-map contamination and the two non-compliant probes | `test/evals/RESULTS.md` carries the 2026-08-31 rows (haiku 22/22; sonnet 20/22 with q01/q10 named; scenario lines 24/35 and 31/35 with every missed line listed); `python3 test/evals_validate.py` → `OK: 22 trigger cases and 4 scenarios validate` — the stated counts are compared, not typed; the s01 artifacts were re-audited with `scripts/audit_skill.py` (sonnet repo: 10/10 lines, both `--strict` outputs quoted; haiku repo: `DESC_RU` GAP and missing marketplace-entry version found by inspection, not taken from the agent's report) | **observed** |
+| R-47 | The discovery check SKILL.md demands runs in CI: `skills-cli-discovery` job asserts the skills-CLI listing for `ssheleg/make-skill` serves exactly one skill named make-skill | `.github/workflows/validate.yml` — its own job beside `claude-plugin-validate`; ANSI stripped before asserting; both failure branches print a remedy line. Not runnable on this machine (the umbrella's hygiene guard refuses the bare skills CLI on family members — the reason MSK-03 existed), so the confirming run is the PR's own CI, gated before merge | **planted in CI; watched green on the release PR** |
+| R-48 | Body headroom restored by displacement: ~4742/4750 → ~4677/4750 tokens with the displaced material landing in `authoring.md` (Cyrillic budget measurement), `distribution.md` (six skeleton filenames in the layout tree), and pointers to the checklists that already carried the five-facts and machine-refresh sequences | `python3 plugins/make-skill/skills/make-skill/scripts/audit_skill.py plugins/make-skill/skills/make-skill --house` → `PASS BODY_HEADROOM … ~4677/4750`, 0 GAP; `grep -n "3408" plugins/make-skill/skills/make-skill/references/authoring.md` → one hit (the measurement lives there now); `python3 test/validate.py` → PASS | **observed** |
+| R-49 | The MCP/A2A carve-out is stated at the References-table layer in both directions: the `mcp.md` and `a2a.md` rows name `agent-interop` (agent-stack) as the wire's home; the description is untouched (965/970) | `grep -c "agent-interop" plugins/make-skill/skills/make-skill/SKILL.md` → table rows plus the Protocol-connected section; auditor → `DESC_LENGTH 965/1024`, `DESC_HEADROOM 965/970` both PASS | **read** + **observed** |
+
 ## Shipped state — v0.25.1 (2026-08-30)
 
 Measured on the release-candidate tree before the tag exists.
