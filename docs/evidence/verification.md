@@ -18,6 +18,20 @@ the release the CHANGELOG carries (MS-03).
 
 ---
 
+## Shipped state — v0.25.3 (2026-08-31)
+
+Measured on the release-candidate tree before the tag exists.
+
+| REQ | What ships | How it was confirmed | Confirmed |
+|---|---|---|---|
+| R-50 | `references/authoring.md` no longer claims no eval runner exists: it names `claude plugin eval`, its case format, `--ablation with-without`, and the `--no-publish` default that otherwise pushes the report to claude.ai | `grep -c "there is no built-in runner" plugins/make-skill/skills/make-skill/references/authoring.md` → **0**; the same file carries `claude plugin eval <target>` and the case-format sentence | **observed** |
+| R-51 | The replacement is a dated measurement rather than a second absence-claim: Claude Code 2.1.236, every `claude plugin eval` path prints ``plugin eval` is currently in early access`, writes nothing, exits 1 | measured this session — `claude plugin eval`, `claude plugin eval init --bare smoke`, `claude plugin eval . --no-publish --max-cost-usd 0.05` each printed that line with `rc=1` (checked with `>/dev/null 2>&1; echo $?`, **not** through a pipe, after a first reading through `head` mis-reported rc=0); `claude plugin eval init --bare` wrote no file into a scratch dir holding only `plugin.json`; no `eval`/early-access key in `settings.json`, `~/.claude.json` `cachedGrowthBookFeatures`, or the environment | **observed** |
+| R-52 | The two derived statements are corrected: `distribution.md`'s layout comment no longer reads *"run by a human"*, and `retrofit.md` item 8 now demands evaluations have been **executed**, not merely exist | `grep -c "run by a human" plugins/make-skill/skills/make-skill/references/distribution.md` → **0**; `retrofit.md` item 8 reads "exist and have been executed" and points at the gated runner first | **observed** |
+| R-53 | `THIRD_PARTY_CLAIMS` refuses a registered third-party claim that has lost its date, its re-check command, or itself | `python3 test/validate.py` → PASS on the real tree; three plants into copies (strip the date / reword the claim / remove the command) each refused, and each **for its own reason** — `no ISO date within 8 lines`, `no longer carries it`, ``without naming `claude plugin eval --help``` | **watched failing** |
+| R-54 | Those three plants are in CI inside the existing *claims, budgets and runnable commands* step, so the documented group count is unchanged | `grep -c 'name: Negative self-test' .github/workflows/validate.yml` → **9**, keeping `CONTRIBUTING.md`'s "9 negative self-test groups" true; `python3 -c "import yaml; yaml.safe_load(open('.github/workflows/validate.yml'))"` parses; the three cases were run locally exactly as the step runs them, each asserting its expected substring | **planted in CI; awaiting the release PR's own run** |
+| R-55 | The generic detector was measured before being rejected, and the number is in the code | the rejected pattern flagged **10** lines across the shipped doctrine with roughly half legitimate (`host-capabilities.md` fallback rows); the count and the reasoning sit in the comment above `THIRD_PARTY_CLAIMS` in `test/validate.py` | **observed** |
+| R-56 | The full gate is green and the **body** of `SKILL.md` is untouched, so the 73-token headroom MSK-04 bought is not spent — only its front-matter `metadata.version` moves, which the validator demanded and which costs no body budget | `npm test` → `rc=0`, 16 PASS/ok lines, residue lines all `nothing`; `git diff -- .../SKILL.md` shows one changed line, the version; the auditor's `BODY_HEADROOM` is unchanged from v0.25.2's ~4677/4750 | **observed** |
+
 ## Shipped state — v0.25.2 (2026-08-31)
 
 Measured on the release-candidate tree before the tag exists.

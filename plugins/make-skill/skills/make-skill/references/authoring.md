@@ -242,8 +242,24 @@ skill documents imagined problems.
 4. **Write the minimum** that fixes the gaps.
 5. **Iterate** — re-run, compare to baseline, refine.
 
-Evaluation record — there is no built-in runner, so keep them in the repo as
-data and run them yourself. House layout: `test/evals/triggers.json` (~20
+**The upstream runner exists — check whether it runs for you before building
+around it.** `claude plugin eval <target>` reads `evals/<case>/case.yaml`, or a
+`prompt.md` beside `graders/*.md`, and `--ablation with-without` runs the
+no-plugin arm and reports the delta — steps 3 and 5 above, performed for you.
+It defaults to publishing its HTML report to claude.ai; `--no-publish` keeps it
+local, which is the right default for an unreleased skill.
+
+**Measured 2026-08-31 on Claude Code 2.1.236: every path — `eval`, `eval init`,
+`eval init --bare`, `eval <target>` — prints ``plugin eval` is currently in
+early access`, writes nothing and exits 1.** No settings key, environment
+variable or feature flag on that machine turned it on. That is why the layout
+below exists and is what actually runs here; the day `claude plugin eval --help`
+is followed by a run rather than that line, this suite is the one to migrate.
+**Re-check before trusting either half of this paragraph** — an absence is the
+most perishable thing a document can assert, and nothing in this repository
+changes on the day it stops being true.
+
+House layout: `test/evals/triggers.json` (~20
 queries, half near-miss negatives) and `test/evals/scenarios.json` (≥3, the
 shape below), with any input under `test/evals/fixtures/` — **never named
 `SKILL.md`**, which would ship as a real skill:

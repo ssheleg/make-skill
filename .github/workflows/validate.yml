@@ -308,7 +308,9 @@ jobs:
                       bodyvar:'substituted' cmdvar:'cannot run' mdclayout:'templates' \
                       headroom:'headroom' deschead:'working limit' xmldrift:'XML_TAG_RE' \
                       ledgerunship:'no version beside it' boardunship:'backlog.md' \
-                      ledgerbehind:'newest' ledgeruncut:'nobody cut'; do
+                      ledgerbehind:'newest' ledgeruncut:'nobody cut' \
+                      tpcdate:'no ISO date' tpcclaim:'no longer carries it' \
+                      tpcproof:'without naming'; do
             name="${case%%:*}"; expect="${case#*:}"
             rm -rf "/tmp/cl-$name"
             cp -R . "/tmp/cl-$name"
@@ -387,6 +389,23 @@ jobs:
               s = p.read_text(encoding="utf-8")
               out = re.sub(r"(?m)^(## Shipped state — )v[\d.]+", r"\g<1>v9.9.9", s, count=1)
               assert out != s, "PLANT DID NOT LAND: no shipped-state version to falsify"
+              p.write_text(out, encoding="utf-8")
+          elif case.startswith("tpc"):
+              # THIRD_PARTY_CLAIMS: a claim about someone else's tool must keep its
+              # date and the command that re-checks it. The claim wraps the line
+              # break in the source, so each plant is whitespace-tolerant — a
+              # line-anchored substitution here silently changes nothing and the
+              # step then blames a guard it never disarmed.
+              p = root / "plugins/make-skill/skills/make-skill/references/authoring.md"
+              s = p.read_text(encoding="utf-8")
+              if case == "tpcdate":
+                  out = s.replace("Measured 2026-08-31 on Claude Code 2.1.236",
+                                  "Measured recently on a recent Claude Code")
+              elif case == "tpcclaim":
+                  out = re.sub(r"currently in\s+early access", "currently unavailable", s)
+              else:
+                  out = s.replace("`claude plugin eval --help`", "the help output")
+              assert out != s, f"PLANT DID NOT LAND: {case} changed nothing"
               p.write_text(out, encoding="utf-8")
           else:                      # the two validators disagreeing on one rule
               p = root / "plugins/make-skill/skills/make-skill/scripts/audit_skill.py"
