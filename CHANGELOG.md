@@ -1,3 +1,35 @@
+## v0.26.0 — where a rule lives decides whether it exists
+
+`authoring.md` treated progressive disclosure as a budget question. It is also a
+**delivery** question, and that half was measured.
+
+**Soft channels failed completely.** A README, an `AGENTS.md` beside the code, comments
+inside a dependency directory, a warning field in an API response — none of them steered
+anything. Two failures inside that deserve their own names, because each looks like it
+should work: agents **rarely open files inside dependency directories**, so a rule written
+there is a rule nobody reads; and agents **parse the data out of an API response while
+ignoring the warning field in the same payload** — the bytes arrived, the guidance did not.
+
+**Hard channels worked**: the skill file itself, an error message, CLI help, an install
+prompt. So a rule that matters belongs in `SKILL.md` or a reference the body links, never
+in a neighbouring document that is merely nearby — **proximity is not loading**. And an
+error message is a steering surface rather than an apology: it arrives exactly when the
+agent is wrong, in a channel it is already reading.
+
+The numbers, all on hard channels: restructuring for progressive disclosure bought about
+**10%** better performance *at lower token cost*; promoting a skill from CLI login converted
+at **30–35%** to an install; moving templates and examples inside the skill rather than into
+the system prompt cut time-to-first-token by **18.1%**.
+
+**And the trigger corpus's negative half now carries the number that defends it.** House
+style already mandates *"~20 queries, half near-miss negatives"* — with no evidence that
+omitting them costs anything, which is exactly the shape of a rule an author trims under
+deadline. Moving to skill-based routing dropped triggering by about **20%** in targeted
+evals before negative examples and edge-case coverage were added back; with them the same
+skill reached **73% → 85%** routing accuracy. A corpus that is all positives measures
+whether the skill fires and never whether it stays quiet — and staying quiet is half of what
+routing is.
+
 # Changelog
 
 ## v0.25.3 — the runner we said did not exist, and the date a claim about someone else now carries

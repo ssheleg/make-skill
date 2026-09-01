@@ -18,6 +18,22 @@ the release the CHANGELOG carries (MS-03).
 
 ---
 
+## Shipped state — v0.26.0 (2026-09-01)
+
+Measured on the release-candidate tree before the tag exists. Two harvest findings about
+delivery rather than content: where a rule has to sit to exist, and what the negative half
+of a trigger corpus is worth.
+
+| REQ | What ships | How it was confirmed | Confirmed |
+|---|---|---|---|
+| HS-1 | `authoring.md` states the hard/soft channel split with both named failure modes | new section *Where a rule lives decides whether it exists*, listing the four soft channels that failed and the four hard ones that worked, plus the two specific failures — dependency-directory files rarely opened, and warning fields parsed past inside a payload whose data was used | **observed** |
+| HS-2 | The consequence is stated as a placement rule an author can apply | *a rule that matters belongs in `SKILL.md` or a reference the body links* — **proximity is not loading** — and an error message named as a steering surface rather than an apology | **observed** |
+| HS-3 | Progressive disclosure gains its performance half beside its budget half | ~**10%** better performance at lower token cost; **30–35%** CLI-login conversion to install; **18.1%** time-to-first-token reduction from moving templates inside the skill | **observed** |
+| HS-4 | The trigger corpus's negatives carry the cost of deleting them | the *Trigger eval loop* step 1 now names the **~20%** triggering drop that preceded adding negatives back, and the **73% → 85%** routing accuracy with them — the argument that stops an author trimming the half with no visible payoff | **observed** |
+| HS-5 | The body was untouched and the gate is green | auditor body **4677/4750**, unchanged from v0.25.2's displacement; `npm test` → rc=0. The one GAP reported locally is `scripts/__pycache__`, gitignored build residue from running the suite, absent on CI's clean checkout | **observed** |
+
+---
+
 ## Shipped state — v0.25.3 (2026-08-31)
 
 Measured on the release-candidate tree before the tag exists.
