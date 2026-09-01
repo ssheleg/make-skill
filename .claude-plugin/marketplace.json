@@ -12,7 +12,7 @@
       "displayName": "Make Skill",
       "source": "./plugins/make-skill",
       "description": "Encodes the Agent Skills open standard AND Anthropic's platform rules (front-matter limits, disclosure budgets, per-surface runtime limits, the Skills API, evaluation-driven authoring) plus the Claude Code plugin reference (manifest schemas, component layout, `claude plugin validate --strict`) and the proven ssheleg pipeline: marketplace repo layout, version sync, validator + CI, multi-channel distribution (Claude Code plugin, vercel skills CLI, npx, Cursor), npm gotchas, end-to-end first publish, the review checklist for third-party skills, and MCP / A2A rules for protocol-connected skills.",
-      "version": "0.25.3",
+      "version": "0.26.0",
       "author": {
         "name": "ssheleg",
         "url": "https://x.com/sshlg93"

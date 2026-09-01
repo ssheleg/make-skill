@@ -14,6 +14,7 @@ and [agentskills.io](https://agentskills.io/skill-creation/best-practices).
 
 - Naming — what to call the skill
 - Description — the entire triggering budget
+- Where a rule lives decides whether it exists
 - Trigger eval loop — when firing is wrong
 - Degrees of freedom — how prescriptive to be
 - Body patterns worth copying
@@ -65,11 +66,50 @@ each of which changes whether the skill fires:
 - Agents skip skills for tasks they can already do in one step. Descriptions earn
   their keep on specialized or multi-step work.
 
+## Where a rule lives decides whether it exists
+
+**If your guidance was not in the loaded context, it did not happen.** That is not a
+figure of speech about attention — it is the measured difference between two kinds of
+channel.
+
+| | Channel | Result |
+|---|---|---|
+| **Soft** | a README, an `AGENTS.md` beside the code, comments inside a dependency directory, a warning field in an API response | **failed completely** |
+| **Hard** | the skill file itself, an error message, CLI help, an install prompt | worked |
+
+Two failures inside that are worth naming separately, because each looks like it should
+work. Agents **rarely open files inside dependency directories** — a rule written there is
+a rule nobody reads. And agents **parse the data out of an API response while ignoring the
+warning field in the same payload**: the bytes arrived, the guidance did not.
+
+The consequences for a skill author:
+
+- **A rule that matters belongs in `SKILL.md` or in a reference the body links**, not in a
+  neighbouring document that happens to be nearby in the repository. Proximity is not
+  loading.
+- **An error message is a steering surface**, and often the best one — it arrives exactly
+  when the agent is wrong, in the channel it is already reading. Error-based steering
+  reliably corrected requests where a soft warning did not.
+- **Restructuring for progressive disclosure is not only a budget move**: doing it bought
+  about **10% better performance at lower token cost**, because what remained in the body
+  was what had to be read every time.
+
+Two figures for the other end of the funnel, both about hard channels: promoting a skill
+from CLI login converted at **30–35%** to an install, and moving templates and examples
+*inside* the skill rather than into the system prompt cut time-to-first-token by **18.1%**.
+
 ## Trigger eval loop — when firing is wrong
 
 1. Write ~20 realistic queries: 8–10 `should_trigger: true`, 8–10 `false`. The
    valuable negatives are **near-misses** that share keywords but need something
    else.
+
+   **The negatives are the half an author deletes first, and the one with a number
+   behind it.** Moving to skill-based routing dropped triggering by about **20%** in
+   targeted evals before negative examples and edge-case coverage were added back; with
+   them the same skill reached **73% → 85%** routing accuracy. A trigger corpus that is
+   all positives measures whether the skill fires, never whether it stays quiet — and
+   staying quiet is half of what routing is.
 2. Run each 3× against the agent with the skill installed → trigger rate;
    pass threshold 0.5.
 3. Split 60% train / 40% validation, fixed across iterations. Tune only on train
