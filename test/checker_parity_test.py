@@ -199,6 +199,56 @@ def _():
     assert "HOST_KEYS differs" in out, out[-500:]
 
 
+@case("a description that says WHEN and never WHAT is refused")
+def _():
+    # B-139: nine `DESC_*` rules asked WHEN and not one asked WHAT. Anthropic's guidance
+    # wants both halves, and `B-76` quoted the failure directly — *a description that
+    # never says what the skill does passes*.
+    d = skill_dir('name: planted\ndescription: Use when the user asks. '
+                  'Triggers - "делай" / "do it", "почини" / "fix".')
+    gaps = audit_ids(d, house=True)
+    assert "DESC_WHAT" in gaps, "an opener plus a trigger list passed as a description"
+    left = int(re.search(r"(\d+) chars remain", gaps["DESC_WHAT"]["message"]).group(1))
+    assert left < 60, "the WHAT half measured %d, which is not the planted shape" % left
+
+
+@case("both spellings of one description reach the same WHAT verdict")
+def _():
+    # The prototype this rule replaces was built on raw text and refused: it reported a
+    # 0-character WHAT half for six skills and missed the opening clause of twenty,
+    # because several descriptions are YAML block scalars a raw-text regex reads past.
+    # `what_half` is fed the PARSED value, so the spelling cannot change the verdict.
+    #
+    # Scope stated rather than implied: the FOLDING itself is guarded by its own case
+    # above ("a block scalar still folds as it did"), which is where a regression in
+    # `parse_frontmatter` lands. This case is about the RULE agreeing with itself, and a
+    # fixture that claimed the parser's property would be reporting somebody else's work.
+    plain = ('Use when a release needs cutting - it tags the tree, runs the suite '
+             'against that tag and publishes only if green. '
+             'Triggers - "зарелизь" / "release it".')
+    folded = ('name: planted\ndescription: >-\n  Use when a release needs cutting - it '
+              'tags the tree, runs\n  the suite against that tag and publishes only if '
+              'green.\n  Triggers - "зарелизь" / "release it".')
+    a = audit_ids(skill_dir("name: planted\ndescription: " + plain), house=True)
+    b = audit_ids(skill_dir(folded), house=True)
+    assert "DESC_WHAT" not in a, "the plain spelling was refused: %r" % a.get("DESC_WHAT")
+    assert "DESC_WHAT" not in b, "the block scalar was refused where the plain one passed"
+    # and neither passed vacuously: the rule must have measured a real WHAT half
+    assert len(audit_skill.what_half(plain)) >= audit_skill.DESC_WHAT_MIN
+    # the parsed value never carries a newline, which is the contract this rule needs
+    assert "\n" not in audit_skill.parse_frontmatter(folded + "\n")[0]["description"]
+
+
+@case("the WHAT floor clears every shipped description by more than double")
+def _():
+    # A floor tuned so tightly that an honest description trips it would be lowered away
+    # on its first false positive. Measured across the family, the smallest honest WHAT
+    # half is 149 characters, so the floor of 60 has room that can be stated.
+    assert audit_skill.DESC_WHAT_MIN * 2 < 149, (
+        "the floor is no longer clear of the smallest measured WHAT half; re-measure "
+        "before raising it, because the number 149 is a fact about a tree that moves")
+
+
 if failures:
     print("\n%d failure(s) out of %d cases" % (len(failures), cases))
     sys.exit(1)

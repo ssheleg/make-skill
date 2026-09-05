@@ -1,3 +1,39 @@
+## v0.27.0 — the standard-keeper asked WHEN nine times and WHAT never
+
+`B-139`. `audit_skill.py` carried nine `DESC_*` rules — length, headroom, person, Russian
+triggers, XML, target, the `Use when` opener — and **not one asked whether the
+description says what the skill DOES.** That is the half of Anthropic's guidance `B-76`
+quoted directly: *a description that never says what the skill does passes*. Measured
+2026-09-03 across the family: **28 of 28 skills pass `DESC_USEWHEN`, 0 gaps** — the WHEN
+half is universal and the WHAT half was unchecked.
+
+`DESC_WHAT` measures the description with its mechanical parts removed — the `Use when`
+opener, the trigger list, the `Not for` clause and the opt-out sentence — and refuses
+what is left below 60 characters.
+
+**Built on the PARSED description, which is the whole reason the previous attempt was
+refused.** That prototype read raw front matter, reported a **0-character** WHAT half for
+six skills and missed the opening clause of twenty, because several descriptions are YAML
+block scalars (`>-`) a raw-text regex reads straight past. `parse_frontmatter` already
+resolves them.
+
+**The floor is stated with its margin.** Measured across the shipped family the smallest
+honest WHAT half is **149** characters (`ux-audit`) and the largest **949**
+(`seo-aeo-audit`), so 60 clears every real description by more than double while still
+catching `Use when the user asks. Triggers - "делай" / "do it".`, whose WHAT half is
+**13**. A case asserts that margin, so raising the floor without re-measuring fails.
+
+**This rule finds no gap today and that is said out loud.** A standard is for the
+description not yet written, and a rule that fires on nothing now is worth only what its
+plants prove — so it was watched refusing a WHEN-only description and watched going
+silent when disabled.
+
+**One case was reworded after being caught claiming somebody else's work.** It asserted
+the WHAT half is read from the parsed value rather than raw text — and the plant for that
+property is caught by an existing case guarding `parse_frontmatter`'s folding, one layer
+up. It now claims only what it holds: both spellings of one description reach the same
+verdict, neither passes vacuously, and the parsed value carries no newline.
+
 ## v0.26.0 — where a rule lives decides whether it exists
 
 `authoring.md` treated progressive disclosure as a budget question. It is also a

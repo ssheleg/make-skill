@@ -38,6 +38,48 @@ DESC_MAX = 1024         # spec: description is 1-1024 characters
 # budget AND the field that must grow when a near-miss skill appears ("say what
 # it is NOT for"). A description at 98% of cap cannot absorb that sentence.
 DESC_TARGET = 970
+# B-139 — the nine `DESC_*` rules ask WHEN and never WHAT.
+#
+# Anthropic's guidance asks a description to say what the skill DOES as well as when to
+# use it, and `B-76` quoted the failure directly: *a description that never says what the
+# skill does passes*. Measured 2026-09-03 across the family: **28 of 28 skills pass
+# `DESC_USEWHEN`, 0 gaps** — the WHEN half is universal and the WHAT half was unchecked.
+#
+# The WHAT half is the description with its mechanical parts removed: the `Use when`
+# opener, the trigger list, the `Not for` clause and the opt-out sentence. What remains is
+# the prose that names the act. A description that is an opener plus a trigger list leaves
+# almost nothing, which is exactly the shape the rule refuses.
+#
+# The floor is 60 and it is deliberately permissive. Measured on the shipped family, the
+# smallest honest WHAT half is **149** characters (`ux-audit`) and the largest 949, so 60
+# clears every real description by more than double and still catches
+# `Use when the user asks. Triggers - "x" / "у".`, whose WHAT half is 13.
+#
+# **This rule finds no gap today, and that is stated rather than hidden.** A standard is
+# for the description not yet written; a rule that fires on nothing now is only worth
+# anything if it was watched firing on a plant, which `test/checker_parity_test.py` does.
+DESC_WHAT_MIN = 60
+
+# Built on the PARSED description, never the raw front matter. A prototype was built
+# against raw text and refused: it reported a 0-character WHAT half for six skills and
+# missed the opening clause of twenty, because several descriptions are YAML block
+# scalars (`>-`) that a raw-text regex reads straight past. `parse_frontmatter` already
+# resolves them, and the prototype did not use it.
+_WHAT_OPENER = re.compile(r"^use when\s+", re.I)
+_WHAT_STRIP = (
+    re.compile(r"\bTriggers?\s*[-–—:].*", re.S | re.I),
+    re.compile(r"\bNot for\b.*", re.S | re.I),
+    re.compile(r"\bsay\s+['\"«].*", re.S | re.I),
+)
+
+
+def what_half(description):
+    """The prose that names the act, with the mechanical parts removed."""
+    core = _WHAT_OPENER.sub("", " ".join(str(description or "").split()))
+    for rx in _WHAT_STRIP:
+        core = rx.sub("", core)
+    return core.strip(" .,;—-")
+
 COMPAT_MAX = 500        # spec: compatibility is 1-500 characters
 BODY_MAX_LINES = 500    # spec + Anthropic: keep the body under 500 lines
 BODY_MAX_TOKENS = 5000  # spec + Anthropic: level-2 budget
@@ -270,6 +312,17 @@ def _check_description(a, fm, lines, rel, house):
             a.gap("DESC_RU", "description carries no Russian trigger phrases (house rule)", rel, ln)
         else:
             a.ok("DESC_RU", "description carries Russian trigger phrases (house rule)", rel, ln)
+        what = what_half(desc)
+        if len(what) < DESC_WHAT_MIN:
+            a.gap("DESC_WHAT", "description says WHEN and never WHAT: %d chars remain "
+                  "after the opener, the trigger list and the refusal are removed, and "
+                  "the floor is %d (house rule). Anthropic's guidance asks for both "
+                  "halves, and a description that is an opener plus a trigger list "
+                  "selects the skill without telling the model what it will do"
+                  % (len(what), DESC_WHAT_MIN), rel, ln)
+        else:
+            a.ok("DESC_WHAT", "description states WHAT the skill does in %d chars "
+                 "beyond its triggers (house rule)" % len(what), rel, ln)
         if DESC_TARGET < len(desc) <= DESC_MAX:
             a.gap("DESC_HEADROOM", "description is %d chars — inside the %d cap but past the "
                   "%d working limit (house rule): leave room for the 'what this is NOT for' "
