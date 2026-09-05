@@ -18,6 +18,21 @@ the release the CHANGELOG carries (MS-03).
 
 ---
 
+## Shipped state — v0.27.0 (2026-09-05)
+
+Measured on the release-candidate tree before the tag exists. One finding: the family's
+standard-keeper asked WHEN nine times and WHAT never, which is the half of Anthropic's
+guidance `B-76` quoted and nobody enforced.
+
+| REQ | What ships | How it was confirmed | Confirmed |
+|---|---|---|---|
+| WH-1 | `DESC_WHAT` refuses a description that is an opener plus a trigger list | `Use when the user asks. Triggers - "делай" / "do it".` leaves **13** characters against a floor of 60, and the gap message states both numbers | **observed** |
+| WH-2 | It is built on the PARSED description, which is why the refused prototype's failure does not return | that prototype read raw front matter, reported a **0-character** WHAT half for six skills and missed the opening clause of twenty, because several descriptions are `>-` block scalars a raw-text regex reads past | **observed** |
+| WH-3 | The floor's margin is measured, not chosen | smallest honest WHAT half across the 28 shipped skills is **149** (`ux-audit`), largest **949** (`seo-aeo-audit`); a case asserts `DESC_WHAT_MIN * 2 < 149`, so raising the floor without re-measuring fails | **observed** |
+| WH-4 | The rule finds no gap today, and that is stated rather than hidden | 28 of 28 pass; its worth is what the plants prove — watched refusing a WHEN-only description and watched going silent when the branch is disabled | **observed** |
+| WH-5 | A case was reworded after being caught claiming another guard's work | it asserted the parsed-not-raw property, whose plant is caught by the existing `parse_frontmatter` folding case one layer up; it now claims only that both spellings reach the same verdict, that neither passes vacuously, and that the parsed value carries no newline | **observed** |
+| WH-6 | The gate is green | `npm test` → rc=0, checker parity **17 cases** | **observed** |
+
 ## Shipped state — v0.26.0 (2026-09-01)
 
 Measured on the release-candidate tree before the tag exists. Two harvest findings about
