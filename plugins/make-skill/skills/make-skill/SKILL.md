@@ -1,11 +1,11 @@
 ---
 name: make-skill
-description: Use when creating, upgrading, auditing, or publishing agent skills and Claude Code plugins - "make a skill" / "сделай скилл", "wrap it in a plugin" / "заверни в плагин", "publish a skill" / "опубликуй скилл", "retrofit a skill to the standard" / "приведи скилл к стандарту", "does this skill match the spec" / "соответствует ли скилл стандарту", "claude plugin validate fails" / "проверь плагин по документации Anthropic", "is this skill safe to install" / "безопасно ли ставить этот скилл" - or when a skill must reach an MCP server or another agent over A2A. NOT for a version bump or release in a repo that ships anything but a skill or plugin. Encodes the Agent Skills open standard and Anthropic's platform rules (front-matter limits, budgets, the Skills API, evals), the Claude Code plugin reference (manifest schemas, component layout, validate --strict), plus the ssheleg pipeline - marketplace layout, version sync, validator+CI, distribution, npm gotchas.
+description: Use when creating, upgrading, auditing, or publishing agent skills and Claude Code plugins - "make a skill" / "сделай скилл", "skill audit" / «аудит скилов», "wrap it in a plugin" / "заверни в плагин", "publish a skill" / "опубликуй скилл", "retrofit a skill to the standard" / "приведи скилл к стандарту", "does this skill match the spec" / "соответствует ли скилл стандарту", "claude plugin validate fails" / "проверь плагин по документации Anthropic", "is this skill safe to install" / "безопасно ли ставить этот скилл" - or when a skill must reach an MCP server or another agent over A2A. NOT for a version bump or release in a repo that ships anything but a skill or plugin. Encodes the Agent Skills standard, Anthropic's platform rules (limits, budgets, Skills API, evals), the plugin reference (manifests, layout, validate --strict), plus the ssheleg pipeline - marketplace layout, version sync, validator+CI, distribution, npm gotchas.
 license: MIT
 compatibility: Authoring works on any agent. The bundled scripts/ need python3. Publishing steps need git, gh, node and npm; the plugin gates need the claude CLI. Not usable on the Claude API surface, which has no network and no runtime package install.
 metadata:
   author: ssheleg
-  version: "0.27.0"
+  version: "0.27.1"
   homepage: https://github.com/ssheleg/make-skill
 ---
 
