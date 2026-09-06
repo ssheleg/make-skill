@@ -1,3 +1,29 @@
+## v0.27.1 — the tarball stops shipping compiled Python, and the audit vocabulary the routing block promised becomes advertised
+
+Family audit 2026-09-06, wave `AUDIT-WAVE-0906`. Two findings, both a gap between what
+this member says and what it ships.
+
+**The npm tarball carried a 33kB `.pyc` from a used checkout.** `files` includes
+`plugins`, the gate imports the auditor, and Python drops
+`scripts/__pycache__/audit_skill.cpython-314.pyc` beside it — so a publish from any
+machine that had run the suite shipped bytecode nobody wrote. `.gitignore` already
+covered it, and that is exactly why it looked handled: git never carried the file, but
+npm's `files` allowlist does not read `.gitignore` inside a directory it was told to
+include. The durable fix is the shape `seo-aeo-audit` already ships — `"!**/__pycache__"`
+and `"!**/*.pyc"` in `files`. **Measured with the residue present on disk, not after
+deleting it**: the `.pyc` was regenerated first, then `npm pack --dry-run | grep -c pyc`
+→ **0**. The auditor's `BUNDLE_NESTED` GAP for that directory goes with it.
+
+**The umbrella's routing block advertises "skill audit" / «аудит скилов», and the
+description never did.** Both phrases now sit in the trigger enumeration, verbatim, after
+the "сделай скилл" pair. The room was paid for by trimming **54** characters from the
+non-trigger prose — "open standard and" → "standard,", "front-matter limits" → "limits",
+"manifest schemas, component layout" → "manifests, layout", "the Claude Code plugin
+reference" → "the plugin reference" — and **every previously advertised quoted phrase
+survives verbatim**, which is what the umbrella's soundness fixture refuses a pin
+without. Auditor before → after: description **965/970 → 943/970**, `DESC_WHAT` **550 →
+582** chars beyond the triggers, body untouched at ~4677/4750, **0 GAP**.
+
 ## v0.27.0 — the standard-keeper asked WHEN nine times and WHAT never
 
 `B-139`. `audit_skill.py` carried nine `DESC_*` rules — length, headroom, person, Russian

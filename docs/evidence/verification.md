@@ -18,6 +18,20 @@ the release the CHANGELOG carries (MS-03).
 
 ---
 
+## Shipped state — v0.27.1 (2026-09-06)
+
+Measured on the release-candidate tree before the tag exists. Source: family audit
+2026-09-06, wave AUDIT-WAVE-0906 — two findings, the packed bytecode and the audit
+vocabulary the umbrella's routing block promised but the description never advertised.
+
+| REQ | What ships | How it was confirmed | Confirmed |
+|---|---|---|---|
+| AW-1 | The npm tarball excludes compiled Python: `"!**/__pycache__"` and `"!**/*.pyc"` in `files` — the shape `seo-aeo-audit`'s package.json already ships | confirmed against the residue rather than its absence: `python3 -c "import audit_skill"` regenerated `scripts/__pycache__/audit_skill.cpython-314.pyc` first, then `npm pack --dry-run 2>&1 \| grep -c pyc` → **0** and `… \| grep -c __pycache__` → **0** | **observed** |
+| AW-2 | The description advertises "skill audit" / «аудит скилов» in its trigger enumeration, after the "сделай скилл" pair | auditor: `DESC_LENGTH … 943/1024`, `DESC_HEADROOM … 943/970`, `DESC_USEWHEN`, `DESC_RU` all PASS; both phrases checked as verbatim substrings of the front-matter description | **observed** |
+| AW-3 | Every previously advertised trigger phrase survives verbatim — the umbrella's soundness fixture refuses a pin whose triggers lost their words | all fourteen quoted phrases of the v0.27.0 description asserted as substrings of the new one in a loop before the edit landed; the **54** trimmed characters came only from the prose tail (`Encodes …` onward) | **observed** |
+| AW-4 | The auditor's `BUNDLE_NESTED` gap is gone and the body is untouched | `audit_skill.py --house` → **0 GAP, 15 PASS**; `BODY_HEADROOM` unchanged at ~4677/4750; `DESC_WHAT` at **582** chars beyond the triggers, still above the 60 floor | **observed** |
+| AW-5 | The gate is green with the version moved on every surface that carries it | `npm test` → rc=0; 0.27.1 in `package.json`, `plugin.json`, `marketplace.json`, SKILL.md `metadata.version` and SKILL-CARD.md's Version row | **observed** |
+
 ## Shipped state — v0.27.0 (2026-09-05)
 
 Measured on the release-candidate tree before the tag exists. One finding: the family's
