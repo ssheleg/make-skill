@@ -164,6 +164,7 @@ agent opens only when the situation calls for them:
 | `surfaces.md` | Claude Code vs the Claude API vs claude.ai — the Skills API (upload, versions, 8 per request), and the no-network / no-package-install limits that break scripts moved between surfaces |
 | `enterprise.md` | installing a skill you didn't write, and running a fleet — risk tiers, the review checklist, the five approval gates, lifecycle, recall limits, rollback |
 | `retrofit.md` | the audit procedure — the 14-item checklist, what counts as evidence for a PASS, and the short form for a personal skill |
+| `outcome-evaluation.md` | the outcome-eval method — frozen inputs, baseline-vs-current arms, artifact checks, the routing/correctness/visual split, and PASS/FAIL/ERROR/NOT_RUN verdicts with no host-locked actor |
 | `host-capabilities.md` | hooks, subagents, commands, scripts and MCP dependencies — what each buys, what it costs in always-on tokens, hook events and exit-code semantics, and the degradation clauses that keep a skill working where none of them exist |
 | `claude-code-plugin.md` | the [Claude Code layer](https://code.claude.com/docs/en/plugins-reference) — `plugin.json` / `marketplace.json` schemas, plugin sources, component locations, host-only front-matter, path variables, cache and symlink rules, the `claude plugin` CLI |
 | `distribution.md` | the repo layout, every install channel, exact CLI flags, npm publishing traps, the release checklist |

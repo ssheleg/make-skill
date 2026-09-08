@@ -34,7 +34,7 @@ that apply.
 
 ## What to check before you trust it
 
-1. Read `SKILL.md` and the 10 files under `skills/make-skill/references/` —
+1. Read `SKILL.md` and the 11 files under `skills/make-skill/references/` —
    that is the whole instruction surface, and every one is linked from `SKILL.md`.
    This validator fails if a shipped reference is missing from the README, so the
    count above cannot quietly go stale.

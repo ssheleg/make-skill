@@ -314,7 +314,10 @@ gate's own output.
 ## Evaluation and iteration — evals before prose
 
 **Build the evaluations before writing extensive documentation.** Otherwise the
-skill documents imagined problems.
+skill documents imagined problems. The judging method — frozen inputs, the
+baseline arm, artifact checks, the routing/correctness/visual split and the
+PASS/FAIL/ERROR/NOT_RUN verdicts — is `references/outcome-evaluation.md`; read
+it when a verdict is about to be written down.
 
 1. **Identify gaps** — run the agent on representative tasks with NO skill.
    Record the specific failures.

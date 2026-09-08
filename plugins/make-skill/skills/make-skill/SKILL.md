@@ -24,6 +24,7 @@ orchestrator, release automation). **make-skill itself** is built to this canon.
 | `references/surfaces.md` | shipping anywhere but Claude Code — Skills API upload/versions/8-per-request, claude.ai zip, the no-network limits |
 | `references/enterprise.md` | installing someone else's skill, or governing a fleet — risk tiers, review checklist, approval gates, lifecycle |
 | `references/retrofit.md` | auditing an existing skill/repo — the 14-item checklist, the evidence rules, the personal-skill short form |
+| `references/outcome-evaluation.md` | proving a skill changed real outcomes — frozen inputs, baseline vs current, artifact checks, the routing/correctness/visual split, PASS/FAIL/ERROR/NOT_RUN |
 | `references/host-capabilities.md` | shipping a **hook, subagent, command, script or MCP dependency** — what each buys and costs, hook events and exit codes, the degradation clauses |
 | `references/claude-code-plugin.md` | anything shipping as a **Claude Code plugin/marketplace** — manifest schemas, component layout, path variables, `validate` failures |
 | `references/distribution.md` | the repo layout, releases, and all five channels — plugin, skills CLI, npx, Cursor, umbrella family repo |
