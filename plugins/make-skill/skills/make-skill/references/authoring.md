@@ -20,6 +20,7 @@ and [agentskills.io](https://agentskills.io/skill-creation/best-practices).
 - Body patterns worth copying
 - Workflows and feedback loops
 - Content guidelines (terminology, time, paths, table of contents)
+- Selective loading — every reference earns its tokens
 - Scripts — the rules that separate a script from a liability
 - A gate's self-test runs in both directions
 - Evaluation and iteration — evals before prose
@@ -201,6 +202,46 @@ the body.
   rewriting the eight ssheleg routers into English cut them **3408 → 1885
   tokens** with no loss of meaning.
 
+## Selective loading — every reference earns its tokens
+
+A reference is a loan against the context window, and the load condition is the
+contract that says when the loan is worth taking. Three rules, each of which has
+been paid for:
+
+- **Every reference states its own load condition** — the `**Load this when:**`
+  opener this file itself uses, or a "read X when Y" sentence at the link site in
+  `SKILL.md`. "See `references/`" is a pointer at a directory: it loads either
+  everything (the budget bleeds on every turn) or nothing (dead doctrine), and
+  `scripts/audit_skill.py` flags it. A condition names the situation, not the
+  file: "read `references/mcp.md` when the skill must reach an MCP server", never
+  "additional details in mcp.md".
+- **Split primary from appendix, and say which is which.** Primary material is
+  what a decision REQUIRES: the contract, the acceptance criteria, the failure
+  modes. Appendix material is depth — worked examples, history, fixtures — that
+  can stay unloaded without changing any decision. The split decides what a
+  budget cut may touch: **mandatory decisions and acceptance are never truncated
+  to fit a budget; the appendix is.** A body that trimmed its acceptance to make
+  a line count fit has traded the contract for the heuristic that was supposed
+  to protect it. Variants follow the same rule: where a reference exists in more
+  than one language or platform flavour, the load condition names WHICH variant a
+  given task requires, and only that one is loaded — a multilingual bundle that
+  loads every variant pays for the same knowledge twice.
+- **A required reference that does not resolve blocks the work.** If the body
+  says a decision depends on `references/x.md` and the file is absent, the audit
+  gap is a stop, not a warning — proceeding without the contract is how a skill
+  ships with half its acceptance. `audit_skill.py` exits non-zero on exactly
+  this.
+
+**The budget is tokens, and lines are only a heuristic.** "500 lines / 5000
+tokens" pairs a length heuristic with the real limit; the 500 never proves the
+5000. A multilingual body makes the gap concrete: Russian encodes at 1.9–2.3
+chars/token against English's 5.0 (`cl100k`), so 300 Cyrillic lines can out-cost
+500 English ones. A token figure is therefore either **measured by a named
+tokenizer** or **an explicitly labeled estimate** — `audit_skill.py` reports
+`~N tokens (chars / 3.9)`, and the divisor is printed because an estimate that
+hides its basis reads as a measurement. Never state a bare token count nothing
+computed.
+
 ## Scripts — the rules that separate a script from a liability
 
 A bundled script is more reliable than generated code, costs no context (only its
@@ -340,6 +381,8 @@ quality — are in `references/enterprise.md`.
 - [ ] Name follows one pattern, is not vague, contains no reserved word
 - [ ] Body under 500 lines / 5000 tokens; detail in one-level-deep files
 - [ ] Every reference has a stated load condition; >100-line ones have a TOC
+- [ ] Primary (decisions, acceptance) split from appendix; cuts only ever hit the appendix
+- [ ] Token figures are measured by a named tokenizer or labeled as estimates with their basis
 - [ ] Degrees of freedom match task fragility
 - [ ] No time-sensitive statements outside an "Old patterns" section
 - [ ] Consistent terminology; forward slashes everywhere
