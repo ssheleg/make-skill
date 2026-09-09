@@ -1,0 +1,119 @@
+{
+ "contract": "outcome-contract-counterexample/1",
+ "note": "Counterexamples to the eval OUTCOME CONTRACT (ADOPT-M-05.01). Each fixture is INDEPENDENT of any external runner: it describes a defective run shape and the TYPED outcome (with its unit) a conforming runner must produce for it. THE PRESENCE OF A FIXTURE NEVER MEANS A SUCCESSFUL RUN — none of these cases claims an executed PASS; every expected outcome here is a refusal, a TIMEOUT or a NOT_RUN, recorded with the tool availability that produced it. Adapting an existing runner to consume these is FIX-EV-01's implementation, deliberately separate.",
+ "outcome_types": [
+  "PASS",
+  "FAIL",
+  "TIMEOUT",
+  "NOT_RUN",
+  "INVALID_RUN"
+ ],
+ "cases": [
+  {
+   "id": "OCC-01-timeout",
+   "fixture": {
+    "kind": "run",
+    "wall_seconds": 1800,
+    "budget_seconds": 300,
+    "stdout_tail": "still working..."
+   },
+   "expected": {
+    "outcome": "TIMEOUT",
+    "unit": "seconds",
+    "baseline": "budget_seconds=300",
+    "why": "a run past its budget is TIMEOUT — never scored on whatever partial output exists"
+   },
+   "executed": false
+  },
+  {
+   "id": "OCC-02-missing-metric",
+   "fixture": {
+    "kind": "result",
+    "metrics": {
+     "latency_ms": 412
+    },
+    "required_metrics": [
+     "latency_ms",
+     "pass_rate"
+    ]
+   },
+   "expected": {
+    "outcome": "INVALID_RUN",
+    "unit": "metric-name",
+    "baseline": "required_metrics",
+    "why": "a result missing a required metric is INVALID_RUN — an absent number is not a zero"
+   },
+   "executed": false
+  },
+  {
+   "id": "OCC-03-flat-runs-directory",
+   "fixture": {
+    "kind": "layout",
+    "paths": [
+     "runs/output1.txt",
+     "runs/output2.txt"
+    ],
+    "required_layout": "runs/<run-id>/<artifact>"
+   },
+   "expected": {
+    "outcome": "INVALID_RUN",
+    "unit": "path",
+    "baseline": "runs/<run-id>/",
+    "why": "a flat runs directory cannot attribute artifacts to runs — nothing in it is scoreable"
+   },
+   "executed": false
+  },
+  {
+   "id": "OCC-04-swapped-config-labels",
+   "fixture": {
+    "kind": "pair",
+    "run_a": {
+     "label": "candidate",
+     "config_digest": "aaa111"
+    },
+    "run_b": {
+     "label": "baseline",
+     "config_digest": "aaa111"
+    }
+   },
+   "expected": {
+    "outcome": "INVALID_RUN",
+    "unit": "config-digest",
+    "baseline": "distinct digests per label",
+    "why": "two labels over one config digest mean the labels are decoration — a comparison of a thing with itself"
+   },
+   "executed": false
+  },
+  {
+   "id": "OCC-05-empty-evidence",
+   "fixture": {
+    "kind": "result",
+    "verdict": "pass",
+    "evidence": []
+   },
+   "expected": {
+    "outcome": "INVALID_RUN",
+    "unit": "evidence-row",
+    "baseline": ">= 1 evidence row per verdict",
+    "why": "a pass with empty evidence is an assertion, not a result"
+   },
+   "executed": false
+  },
+  {
+   "id": "OCC-06-unread-feedback",
+   "fixture": {
+    "kind": "loop",
+    "feedback_file": "feedback.md",
+    "feedback_mtime": 200,
+    "last_read_at": 100
+   },
+   "expected": {
+    "outcome": "NOT_RUN",
+    "unit": "timestamp",
+    "baseline": "last_read_at >= feedback_mtime",
+    "why": "feedback newer than its last read has not entered the loop — the next iteration is NOT_RUN until it is read, never silently skipped"
+   },
+   "executed": false
+  }
+ ]
+}
