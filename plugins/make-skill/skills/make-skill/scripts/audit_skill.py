@@ -92,7 +92,28 @@ BODY_TARGET_TOKENS = 4750
 # No tokenizer in the stdlib. 3.9 chars/token is measured, not assumed: tokenizing
 # this skill's own bundle gives 3.78-4.47. `claude plugin details` is far more
 # pessimistic (~2.8) and will always show a bigger number than this estimate.
+# AND the estimate is an ESTIMATE (FIX-MS-01.01): a 16 000-hieroglyph body is
+# 16 000 cl100k tokens and estimates ~4 102 — so the estimate never grants a
+# token PASS and is never CALLED tokens. A real, NAMED tokenizer measures;
+# without one the token budget is UNMEASURED and the estimate rides beside it
+# as its own field.
 CHARS_PER_TOKEN = 3.9
+
+# Optional tokenizer adapter. `None` = unresolved; tests may inject
+# `(callable, "name")` or `(None, None)` directly to pin either path.
+TOKENIZER = None
+
+
+def resolve_tokenizer():
+    global TOKENIZER
+    if TOKENIZER is None:
+        try:
+            import tiktoken
+            enc = tiktoken.get_encoding("cl100k_base")
+            TOKENIZER = (lambda text: len(enc.encode(text)), "tiktoken:cl100k_base")
+        except Exception:
+            TOKENIZER = (None, None)
+    return TOKENIZER
 TOC_MIN_LINES = 100     # Anthropic: longer reference files need a table of contents
 
 SPEC_KEYS = {"name", "description", "license", "compatibility", "metadata", "allowed-tools"}
@@ -368,32 +389,53 @@ def _check_keys(a, fm, lines, rel):
 
 def _check_body_budget(a, body, rel, house=False):
     n_lines = body.count("\n") + 1
+    count_fn, tok_name = resolve_tokenizer()
     est = int(len(body) / CHARS_PER_TOKEN)
     # Both, not either: a body over the line budget still has to report its
-    # token count, or the second fix arrives only after the first one ships.
+    # token verdict, or the second fix arrives only after the first one ships.
     over = False
     if n_lines >= BODY_MAX_LINES:
         a.gap("BODY_LINES", "body is %d lines, the budget is < %d — move detail into "
               "references/" % (n_lines, BODY_MAX_LINES), rel)
         over = True
-    if est >= BODY_MAX_TOKENS:
-        a.gap("BODY_TOKENS", "body is ~%d tokens (%d chars / %s), the budget is < %d"
-              % (est, len(body), CHARS_PER_TOKEN, BODY_MAX_TOKENS), rel)
+    if count_fn is None:
+        # No adapter, no token verdict: the budget is UNMEASURED, and the
+        # byte/char estimate is reported as an ESTIMATE — it is not tokens,
+        # it cannot PASS the budget, and it cannot fail it either (a
+        # 16k-hieroglyph body estimates ~4k and measures 16k).
+        a.ok("BODY_TOKENS_UNMEASURED",
+             "token budget UNMEASURED — no tokenizer installed; the estimate "
+             "~%d (%d chars / %s) is an estimate, NOT tokens: install tiktoken "
+             "to measure" % (est, len(body), CHARS_PER_TOKEN), rel)
+        if not over:
+            a.ok("BODY_BUDGET", "body is %d lines (budget %d); token budget "
+                 "unmeasured" % (n_lines, BODY_MAX_LINES), rel)
+        if house:
+            a.ok("BODY_HEADROOM_UNMEASURED",
+                 "the %d-token working limit needs a measurement — unmeasured, "
+                 "not passed" % BODY_TARGET_TOKENS, rel)
+        return
+    measured = count_fn(body)
+    if measured >= BODY_MAX_TOKENS:
+        a.gap("BODY_TOKENS", "body is %d tokens (%s), the budget is < %d"
+              % (measured, tok_name, BODY_MAX_TOKENS), rel)
         over = True
     if not over:
-        a.ok("BODY_BUDGET", "body is %d lines / ~%d tokens (budget %d / %d)"
-             % (n_lines, est, BODY_MAX_LINES, BODY_MAX_TOKENS), rel)
+        a.ok("BODY_BUDGET", "body is %d lines / %d tokens (%s; budget %d / %d)"
+             % (n_lines, measured, tok_name, BODY_MAX_LINES, BODY_MAX_TOKENS), rel)
     # The house half, and it is the same rule DESC_HEADROOM applies to the other
     # field: a body at the ceiling cannot absorb the next paragraph, so it gets
-    # absorbed into a reference that should have been split instead.
-    if house and not over and est >= BODY_TARGET_TOKENS:
-        a.gap("BODY_HEADROOM", "body is ~%d tokens — inside the %d budget but past the "
-              "%d working limit (house rule): the next section will breach it, and the "
-              "answer then is a split, not a trim"
-              % (est, BODY_MAX_TOKENS, BODY_TARGET_TOKENS), rel)
+    # absorbed into a reference that should have been split instead. House
+    # thresholds ride the MEASURED count only — a house rule on an estimate is
+    # a verdict on the instrument.
+    if house and not over and measured >= BODY_TARGET_TOKENS:
+        a.gap("BODY_HEADROOM", "body is %d tokens (%s) — inside the %d budget but "
+              "past the %d working limit (house rule): the next section will "
+              "breach it, and the answer then is a split, not a trim"
+              % (measured, tok_name, BODY_MAX_TOKENS, BODY_TARGET_TOKENS), rel)
     elif house and not over:
-        a.ok("BODY_HEADROOM", "body is ~%d/%d tokens, inside the working limit"
-             % (est, BODY_TARGET_TOKENS), rel)
+        a.ok("BODY_HEADROOM", "body is %d/%d tokens (%s), inside the working limit"
+             % (measured, BODY_TARGET_TOKENS, tok_name), rel)
 
 
 def _bundle_closure(skill_dir, skill_text):

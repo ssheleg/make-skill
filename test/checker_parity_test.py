@@ -139,23 +139,36 @@ def _():
 
 @case("--house applies the 4750 body working limit, not only the description one")
 def _():
-    body = "# s\n\n" + ("word " * int(4800 * audit_skill.CHARS_PER_TOKEN / 5))
-    d = skill_dir("name: planted\ndescription: Use when planting. Триггеры - посадить.", body)
-    assert "BODY_HEADROOM" in audit_ids(d, house=True), \
-        "a body past 4750 tokens got no gap under --house"
+    # A measured context, pinned: house thresholds ride the MEASURED count
+    # only (FIX-MS-01.01), so the fake adapter makes the case deterministic
+    # on machines with and without tiktoken alike.
+    audit_skill.TOKENIZER = (lambda text: 4800, "fake-test")
+    try:
+        d = skill_dir("name: planted\ndescription: Use when planting. Триггеры - посадить.", "# s\n\nbody")
+        assert "BODY_HEADROOM" in audit_ids(d, house=True), \
+            "a body past 4750 measured tokens got no gap under --house"
+    finally:
+        audit_skill.TOKENIZER = None
 
 
 @case("without --house the working limit is not applied — it is a house rule")
 def _():
-    body = "# s\n\n" + ("word " * int(4800 * audit_skill.CHARS_PER_TOKEN / 5))
-    d = skill_dir("name: planted\ndescription: Use when planting.", body)
-    assert "BODY_HEADROOM" not in audit_ids(d, house=False)
+    audit_skill.TOKENIZER = (lambda text: 4800, "fake-test")
+    try:
+        d = skill_dir("name: planted\ndescription: Use when planting.", "# s\n\nbody")
+        assert "BODY_HEADROOM" not in audit_ids(d, house=False)
+    finally:
+        audit_skill.TOKENIZER = None
 
 
 @case("a body inside the working limit is not gapped")
 def _():
-    d = skill_dir("name: planted\ndescription: Use when planting. Триггеры - посадить.")
-    assert "BODY_HEADROOM" not in audit_ids(d, house=True)
+    audit_skill.TOKENIZER = (lambda text: 100, "fake-test")
+    try:
+        d = skill_dir("name: planted\ndescription: Use when planting. Триггеры - посадить.")
+        assert "BODY_HEADROOM" not in audit_ids(d, house=True)
+    finally:
+        audit_skill.TOKENIZER = None
 
 
 # --- the drift guard: watched failing against a real divergence -------------
