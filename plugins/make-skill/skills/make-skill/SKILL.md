@@ -199,28 +199,29 @@ Done = the five VERIFIED facts in that sequence's step 10 — nothing assumed.
 
 ## Retrofit (bring an existing skill/repo up to standard)
 
-Audit first, fix second, in the same session. Verdict per item: PASS / GAP /
-NOT-RUN with evidence — a `file:line` or the output of the command you actually
+Audit first — the audit's own deliverable is the REPORT; fixing is a second
+scope and releasing a third, granted by the request, never by the report being
+in hand («аудит скилов» asks for a verdict, not a diff). Verdict per item:
+PASS / GAP / NOT-RUN with evidence — a `file:line` or the output of the command you actually
 ran. "Looks fine" is not a verdict, and neither is a PASS on a check that was
 reasoned about instead of executed; a check whose tool is absent is **NOT-RUN
 with the reason**, never a PASS.
 
-**Run the bundled auditor first** — it does the mechanical half
-deterministically, and it never depends on an unset variable:
+**Run the bundled auditor first** — the mechanical half, deterministic:
 
 ```bash
-make-skill-audit <skill-dir> --house    # Claude Code: the plugin's bin/ is on PATH
+make-skill-audit <skill-dir> --house    # Claude Code: bin/ is on PATH
 ```
 
-Anywhere else, run `scripts/audit_skill.py` from the make-skill directory you
-just read this from. **Then work the 14-item checklist in
-`references/retrofit.md`** — spec floor, plugin floor, surfaces, one-job, entry
-point, layout and version sync, validator and CI, evaluations, README,
-distribution, repo meta, gotchas, protocols, host capabilities. For a PERSONAL
-skill only three items apply; that file says which.
+Anywhere else: `scripts/audit_skill.py` from this directory. **Then work the 14-item checklist in
+`references/retrofit.md`** — a PERSONAL skill owes only three of its items;
+the file says which.
 
-**Then:** report the gap table, fix everything fixable now, bump a minor/patch
-version, run the release checklist.
+**Then: report the gap table — and stop there when the request was an
+audit.** With fixing granted: fix what the report names, bump minor/patch, run
+the release checklist. Load
+`references/outcome-evaluation.md` only when the work CHANGES behaviour — a
+conformance audit stops at its report, no outcome arms.
 
 ## Promote (personal → distributable)
 
