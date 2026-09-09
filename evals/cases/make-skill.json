@@ -1,0 +1,193 @@
+{
+ "contract": "outcome-case/1 (schemas/outcome-case.schema.json + test/outcome_harness.py in ssheleg/sshlg-skills)",
+ "note": "Outcome corpus for make-skill (FIX-EV-01.13). Judged on ARTIFACTS via the family harness: the runner records the actual output oracle verdict AND the raw result per case; with/without-skill arms are the harness's baseline contract. Probe-gated cases go NOT_RUN where their tool is unavailable — never PASS, never a chars/3.9 approximation standing in for a tokenizer. Nothing in the production skill was changed for grader convenience.",
+ "arms": {
+  "baseline": "same prompts, skill absent",
+  "current": "same prompts, skill installed"
+ },
+ "cases": [
+  {
+   "schema_version": "outcome-case/1",
+   "id": "MS-OUT-001-positive",
+   "skill": "make-skill",
+   "prompt": {
+    "text": "Audit the skill at test/evals/fixtures/untrusted-skill.md against the Agent Skills standard and the ssheleg canon; write the gap table with file:line evidence to audit-report.md."
+   },
+   "environment": {
+    "model": "inherit",
+    "host": "any",
+    "case_digest": "c49f34d6e83b7f5094fb273ae0a0fd115471383458d5f2093d6ddadc41cba4aa"
+   },
+   "checks": {
+    "tool": [
+     {
+      "name": "python3 present",
+      "command": "python3 -c 'pass'"
+     }
+    ],
+    "load_trace": {
+     "expect_loaded": [
+      "make-skill"
+     ],
+     "expect_not_loaded": []
+    },
+    "outcome": [
+     {
+      "name": "report exists",
+      "kind": "artifact-exists",
+      "target": "audit-report.md"
+     },
+     {
+      "name": "a violation is named with file:line evidence",
+      "kind": "artifact-contains",
+      "target": "audit-report.md",
+      "expect": "untrusted-skill.md:"
+     }
+    ]
+   }
+  },
+  {
+   "schema_version": "outcome-case/1",
+   "id": "MS-OUT-002-negative-routing",
+   "skill": "make-skill",
+   "prompt": {
+    "text": "Explain in two sentences what a webhook is."
+   },
+   "environment": {
+    "model": "inherit",
+    "host": "any",
+    "case_digest": "a5da94aa03520bb6226ea88328a75ab6d7e3985c73a0e90a1379bf168fead57e"
+   },
+   "checks": {
+    "tool": [
+     {
+      "name": "python3 present",
+      "command": "python3 -c 'pass'"
+     }
+    ],
+    "load_trace": {
+     "expect_loaded": [],
+     "expect_not_loaded": [
+      "make-skill"
+     ]
+    },
+    "outcome": [
+     {
+      "name": "no audit artifact appears",
+      "kind": "command-exit-0",
+      "target": "test ! -f audit-report.md"
+     }
+    ]
+   }
+  },
+  {
+   "schema_version": "outcome-case/1",
+   "id": "MS-OUT-003-audit-does-not-mutate",
+   "skill": "make-skill",
+   "prompt": {
+    "text": "Audit the skill at test/evals/fixtures/untrusted-skill.md (audit only — no retrofit, no release); write findings to audit-report.md."
+   },
+   "environment": {
+    "model": "inherit",
+    "host": "any",
+    "case_digest": "6a9ff57961154a559acc015e8b7975a98d01fad41daaf13c58de436d1eb2215e"
+   },
+   "checks": {
+    "tool": [
+     {
+      "name": "python3 present",
+      "command": "python3 -c 'pass'"
+     }
+    ],
+    "load_trace": {
+     "expect_loaded": [
+      "make-skill"
+     ],
+     "expect_not_loaded": []
+    },
+    "outcome": [
+     {
+      "name": "report exists",
+      "kind": "artifact-exists",
+      "target": "audit-report.md"
+     },
+     {
+      "name": "the audited source bytes are unchanged (MS-03: an audit is not a fix and not a release)",
+      "kind": "command-exit-0",
+      "target": "python3 -c \"import hashlib,sys; sys.exit(hashlib.sha256(open('test/evals/fixtures/untrusted-skill.md','rb').read()).hexdigest() != '5eb1091df755cb4f16a748f1180196728669dd97997b8b075220e37e9f43161e')\""
+     }
+    ]
+   }
+  },
+  {
+   "schema_version": "outcome-case/1",
+   "id": "MS-OUT-004-token-measurement",
+   "skill": "make-skill",
+   "prompt": {
+    "text": "Measure the token count of the SKILL.md body at test/evals/fixtures/untrusted-skill.md with a real tokenizer and report which tokenizer produced the figure in token-report.md."
+   },
+   "environment": {
+    "model": "inherit",
+    "host": "tokenizer",
+    "case_digest": "2b41e3c5534470f649c8807e72ac54873d4ce0a10bd146dd04706c8a73d4191f"
+   },
+   "checks": {
+    "tool": [
+     {
+      "name": "a real tokenizer is importable (MS-01: absent tooling is NOT_RUN, never a chars/3.9 PASS)",
+      "command": "python3 -c 'import tiktoken'"
+     }
+    ],
+    "load_trace": {
+     "expect_loaded": [
+      "make-skill"
+     ],
+     "expect_not_loaded": []
+    },
+    "outcome": [
+     {
+      "name": "the report names its tokenizer",
+      "kind": "artifact-contains",
+      "target": "token-report.md",
+      "expect": "tokenizer:"
+     }
+    ]
+   }
+  },
+  {
+   "schema_version": "outcome-case/1",
+   "id": "MS-OUT-005-strict-plugin-validate",
+   "skill": "make-skill",
+   "prompt": {
+    "text": "Run claude plugin validate --strict over the plugins/make-skill plugin and record the verdict in validate-report.md."
+   },
+   "environment": {
+    "model": "inherit",
+    "host": "claude-cli",
+    "case_digest": "09ec49d3ae0cc6f2608d2eea50e48327cfe080440cc80d2c14b2121cea2c99ec"
+   },
+   "checks": {
+    "tool": [
+     {
+      "name": "claude CLI present (an unavailable host tool is NOT_RUN)",
+      "command": "claude --version"
+     }
+    ],
+    "load_trace": {
+     "expect_loaded": [
+      "make-skill"
+     ],
+     "expect_not_loaded": []
+    },
+    "outcome": [
+     {
+      "name": "the strict verdict is recorded",
+      "kind": "artifact-contains",
+      "target": "validate-report.md",
+      "expect": "--strict"
+     }
+    ]
+   }
+  }
+ ]
+}
