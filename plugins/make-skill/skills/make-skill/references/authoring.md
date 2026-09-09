@@ -158,6 +158,10 @@ field makes the agent worse than it was without the skill.
 - **Add what the agent lacks**; cut anything it already knows. Test: "would the
   agent get this wrong without this line?" No → delete it.
 - **Procedures over answers** — teach the method, not one instance's result.
+- **Copying from OUTSIDE** — when a body pattern is borrowed from an external
+  source rather than written fresh, route the intake through the source/runtime
+  contract in `references/enterprise.md` (§ Selective knowledge adoption): a
+  pinned permalink and an attribution receipt, and no-key is not no-dependency.
 
 ## Workflows and feedback loops
 

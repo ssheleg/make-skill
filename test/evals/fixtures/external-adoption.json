@@ -1,0 +1,33 @@
+{
+  "_why": "PXS-01.01. Four synthetic intake fixtures for the source/runtime contract in references/enterprise.md. Each names what an external borrowing actually needs; the intake reaches a verdict by READING, never by calling setup/login/provider. No key is not no dependency.",
+  "intakes": [
+    {
+      "id": "oauth-no-key",
+      "source": "a helper that authenticates to a calendar API via OAuth; no key is bundled",
+      "needs": {"auth": "oauth", "key_present": false, "runtime_fetch": null, "license": "MIT", "deprecated": false},
+      "expected_verdict": "adopt-declare-dependency",
+      "must_not": ["login", "provider-call", "install"]
+    },
+    {
+      "id": "npx-no-package",
+      "source": "a snippet that runs `npx some-tool build` at runtime with no package/version declared",
+      "needs": {"auth": null, "key_present": null, "runtime_fetch": "npx", "package_declared": false, "license": "Apache-2.0", "deprecated": false},
+      "expected_verdict": "reject-or-declare-package",
+      "must_not": ["install", "npx-run"]
+    },
+    {
+      "id": "missing-license",
+      "source": "a reference doc with useful method but no LICENSE file",
+      "needs": {"auth": null, "runtime_fetch": null, "license": null, "deprecated": false},
+      "expected_verdict": "adopt-method-not-bytes",
+      "must_not": ["copy-bytes"]
+    },
+    {
+      "id": "deprecated-source",
+      "source": "a library whose README says it is deprecated and unmaintained",
+      "needs": {"auth": null, "runtime_fetch": null, "license": "MIT", "deprecated": true},
+      "expected_verdict": "adopt-method-note-deprecation",
+      "must_not": ["pin-dead-ref"]
+    }
+  ]
+}
