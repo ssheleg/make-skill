@@ -223,11 +223,23 @@ class Audit:
 
 
 def parse_frontmatter(text):
-    """YAML subset: top-level scalars, block scalars, one nested map.
+    """A STRICT stdlib precheck of an explicitly bounded YAML subset — NOT full
+    YAML, and it does not pretend to be (FIX-MS-02.01).
 
-    Returns (data, line_of_key). A full YAML parser is not in the stdlib and a
-    skill's frontmatter is a flat map by specification, so this is enough — and
-    it keeps the script dependency-free, which is the point of shipping it.
+    The supported subset: top-level scalars (quoted or plain), block scalars
+    (`>`/`|` and their chomping variants), inline flow sequences (`[a, b]`),
+    and ONE nested map. Everything else is out of subset and must be caught,
+    never waved through — a precheck that silently accepts what the real
+    uploader rejects is worse than no precheck.
+
+    Returns (data, line_of_key). A bare scalar that a real YAML parser would
+    COERCE keeps its type here too: `version: 1.0` becomes the float 1.0, not
+    the string "1.0", so a field the contract requires to be a string
+    (metadata values, name, description) is caught by its own type check
+    instead of passing as a stringified number. Quote it and it stays a
+    string. A full YAML parser is not in the stdlib and a skill's frontmatter
+    is a flat map by specification, so this is enough — and it keeps the
+    script dependency-free, which is the point of shipping it.
 
     A plain scalar may continue on indented lines and YAML folds them into one
     value with a space. Dropping those lines is how a description whose real
@@ -235,8 +247,11 @@ def parse_frontmatter(text):
     and the 970 working limit — a clean bill from the family's standard-keeper
     for a skill the Skills API rejects on upload (2026-08-16, B-63).
     """
+    parse_frontmatter.last_duplicates = []
     data, lines, key, mode = {}, {}, None, None
     scalars = set()
+    duplicates = []            # (scope, key) pairs seen more than once
+    nested_seen = set()
     for i, raw in enumerate(text.split("\n"), start=2):  # +2: the opening '---'
         if not raw.strip():
             continue
@@ -246,6 +261,9 @@ def parse_frontmatter(text):
                 key, mode = None, None
                 continue
             key, val = m.group(1), m.group(2).strip()
+            if key in data:
+                duplicates.append(("top", key))
+            nested_seen = set()
             lines[key] = i
             if val in (">", "|", ">-", "|-", ">+", "|+"):
                 data[key], mode = "", "block"
@@ -265,10 +283,36 @@ def parse_frontmatter(text):
         elif mode == "map":
             m = re.match(r"^\s+([A-Za-z0-9_-]+):\s*(.*)$", raw)
             if m:
-                data[key][m.group(1)] = _unquote(m.group(2).strip())
+                if m.group(1) in nested_seen:
+                    duplicates.append((key, m.group(1)))
+                nested_seen.add(m.group(1))
+                data[key][m.group(1)] = _typed_scalar(m.group(2).strip())
     for k in scalars:
         data[k] = _finish_scalar(data[k])
+    parse_frontmatter.last_duplicates = duplicates
     return data, lines
+
+
+def _typed_scalar(v):
+    """A bare scalar keeps the TYPE a real YAML parser would give it; a quoted
+    one stays a string. This is what lets a string-required field notice that
+    `1.0` is a float and `true` is a bool (FIX-MS-02.01)."""
+    v = v.strip()
+    if len(v) >= 2 and v[0] == v[-1] and v[0] in "\"'":
+        return v[1:-1]                       # explicitly quoted → string
+    if v in ("true", "false", "True", "False"):
+        return v.lower() == "true"
+    if v in ("null", "~", "Null", "NULL", ""):
+        return None if v != "" else ""
+    if re.match(r"^[+-]?\d+$", v):
+        return int(v)
+    if re.match(r"^[+-]?(\d+\.\d*|\.\d+|\d+)([eE][+-]?\d+)?$", v) and \
+            re.search(r"[.eE]", v):
+        try:
+            return float(v)
+        except ValueError:
+            return v
+    return v
 
 
 def _finish_scalar(v):
@@ -316,6 +360,15 @@ def audit(skill_dir, house=False):
         return a
     fm, fm_lines = parse_frontmatter(m.group(1))
     body = text[m.end():]
+
+    dups = getattr(parse_frontmatter, "last_duplicates", [])
+    if dups:
+        named = ", ".join(k if scope == "top" else f"{scope}.{k}" for scope, k in dups)
+        a.gap("FM_DUPLICATE_KEY", "duplicate frontmatter key(s): %s — a real YAML "
+              "parser rejects or last-wins them; either way the precheck must not "
+              "pass two values for one key" % named, rel)
+    else:
+        a.ok("FM_DUPLICATE_KEY", "no duplicate frontmatter keys", rel)
 
     _check_name(a, fm, fm_lines, name_on_disk, rel)
     _check_description(a, fm, fm_lines, rel, house)
