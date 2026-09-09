@@ -48,10 +48,14 @@ def t_link_resolves():
 
 def t_conformance_audit_stops_at_report():
     flat = " ".join(open(SKILL, encoding="utf-8").read().split())
-    for needle in ("the audit's own deliverable is the REPORT",
-                   "fixing is a second scope and releasing a third",
+    # MS-03 refined this scope rule into three explicit effect-contract modes;
+    # the contract is unchanged (audit reads, fixing/releasing are separate
+    # granted scopes), the wording is the modes form.
+    for needle in ("`audit` reads (evidence + plan only)",
+                   "`retrofit` writes only what the request scoped; `release` publishes",
+                   "decided by\nINTENT and prior authorization, never by\nthe skill invoked".replace("\n", " "),
                    "asks for a verdict, not a diff",
-                   "report the gap table — and stop there when the request was an audit"):
+                   "report the gap table — and stop there in `audit` mode"):
         assert needle in flat, f"the scope rule no longer states {needle!r}"
     assert "fix everything fixable now, bump" not in flat, \
         "the audit still auto-continues into fixes and a release"
