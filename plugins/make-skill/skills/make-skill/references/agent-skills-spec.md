@@ -134,8 +134,39 @@ Rules:
 |---|---|---|
 | `skills-ref validate ./<skill dir>` | the open standard's frontmatter rules | Python, installed from source out of `github.com/agentskills/agentskills`; not on npm or PyPI |
 | Skills API upload | Anthropic's extra rules (reserved words, XML tags, dir name, 30 MB) | the only place they are enforced — see `references/surfaces.md` |
-| `claude plugin validate … --strict` | plugin/marketplace **manifests only**, not SKILL.md frontmatter | `references/claude-code-plugin.md` |
+| `claude plugin validate … --strict` | plugin/marketplace manifests — AND, since Claude Code v2.1.233, `SKILL.md` frontmatter in skill directories too (version-gate the claim; older builds validated manifests only) | `references/claude-code-plugin.md` |
 | your `test/validate.py` | house rules + everything the three above miss | the only one that runs on every commit |
+
+## Host capability matrix — presence varies by host AND version (MS-04)
+
+"Claude Code only" is wrong for several of these: some non-Claude runtimes
+(Codex) provide subagents and MCP natively. DETECT the capability; do not
+assume its absence. Presence is per host AND per version.
+
+| Capability | Claude Code | Codex | Cursor | skills CLI / API | Detect by |
+|---|---|---|---|---|---|
+| Hooks | yes | no | no | no | host docs / config |
+| Subagents | yes | **yes (native)** | no | no | runtime probe |
+| MCP servers | yes | **yes (native)** | varies | no | runtime probe |
+| `/commands` | yes | no | no | no | host docs |
+| Plugin path vars | yes | no | no | no | env presence |
+
+And every NORM this skill enforces carries its **owner** (spec = the Agent
+Skills standard, host = a runtime's own rule, house = this family), whether it
+is **required vs recommended**, and the **date last verified against source** —
+a number with no owner reads as physics, and an unversioned norm has no expiry:
+
+| Norm | Owner | Required? | Last checked |
+|---|---|---|---|
+| `name` ≤ 64 chars, `description` ≤ 1024 | spec | required | 2026-09-09 |
+| body < 5000 tokens | spec | recommended | 2026-09-09 |
+| body < 4750 tokens (headroom) | house | recommended | 2026-09-09 |
+| Skills API: 8 skills/request, 30 MB | host | required (that surface) | 2026-09-09 |
+| `--strict` validates SKILL.md frontmatter | host (Claude Code ≥ v2.1.233) | n/a | 2026-09-09 |
+
+A recommendation (500 lines, 5000 tokens, the house limits) is a QUALITY norm,
+not a universal reason a host refuses to LOAD the skill — a body over budget is
+worse authoring, not an install error everywhere.
 
 ## Conformance checklist
 

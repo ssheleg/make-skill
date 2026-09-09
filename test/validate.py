@@ -633,16 +633,17 @@ for plugin_dir in sorted(glob.glob(os.path.join(ROOT, "plugins", "*"))):
                  "list and silently drops the whole frontmatter block")
 
 # --- shipped host capabilities: hooks, agents, scripts -----------------------
-# Every one of these is Claude-Code-only, so the canon requires a written
-# fallback; and each has a failure mode that is invisible until a user hits it.
+# These are HOST capabilities whose presence varies by host AND version (MS-04):
+# some non-Claude runtimes provide subagents/MCP natively, so the canon requires
+# a written fallback for a host that LACKS one, not a blanket "Claude-Code-only".
 PLUGIN_DIR = os.path.join(ROOT, "plugins", NAME)
 
 # The degradation contract must be in the body, in the words the agent reads at
 # the moment something is missing — not only in a reference file.
-for phrase in ("Degradation contract", "Not Claude Code", "absent"):
-    if phrase not in skill_txt:
+for phrase in ("Degradation contract", "HOST\ncapabilities", "written fallback", "absent"):
+    if phrase.replace("\n", " ") not in " ".join(skill_txt.split()):
         fail(f"SKILL.md: no {phrase!r} — a plugin that ships hooks/agents/commands "
-             "owes a written fallback for hosts that have none")
+             "owes a written fallback for a host that lacks the capability")
 
 scripts_dir = os.path.join(SKILL_DIR, "scripts")
 if not os.path.isdir(scripts_dir):

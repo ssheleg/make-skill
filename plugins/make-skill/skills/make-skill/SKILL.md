@@ -129,20 +129,19 @@ House additions on top of the spec:
 
 ### Degradation contract (every skill that touches a host capability)
 
-Hooks, subagents, `/commands`, plugin path variables and MCP servers exist only
-inside Claude Code — a minority of where skills run. **Each is an accelerator
-with a written fallback; the skill still finishes its job without it, more
-slowly.** Write the three cases into the body, in the agent's words, at the
-point it will need them (shapes: `references/host-capabilities.md`):
-
-- **Not Claude Code** (Cursor, Codex, skills CLI, API): no hooks, no subagents,
-  no `/command`. Name the inline procedure; bundled `scripts/` still travel, so
-  give the path per channel.
-- **Recommended plugin/skill absent**: say once what is degraded, continue on
-  the manual path. A stage that refuses to start because an optional companion
-  is missing is broken, not strict.
-- **Tool, interpreter or MCP server absent**: state it once, fall back to the
-  by-hand procedure, never retry in a loop. Interactive auth is a human step.
+Hooks, subagents, `/commands`, plugin path variables and MCP servers are HOST
+capabilities that vary by host AND version — subagents and MCP are native to
+some non-Claude runtimes, so DETECT them, never assume "Claude Code only".
+**Each is an accelerator with a written fallback; the skill finishes its job
+without it, more slowly** — a portable body names the inline procedure, not one
+host's exact tool spelling. Write the three fallback cases into the body, in
+the agent's words, at the point it will need them — a HOST lacking a capability
+(the set differs per host: not every non-Claude runtime lacks subagents/MCP), a
+recommended companion absent, and a tool/interpreter/MCP server absent (state it
+once, fall back by hand, never loop; interactive auth is a human step). The
+fallback shapes are in `references/host-capabilities.md`; the per-host
+capability matrix (with each norm's owner and check date) in
+`references/agent-skills-spec.md`.
 
 A fallback you know but did not write is not a fallback.
 
