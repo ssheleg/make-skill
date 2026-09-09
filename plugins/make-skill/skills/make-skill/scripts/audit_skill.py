@@ -248,6 +248,12 @@ TIME_BRANCH_RE = re.compile(
     r"november|december|\d{4})\b", re.I)
 BUNDLE_DIRS = ("references", "scripts", "assets")
 
+# A file in a publishable payload whose name reads as a credential. Fixtures and
+# test data are the common carriers; the auditor names it rather than shipping it.
+DIST_SECRET_RE = re.compile(
+    r"(?i)(?:^|[._/-])(?:secret|secrets|token|password|passwd|api[_-]?key|apikey|"
+    r"credential|credentials|\.env|id_rsa|id_ed25519|private[_-]?key)(?:$|[._/-])")
+
 
 class Audit:
     """Collects verdicts so every check reports, rather than the first failure."""
@@ -442,6 +448,7 @@ def audit(skill_dir, house=False):
     _check_body_budget(a, body, rel, house)
     _check_bundle(a, skill_dir, text, name_on_disk)
     _check_links(a, skill_dir, text, rel)
+    _check_distribution(a, skill_dir, name_on_disk)
     _check_prose(a, body, rel)
     return a
 
@@ -672,6 +679,56 @@ def _bundle_closure(skill_dir, skill_text):
             continue
         stack.extend(k for k in named_in(txt) if k not in seen)
     return seen
+
+
+def package_closure(payload_files, required, optional):
+    """Whether a PACKAGED payload resolves its references (PXS-06 / ED-01.02).
+
+    `payload_files` is the set of paths actually present in what would ship —
+    the packaged copy, not the whole checkout, because a checkout resolves a
+    ref through a neighbour the package leaves behind. A REQUIRED reference
+    missing from the payload FAILS closure; an OPTIONAL one missing is reported
+    as optional, never promoted to required (an external optional reference is
+    not the package's to carry).
+    """
+    present = set(payload_files)
+    missing_required = sorted(r for r in required if r not in present)
+    missing_optional = sorted(o for o in optional if o not in present)
+    return {"ok": not missing_required,
+            "missing_required": missing_required,
+            "optional_unavailable": missing_optional}
+
+
+def _check_distribution(a, skill_dir, dir_name):
+    """The publishable payload carries no outward symlink and no undeclared secret.
+
+    A symlink pointing outside the skill directory resolves on the author's
+    machine and dangles (or leaks) everywhere else; a file whose name reads as
+    a credential is a secret nobody declared. Neither belongs in what ships.
+    """
+    root = os.path.realpath(skill_dir)
+    found_symlink = found_secret = False
+    for base, dirs, files in os.walk(skill_dir):
+        for entry in list(dirs) + files:
+            full = os.path.join(base, entry)
+            rel = os.path.relpath(full, skill_dir)
+            if os.path.islink(full):
+                target = os.path.realpath(full)
+                if not (target == root or target.startswith(root + os.sep)):
+                    found_symlink = True
+                    a.gap("DIST_SYMLINK_ESCAPE",
+                          "%s is a symlink pointing outside the skill directory — it "
+                          "dangles or leaks when the payload ships without its target"
+                          % rel, os.path.join(dir_name, rel))
+            if os.path.isfile(full) and DIST_SECRET_RE.search(rel):
+                found_secret = True
+                a.gap("DIST_UNDECLARED_SECRET",
+                      "%s reads as a credential — a secret must not ride in a "
+                      "publishable payload; exclude it (.npmignore / files allowlist)"
+                      % rel, os.path.join(dir_name, rel))
+    if not found_symlink and not found_secret:
+        a.ok("DIST_PAYLOAD", "publishable payload carries no outward symlink or "
+             "undeclared secret", dir_name)
 
 
 def _check_bundle(a, skill_dir, skill_text, dir_name):
