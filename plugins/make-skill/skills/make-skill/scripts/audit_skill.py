@@ -101,19 +101,79 @@ CHARS_PER_TOKEN = 3.9
 
 # Optional tokenizer adapter. `None` = unresolved; tests may inject
 # `(callable, "name")` or `(None, None)` directly to pin either path.
+# `MAKE_SKILL_TOKENIZER` selects a tiktoken encoding by name; an UNSUPPORTED
+# name refuses to measure (a warning + UNMEASURED) — it never silently falls
+# back to another encoding or to the estimate, because a verdict from the
+# wrong instrument wearing the right instrument's name is worse than no
+# verdict (FIX-MS-01.02).
 TOKENIZER = None
+DEFAULT_ENCODING = "cl100k_base"
+
+# Who owns each threshold — `spec` is the Agent Skills standard / Anthropic's
+# platform rules, `house` is this family's working rule, `host` would be a
+# per-host runtime limit. A number without its authority reads as physics;
+# these are policies, each negotiable only with its owner.
+THRESHOLDS = {
+    "BODY_MAX_LINES": ("spec", 500),
+    "BODY_MAX_TOKENS": ("spec", 5000),
+    "BODY_TARGET_TOKENS": ("house", 4750),
+    "DESC_MAX_CHARS": ("spec", 1024),
+}
+
+# The differential corpus: pinned counts for DEFAULT_ENCODING, measured with
+# tiktoken 0.14.0 (2026-09-09). Same string + same tokenizer revision must give
+# the same measured count on every machine — a drift here means the adapter
+# or the encoding changed, and either is a finding, never a rounding error.
+TOKEN_CORPUS = {
+    "english": ("the quick brown fox jumps over the lazy dog", 9),
+    "code": ("def verify(sig, key):\n    return hmac.compare_digest(sig, key)\n", 15),
+    "russian": ("проверка бюджета токенов выполняется настоящим токенизатором", 28),
+    "mixed": ("body budget: бюджет тела — 5000 tokens, не оценка", 22),
+    "cjk": ("字符预算不是估计值", 9),
+}
 
 
 def resolve_tokenizer():
     global TOKENIZER
     if TOKENIZER is None:
+        name = os.environ.get("MAKE_SKILL_TOKENIZER") or DEFAULT_ENCODING
+        # tiktoken caches encoding data in TMPDIR by default — residue a test
+        # run must not leave. A stable per-user cache, unless the operator
+        # already chose one.
+        os.environ.setdefault("TIKTOKEN_CACHE_DIR", os.path.join(
+            os.path.expanduser("~"), ".cache", "make-skill", "tiktoken"))
         try:
             import tiktoken
-            enc = tiktoken.get_encoding("cl100k_base")
-            TOKENIZER = (lambda text: len(enc.encode(text)), "tiktoken:cl100k_base")
-        except Exception:
+            enc = tiktoken.get_encoding(name)
+            TOKENIZER = (lambda text: len(enc.encode(text)), f"tiktoken:{name}")
+        except Exception as exc:
+            if os.environ.get("MAKE_SKILL_TOKENIZER"):
+                print(f"audit: tokenizer {name!r} is unsupported ({exc}) — token "
+                      "budgets are UNMEASURED, not silently re-measured with a "
+                      "different encoding", file=sys.stderr)
             TOKENIZER = (None, None)
     return TOKENIZER
+
+
+def corpus_check():
+    """The adapter against the pinned oracle. Returns (verdict, detail):
+    'agree' when every sample matches its pinned count, 'NOT_RUN' without a
+    tokenizer, 'DISAGREE' naming the first divergent sample."""
+    count_fn, tok_name = resolve_tokenizer()
+    if count_fn is None:
+        return "NOT_RUN", "no tokenizer installed — the differential did not run"
+    if tok_name != f"tiktoken:{DEFAULT_ENCODING}":
+        return "NOT_RUN", (f"corpus counts are pinned for {DEFAULT_ENCODING}; "
+                           f"{tok_name} is a different instrument")
+    for name, (sample, pinned) in sorted(TOKEN_CORPUS.items()):
+        got = count_fn(sample)
+        if got != pinned:
+            return "DISAGREE", (f"{name}: adapter says {got}, the pinned oracle "
+                                f"says {pinned} — same string, same revision, "
+                                "different count")
+    return "agree", f"{len(TOKEN_CORPUS)} samples agree with {tok_name}"
+
+
 TOC_MIN_LINES = 100     # Anthropic: longer reference files need a table of contents
 
 SPEC_KEYS = {"name", "description", "license", "compatibility", "metadata", "allowed-tools"}

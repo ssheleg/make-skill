@@ -140,8 +140,9 @@ def t_missing_required_ref_blocks_dispatch():
 
 
 def t_token_figures_are_labeled_estimates():
-    """A body past the budget: the verdict must carry the estimate marker and its
-    basis — an estimate that hides its basis reads as a measurement."""
+    """A body past the budget: the verdict either carries the estimate marker
+    and its basis, or names the tokenizer that MEASURED it (FIX-MS-01.01/.02)
+    — a bare number that says neither reads as physics."""
     long_body = "Read `references/guide.en.md` when starting.\n\n" + ("An English rule line. " * 2600)
     d, skill_dir = fixture(long_body, {"guide.en.md": EN_BODY})
     try:
@@ -151,9 +152,10 @@ def t_token_figures_are_labeled_estimates():
             f"a 2600-sentence body raised no token verdict:\n{out[-300:]}"
         token_lines = [l for l in out.splitlines() if "token" in l and ("BODY" in l)]
         assert token_lines, "no token verdict line found"
-        assert any("~" in l for l in token_lines), \
-            f"a token figure is printed as a measurement, not an estimate: {token_lines[:2]}"
-        assert "chars" in out, "the estimate does not print its chars basis"
+        assert any(("~" in l and "chars" in out) or "tiktoken:" in l
+                   for l in token_lines), \
+            (f"a token figure names neither its estimate basis nor its "
+             f"tokenizer: {token_lines[:2]}")
     finally:
         shutil.rmtree(d)
 
