@@ -174,6 +174,57 @@ def corpus_check():
     return "agree", f"{len(TOKEN_CORPUS)} samples agree with {tok_name}"
 
 
+# Optional FULL-YAML conformance adapter (FIX-MS-02.02). The strict subset
+# parser is the always-available precheck; where a real YAML parser is ALSO
+# installed, it is used as an ORACLE — the subset parse is compared against it
+# on quoted scalars, escapes and multiline forms, and a divergence is a
+# reported finding. Without the parser there is NO PASS of a full-YAML check:
+# the verdict is NOT_RUN, never a green tick, and malformed input is always an
+# error rather than a silent pass.
+YAML_PARSER = None
+
+
+def resolve_yaml_parser():
+    global YAML_PARSER
+    if YAML_PARSER is None:
+        try:
+            import yaml
+            YAML_PARSER = (lambda s: yaml.safe_load(s), "pyyaml")
+        except Exception:
+            YAML_PARSER = (None, None)
+    return YAML_PARSER
+
+
+def yaml_conformance(frontmatter_text):
+    """Compare the strict-subset parse against a full YAML parser, where one is
+    installed. Returns (verdict, detail): 'agree' | 'DIVERGES: …' |
+    'MALFORMED: …' | 'NOT_RUN: …' (no parser). The subset parse never scores
+    a full-YAML PASS on its own."""
+    parse, name = resolve_yaml_parser()
+    if parse is None:
+        return "NOT_RUN", ("no full YAML parser installed — the strict subset "
+                           "precheck ran, but full-YAML conformance is unproven")
+    try:
+        real = parse(frontmatter_text)
+    except Exception as exc:                       # noqa: BLE001 — any parse error
+        return "MALFORMED", f"the real parser rejects this frontmatter: {exc}"
+    if not isinstance(real, dict):
+        return "MALFORMED", "frontmatter is not a mapping"
+    subset, _lines = parse_frontmatter(frontmatter_text)
+    diffs = []
+    for k in set(real) | set(subset):
+        rv, sv = real.get(k), subset.get(k)
+        if isinstance(rv, dict) and isinstance(sv, dict):
+            for kk in set(rv) | set(sv):
+                if rv.get(kk) != sv.get(kk):
+                    diffs.append(f"{k}.{kk}: subset {sv.get(kk)!r} vs {name} {rv.get(kk)!r}")
+        elif rv != sv:
+            diffs.append(f"{k}: subset {sv!r} vs {name} {rv!r}")
+    if diffs:
+        return "DIVERGES", "; ".join(sorted(diffs))
+    return "agree", f"the subset parse matches {name}"
+
+
 TOC_MIN_LINES = 100     # Anthropic: longer reference files need a table of contents
 
 SPEC_KEYS = {"name", "description", "license", "compatibility", "metadata", "allowed-tools"}
@@ -369,6 +420,20 @@ def audit(skill_dir, house=False):
               "pass two values for one key" % named, rel)
     else:
         a.ok("FM_DUPLICATE_KEY", "no duplicate frontmatter keys", rel)
+
+    yv, yd = yaml_conformance(m.group(1))
+    if yv == "DIVERGES":
+        a.gap("FM_YAML_CONFORMANCE", "the strict-subset parse diverges from the "
+              "installed YAML parser: %s — the uploader will read what the real "
+              "parser reads, not the subset" % yd, rel)
+    elif yv == "MALFORMED":
+        a.gap("FM_YAML_CONFORMANCE", "malformed frontmatter: %s" % yd, rel)
+    elif yv == "NOT_RUN":
+        a.ok("FM_YAML_CONFORMANCE", "full-YAML conformance NOT_RUN (%s) — the "
+             "strict subset precheck ran; install PyYAML to prove conformance" % yd, rel)
+    else:
+        a.ok("FM_YAML_CONFORMANCE", "the subset parse matches the installed "
+             "YAML parser", rel)
 
     _check_name(a, fm, fm_lines, name_on_disk, rel)
     _check_description(a, fm, fm_lines, rel, house)
