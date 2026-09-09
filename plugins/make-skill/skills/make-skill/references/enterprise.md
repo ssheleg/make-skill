@@ -94,6 +94,31 @@ Reading the results: declining trigger accuracy → fix the description; coexist
 conflicts → narrow descriptions or merge the skills; persistently low output
 quality → rewrite or add validation; persistent failure across updates → deprecate.
 
+## Selective knowledge adoption — the source/runtime contract
+
+When a skill BORROWS from an external source — a snippet, a method, a whole
+reference — the intake is ONE canonical procedure, and it reaches a verdict
+WITHOUT calling any setup, login or provider: classification is reading, not
+running. Four verdicts, keyed by what the source actually needs:
+
+| The source... | Verdict | Why |
+|---|---|---|
+| authenticates by **OAuth but ships no key** | ADOPT, **declare the dependency** | no key is not "no dependency" — the runtime still needs the OAuth service; declare it, do not conclude it is free-standing |
+| runs an **`npx <tool>` with the package undeclared** | REJECT the undeclared runtime fetch, or **declare the exact package+version** | an `npx` at runtime is a supply-chain edge; an undeclared one is a fetch of whatever the registry serves that day |
+| ships **no license** | DO NOT COPY the bytes | reference the METHOD (procedures over answers), never vendor unlicensed source; adopt only what you may |
+| names a **deprecated source** | adopt the **method**, not the bytes; note the deprecation | pinning to a dead/moving ref imports a liability with an expiry |
+
+Two receipts every adoption carries:
+
+- **A pinned permalink** to the exact source revision (a commit-addressed URL,
+  never a branch tip) for anything copied OR adapted — the bytes must be
+  traceable to what they came from.
+- **An attribution receipt** — who wrote it, under what license, adapted how —
+  beside the borrowed content, so the next reader can re-verify the chain.
+
+`references/authoring.md`'s body-pattern list routes here whenever a pattern is
+copied from outside rather than written fresh.
+
 ## Lifecycle
 
 1. **Plan** — pick workflows that are repetitive, error-prone, or need specialist

@@ -1,0 +1,72 @@
+{
+ "note": "Self-authored negative corpus for FIX-ED-01.02 — the packaged-payload closure rule. Each case is (payload files present, required refs, optional refs) with the verdict package_closure() must return. No foreign runtime is copied; the digests are illustrative sha256 hex.",
+ "cases": [
+  {
+   "id": "complete",
+   "payload": [
+    "references/a.md",
+    "references/b.md"
+   ],
+   "required": [
+    "references/a.md",
+    "references/b.md"
+   ],
+   "optional": [],
+   "expect_ok": true,
+   "expect_missing_required": [],
+   "expect_optional_unavailable": []
+  },
+  {
+   "id": "required-copy-removed",
+   "payload": [
+    "references/a.md"
+   ],
+   "required": [
+    "references/a.md",
+    "references/b.md"
+   ],
+   "optional": [],
+   "expect_ok": false,
+   "expect_missing_required": [
+    "references/b.md"
+   ],
+   "expect_optional_unavailable": []
+  },
+  {
+   "id": "optional-unavailable-stays-optional",
+   "payload": [
+    "references/a.md"
+   ],
+   "required": [
+    "references/a.md"
+   ],
+   "optional": [
+    "references/ext.md"
+   ],
+   "expect_ok": true,
+   "expect_missing_required": [],
+   "expect_optional_unavailable": [
+    "references/ext.md"
+   ]
+  },
+  {
+   "id": "manifest-digest-shape",
+   "manifest": [
+    {
+     "path": "references/a.md",
+     "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+   ],
+   "payload": [
+    "references/a.md"
+   ],
+   "required": [
+    "references/a.md"
+   ],
+   "optional": [],
+   "expect_ok": true,
+   "expect_missing_required": [],
+   "expect_optional_unavailable": []
+  }
+ ]
+}

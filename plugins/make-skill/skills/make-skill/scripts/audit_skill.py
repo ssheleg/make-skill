@@ -92,7 +92,139 @@ BODY_TARGET_TOKENS = 4750
 # No tokenizer in the stdlib. 3.9 chars/token is measured, not assumed: tokenizing
 # this skill's own bundle gives 3.78-4.47. `claude plugin details` is far more
 # pessimistic (~2.8) and will always show a bigger number than this estimate.
+# AND the estimate is an ESTIMATE (FIX-MS-01.01): a 16 000-hieroglyph body is
+# 16 000 cl100k tokens and estimates ~4 102 — so the estimate never grants a
+# token PASS and is never CALLED tokens. A real, NAMED tokenizer measures;
+# without one the token budget is UNMEASURED and the estimate rides beside it
+# as its own field.
 CHARS_PER_TOKEN = 3.9
+
+# Optional tokenizer adapter. `None` = unresolved; tests may inject
+# `(callable, "name")` or `(None, None)` directly to pin either path.
+# `MAKE_SKILL_TOKENIZER` selects a tiktoken encoding by name; an UNSUPPORTED
+# name refuses to measure (a warning + UNMEASURED) — it never silently falls
+# back to another encoding or to the estimate, because a verdict from the
+# wrong instrument wearing the right instrument's name is worse than no
+# verdict (FIX-MS-01.02).
+TOKENIZER = None
+DEFAULT_ENCODING = "cl100k_base"
+
+# Who owns each threshold — `spec` is the Agent Skills standard / Anthropic's
+# platform rules, `house` is this family's working rule, `host` would be a
+# per-host runtime limit. A number without its authority reads as physics;
+# these are policies, each negotiable only with its owner.
+THRESHOLDS = {
+    "BODY_MAX_LINES": ("spec", 500),
+    "BODY_MAX_TOKENS": ("spec", 5000),
+    "BODY_TARGET_TOKENS": ("house", 4750),
+    "DESC_MAX_CHARS": ("spec", 1024),
+}
+
+# The differential corpus: pinned counts for DEFAULT_ENCODING, measured with
+# tiktoken 0.14.0 (2026-09-09). Same string + same tokenizer revision must give
+# the same measured count on every machine — a drift here means the adapter
+# or the encoding changed, and either is a finding, never a rounding error.
+TOKEN_CORPUS = {
+    "english": ("the quick brown fox jumps over the lazy dog", 9),
+    "code": ("def verify(sig, key):\n    return hmac.compare_digest(sig, key)\n", 15),
+    "russian": ("проверка бюджета токенов выполняется настоящим токенизатором", 28),
+    "mixed": ("body budget: бюджет тела — 5000 tokens, не оценка", 22),
+    "cjk": ("字符预算不是估计值", 9),
+}
+
+
+def resolve_tokenizer():
+    global TOKENIZER
+    if TOKENIZER is None:
+        name = os.environ.get("MAKE_SKILL_TOKENIZER") or DEFAULT_ENCODING
+        # tiktoken caches encoding data in TMPDIR by default — residue a test
+        # run must not leave. A stable per-user cache, unless the operator
+        # already chose one.
+        os.environ.setdefault("TIKTOKEN_CACHE_DIR", os.path.join(
+            os.path.expanduser("~"), ".cache", "make-skill", "tiktoken"))
+        try:
+            import tiktoken
+            enc = tiktoken.get_encoding(name)
+            TOKENIZER = (lambda text: len(enc.encode(text)), f"tiktoken:{name}")
+        except Exception as exc:
+            if os.environ.get("MAKE_SKILL_TOKENIZER"):
+                print(f"audit: tokenizer {name!r} is unsupported ({exc}) — token "
+                      "budgets are UNMEASURED, not silently re-measured with a "
+                      "different encoding", file=sys.stderr)
+            TOKENIZER = (None, None)
+    return TOKENIZER
+
+
+def corpus_check():
+    """The adapter against the pinned oracle. Returns (verdict, detail):
+    'agree' when every sample matches its pinned count, 'NOT_RUN' without a
+    tokenizer, 'DISAGREE' naming the first divergent sample."""
+    count_fn, tok_name = resolve_tokenizer()
+    if count_fn is None:
+        return "NOT_RUN", "no tokenizer installed — the differential did not run"
+    if tok_name != f"tiktoken:{DEFAULT_ENCODING}":
+        return "NOT_RUN", (f"corpus counts are pinned for {DEFAULT_ENCODING}; "
+                           f"{tok_name} is a different instrument")
+    for name, (sample, pinned) in sorted(TOKEN_CORPUS.items()):
+        got = count_fn(sample)
+        if got != pinned:
+            return "DISAGREE", (f"{name}: adapter says {got}, the pinned oracle "
+                                f"says {pinned} — same string, same revision, "
+                                "different count")
+    return "agree", f"{len(TOKEN_CORPUS)} samples agree with {tok_name}"
+
+
+# Optional FULL-YAML conformance adapter (FIX-MS-02.02). The strict subset
+# parser is the always-available precheck; where a real YAML parser is ALSO
+# installed, it is used as an ORACLE — the subset parse is compared against it
+# on quoted scalars, escapes and multiline forms, and a divergence is a
+# reported finding. Without the parser there is NO PASS of a full-YAML check:
+# the verdict is NOT_RUN, never a green tick, and malformed input is always an
+# error rather than a silent pass.
+YAML_PARSER = None
+
+
+def resolve_yaml_parser():
+    global YAML_PARSER
+    if YAML_PARSER is None:
+        try:
+            import yaml
+            YAML_PARSER = (lambda s: yaml.safe_load(s), "pyyaml")
+        except Exception:
+            YAML_PARSER = (None, None)
+    return YAML_PARSER
+
+
+def yaml_conformance(frontmatter_text):
+    """Compare the strict-subset parse against a full YAML parser, where one is
+    installed. Returns (verdict, detail): 'agree' | 'DIVERGES: …' |
+    'MALFORMED: …' | 'NOT_RUN: …' (no parser). The subset parse never scores
+    a full-YAML PASS on its own."""
+    parse, name = resolve_yaml_parser()
+    if parse is None:
+        return "NOT_RUN", ("no full YAML parser installed — the strict subset "
+                           "precheck ran, but full-YAML conformance is unproven")
+    try:
+        real = parse(frontmatter_text)
+    except Exception as exc:                       # noqa: BLE001 — any parse error
+        return "MALFORMED", f"the real parser rejects this frontmatter: {exc}"
+    if not isinstance(real, dict):
+        return "MALFORMED", "frontmatter is not a mapping"
+    subset, _lines = parse_frontmatter(frontmatter_text)
+    diffs = []
+    for k in set(real) | set(subset):
+        rv, sv = real.get(k), subset.get(k)
+        if isinstance(rv, dict) and isinstance(sv, dict):
+            for kk in set(rv) | set(sv):
+                if rv.get(kk) != sv.get(kk):
+                    diffs.append(f"{k}.{kk}: subset {sv.get(kk)!r} vs {name} {rv.get(kk)!r}")
+        elif rv != sv:
+            diffs.append(f"{k}: subset {sv!r} vs {name} {rv!r}")
+    if diffs:
+        return "DIVERGES", "; ".join(sorted(diffs))
+    return "agree", f"the subset parse matches {name}"
+
+
 TOC_MIN_LINES = 100     # Anthropic: longer reference files need a table of contents
 
 SPEC_KEYS = {"name", "description", "license", "compatibility", "metadata", "allowed-tools"}
@@ -115,6 +247,12 @@ TIME_BRANCH_RE = re.compile(
     r"(?:january|february|march|april|may|june|july|august|september|october|"
     r"november|december|\d{4})\b", re.I)
 BUNDLE_DIRS = ("references", "scripts", "assets")
+
+# A file in a publishable payload whose name reads as a credential. Fixtures and
+# test data are the common carriers; the auditor names it rather than shipping it.
+DIST_SECRET_RE = re.compile(
+    r"(?i)(?:^|[._/-])(?:secret|secrets|token|password|passwd|api[_-]?key|apikey|"
+    r"credential|credentials|\.env|id_rsa|id_ed25519|private[_-]?key)(?:$|[._/-])")
 
 
 class Audit:
@@ -142,11 +280,23 @@ class Audit:
 
 
 def parse_frontmatter(text):
-    """YAML subset: top-level scalars, block scalars, one nested map.
+    """A STRICT stdlib precheck of an explicitly bounded YAML subset — NOT full
+    YAML, and it does not pretend to be (FIX-MS-02.01).
 
-    Returns (data, line_of_key). A full YAML parser is not in the stdlib and a
-    skill's frontmatter is a flat map by specification, so this is enough — and
-    it keeps the script dependency-free, which is the point of shipping it.
+    The supported subset: top-level scalars (quoted or plain), block scalars
+    (`>`/`|` and their chomping variants), inline flow sequences (`[a, b]`),
+    and ONE nested map. Everything else is out of subset and must be caught,
+    never waved through — a precheck that silently accepts what the real
+    uploader rejects is worse than no precheck.
+
+    Returns (data, line_of_key). A bare scalar that a real YAML parser would
+    COERCE keeps its type here too: `version: 1.0` becomes the float 1.0, not
+    the string "1.0", so a field the contract requires to be a string
+    (metadata values, name, description) is caught by its own type check
+    instead of passing as a stringified number. Quote it and it stays a
+    string. A full YAML parser is not in the stdlib and a skill's frontmatter
+    is a flat map by specification, so this is enough — and it keeps the
+    script dependency-free, which is the point of shipping it.
 
     A plain scalar may continue on indented lines and YAML folds them into one
     value with a space. Dropping those lines is how a description whose real
@@ -154,8 +304,11 @@ def parse_frontmatter(text):
     and the 970 working limit — a clean bill from the family's standard-keeper
     for a skill the Skills API rejects on upload (2026-08-16, B-63).
     """
+    parse_frontmatter.last_duplicates = []
     data, lines, key, mode = {}, {}, None, None
     scalars = set()
+    duplicates = []            # (scope, key) pairs seen more than once
+    nested_seen = set()
     for i, raw in enumerate(text.split("\n"), start=2):  # +2: the opening '---'
         if not raw.strip():
             continue
@@ -165,6 +318,9 @@ def parse_frontmatter(text):
                 key, mode = None, None
                 continue
             key, val = m.group(1), m.group(2).strip()
+            if key in data:
+                duplicates.append(("top", key))
+            nested_seen = set()
             lines[key] = i
             if val in (">", "|", ">-", "|-", ">+", "|+"):
                 data[key], mode = "", "block"
@@ -184,10 +340,36 @@ def parse_frontmatter(text):
         elif mode == "map":
             m = re.match(r"^\s+([A-Za-z0-9_-]+):\s*(.*)$", raw)
             if m:
-                data[key][m.group(1)] = _unquote(m.group(2).strip())
+                if m.group(1) in nested_seen:
+                    duplicates.append((key, m.group(1)))
+                nested_seen.add(m.group(1))
+                data[key][m.group(1)] = _typed_scalar(m.group(2).strip())
     for k in scalars:
         data[k] = _finish_scalar(data[k])
+    parse_frontmatter.last_duplicates = duplicates
     return data, lines
+
+
+def _typed_scalar(v):
+    """A bare scalar keeps the TYPE a real YAML parser would give it; a quoted
+    one stays a string. This is what lets a string-required field notice that
+    `1.0` is a float and `true` is a bool (FIX-MS-02.01)."""
+    v = v.strip()
+    if len(v) >= 2 and v[0] == v[-1] and v[0] in "\"'":
+        return v[1:-1]                       # explicitly quoted → string
+    if v in ("true", "false", "True", "False"):
+        return v.lower() == "true"
+    if v in ("null", "~", "Null", "NULL", ""):
+        return None if v != "" else ""
+    if re.match(r"^[+-]?\d+$", v):
+        return int(v)
+    if re.match(r"^[+-]?(\d+\.\d*|\.\d+|\d+)([eE][+-]?\d+)?$", v) and \
+            re.search(r"[.eE]", v):
+        try:
+            return float(v)
+        except ValueError:
+            return v
+    return v
 
 
 def _finish_scalar(v):
@@ -236,6 +418,29 @@ def audit(skill_dir, house=False):
     fm, fm_lines = parse_frontmatter(m.group(1))
     body = text[m.end():]
 
+    dups = getattr(parse_frontmatter, "last_duplicates", [])
+    if dups:
+        named = ", ".join(k if scope == "top" else f"{scope}.{k}" for scope, k in dups)
+        a.gap("FM_DUPLICATE_KEY", "duplicate frontmatter key(s): %s — a real YAML "
+              "parser rejects or last-wins them; either way the precheck must not "
+              "pass two values for one key" % named, rel)
+    else:
+        a.ok("FM_DUPLICATE_KEY", "no duplicate frontmatter keys", rel)
+
+    yv, yd = yaml_conformance(m.group(1))
+    if yv == "DIVERGES":
+        a.gap("FM_YAML_CONFORMANCE", "the strict-subset parse diverges from the "
+              "installed YAML parser: %s — the uploader will read what the real "
+              "parser reads, not the subset" % yd, rel)
+    elif yv == "MALFORMED":
+        a.gap("FM_YAML_CONFORMANCE", "malformed frontmatter: %s" % yd, rel)
+    elif yv == "NOT_RUN":
+        a.ok("FM_YAML_CONFORMANCE", "full-YAML conformance NOT_RUN (%s) — the "
+             "strict subset precheck ran; install PyYAML to prove conformance" % yd, rel)
+    else:
+        a.ok("FM_YAML_CONFORMANCE", "the subset parse matches the installed "
+             "YAML parser", rel)
+
     _check_name(a, fm, fm_lines, name_on_disk, rel)
     _check_description(a, fm, fm_lines, rel, house)
     _check_optional_fields(a, fm, fm_lines, rel)
@@ -243,6 +448,7 @@ def audit(skill_dir, house=False):
     _check_body_budget(a, body, rel, house)
     _check_bundle(a, skill_dir, text, name_on_disk)
     _check_links(a, skill_dir, text, rel)
+    _check_distribution(a, skill_dir, name_on_disk)
     _check_prose(a, body, rel)
     return a
 
@@ -368,32 +574,53 @@ def _check_keys(a, fm, lines, rel):
 
 def _check_body_budget(a, body, rel, house=False):
     n_lines = body.count("\n") + 1
+    count_fn, tok_name = resolve_tokenizer()
     est = int(len(body) / CHARS_PER_TOKEN)
     # Both, not either: a body over the line budget still has to report its
-    # token count, or the second fix arrives only after the first one ships.
+    # token verdict, or the second fix arrives only after the first one ships.
     over = False
     if n_lines >= BODY_MAX_LINES:
         a.gap("BODY_LINES", "body is %d lines, the budget is < %d — move detail into "
               "references/" % (n_lines, BODY_MAX_LINES), rel)
         over = True
-    if est >= BODY_MAX_TOKENS:
-        a.gap("BODY_TOKENS", "body is ~%d tokens (%d chars / %s), the budget is < %d"
-              % (est, len(body), CHARS_PER_TOKEN, BODY_MAX_TOKENS), rel)
+    if count_fn is None:
+        # No adapter, no token verdict: the budget is UNMEASURED, and the
+        # byte/char estimate is reported as an ESTIMATE — it is not tokens,
+        # it cannot PASS the budget, and it cannot fail it either (a
+        # 16k-hieroglyph body estimates ~4k and measures 16k).
+        a.ok("BODY_TOKENS_UNMEASURED",
+             "token budget UNMEASURED — no tokenizer installed; the estimate "
+             "~%d (%d chars / %s) is an estimate, NOT tokens: install tiktoken "
+             "to measure" % (est, len(body), CHARS_PER_TOKEN), rel)
+        if not over:
+            a.ok("BODY_BUDGET", "body is %d lines (budget %d); token budget "
+                 "unmeasured" % (n_lines, BODY_MAX_LINES), rel)
+        if house:
+            a.ok("BODY_HEADROOM_UNMEASURED",
+                 "the %d-token working limit needs a measurement — unmeasured, "
+                 "not passed" % BODY_TARGET_TOKENS, rel)
+        return
+    measured = count_fn(body)
+    if measured >= BODY_MAX_TOKENS:
+        a.gap("BODY_TOKENS", "body is %d tokens (%s), the budget is < %d"
+              % (measured, tok_name, BODY_MAX_TOKENS), rel)
         over = True
     if not over:
-        a.ok("BODY_BUDGET", "body is %d lines / ~%d tokens (budget %d / %d)"
-             % (n_lines, est, BODY_MAX_LINES, BODY_MAX_TOKENS), rel)
+        a.ok("BODY_BUDGET", "body is %d lines / %d tokens (%s; budget %d / %d)"
+             % (n_lines, measured, tok_name, BODY_MAX_LINES, BODY_MAX_TOKENS), rel)
     # The house half, and it is the same rule DESC_HEADROOM applies to the other
     # field: a body at the ceiling cannot absorb the next paragraph, so it gets
-    # absorbed into a reference that should have been split instead.
-    if house and not over and est >= BODY_TARGET_TOKENS:
-        a.gap("BODY_HEADROOM", "body is ~%d tokens — inside the %d budget but past the "
-              "%d working limit (house rule): the next section will breach it, and the "
-              "answer then is a split, not a trim"
-              % (est, BODY_MAX_TOKENS, BODY_TARGET_TOKENS), rel)
+    # absorbed into a reference that should have been split instead. House
+    # thresholds ride the MEASURED count only — a house rule on an estimate is
+    # a verdict on the instrument.
+    if house and not over and measured >= BODY_TARGET_TOKENS:
+        a.gap("BODY_HEADROOM", "body is %d tokens (%s) — inside the %d budget but "
+              "past the %d working limit (house rule): the next section will "
+              "breach it, and the answer then is a split, not a trim"
+              % (measured, tok_name, BODY_MAX_TOKENS, BODY_TARGET_TOKENS), rel)
     elif house and not over:
-        a.ok("BODY_HEADROOM", "body is ~%d/%d tokens, inside the working limit"
-             % (est, BODY_TARGET_TOKENS), rel)
+        a.ok("BODY_HEADROOM", "body is %d/%d tokens (%s), inside the working limit"
+             % (measured, BODY_TARGET_TOKENS, tok_name), rel)
 
 
 def _bundle_closure(skill_dir, skill_text):
@@ -452,6 +679,56 @@ def _bundle_closure(skill_dir, skill_text):
             continue
         stack.extend(k for k in named_in(txt) if k not in seen)
     return seen
+
+
+def package_closure(payload_files, required, optional):
+    """Whether a PACKAGED payload resolves its references (PXS-06 / ED-01.02).
+
+    `payload_files` is the set of paths actually present in what would ship —
+    the packaged copy, not the whole checkout, because a checkout resolves a
+    ref through a neighbour the package leaves behind. A REQUIRED reference
+    missing from the payload FAILS closure; an OPTIONAL one missing is reported
+    as optional, never promoted to required (an external optional reference is
+    not the package's to carry).
+    """
+    present = set(payload_files)
+    missing_required = sorted(r for r in required if r not in present)
+    missing_optional = sorted(o for o in optional if o not in present)
+    return {"ok": not missing_required,
+            "missing_required": missing_required,
+            "optional_unavailable": missing_optional}
+
+
+def _check_distribution(a, skill_dir, dir_name):
+    """The publishable payload carries no outward symlink and no undeclared secret.
+
+    A symlink pointing outside the skill directory resolves on the author's
+    machine and dangles (or leaks) everywhere else; a file whose name reads as
+    a credential is a secret nobody declared. Neither belongs in what ships.
+    """
+    root = os.path.realpath(skill_dir)
+    found_symlink = found_secret = False
+    for base, dirs, files in os.walk(skill_dir):
+        for entry in list(dirs) + files:
+            full = os.path.join(base, entry)
+            rel = os.path.relpath(full, skill_dir)
+            if os.path.islink(full):
+                target = os.path.realpath(full)
+                if not (target == root or target.startswith(root + os.sep)):
+                    found_symlink = True
+                    a.gap("DIST_SYMLINK_ESCAPE",
+                          "%s is a symlink pointing outside the skill directory — it "
+                          "dangles or leaks when the payload ships without its target"
+                          % rel, os.path.join(dir_name, rel))
+            if os.path.isfile(full) and DIST_SECRET_RE.search(rel):
+                found_secret = True
+                a.gap("DIST_UNDECLARED_SECRET",
+                      "%s reads as a credential — a secret must not ride in a "
+                      "publishable payload; exclude it (.npmignore / files allowlist)"
+                      % rel, os.path.join(dir_name, rel))
+    if not found_symlink and not found_secret:
+        a.ok("DIST_PAYLOAD", "publishable payload carries no outward symlink or "
+             "undeclared secret", dir_name)
 
 
 def _check_bundle(a, skill_dir, skill_text, dir_name):

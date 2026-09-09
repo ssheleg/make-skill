@@ -24,6 +24,7 @@ orchestrator, release automation). **make-skill itself** is built to this canon.
 | `references/surfaces.md` | shipping anywhere but Claude Code — Skills API upload/versions/8-per-request, claude.ai zip, the no-network limits |
 | `references/enterprise.md` | installing someone else's skill, or governing a fleet — risk tiers, review checklist, approval gates, lifecycle |
 | `references/retrofit.md` | auditing an existing skill/repo — the 14-item checklist, the evidence rules, the personal-skill short form |
+| `references/outcome-evaluation.md` | proving a skill changed real outcomes — frozen inputs, baseline vs current, artifact checks, the routing/correctness/visual split, PASS/FAIL/ERROR/NOT_RUN |
 | `references/host-capabilities.md` | shipping a **hook, subagent, command, script or MCP dependency** — what each buys and costs, hook events and exit codes, the degradation clauses |
 | `references/claude-code-plugin.md` | anything shipping as a **Claude Code plugin/marketplace** — manifest schemas, component layout, path variables, `validate` failures |
 | `references/distribution.md` | the repo layout, releases, and all five channels — plugin, skills CLI, npx, Cursor, umbrella family repo |
@@ -45,9 +46,8 @@ Detect from the request and any path in `$ARGUMENTS`; announce the choice.
 | Personal skill should become installable | Promote |
 
 With no argument, **detect instead of asking**: a `SKILL.md`, `.claude-plugin/`
-or `plugins/*/skills/*/` in the current directory → run the Retrofit audit and
-report the gap table plus ONE next action. Nothing to detect → ask in one line
-what to create.
+or `plugins/*/skills/*/` here → run the Retrofit audit, report the gap table
+plus ONE next action. Nothing to detect → ask in one line what to create.
 
 Distributable work is a real project: spec (`docs/evidence/specs/`) before
 code, and the spec locks target-project file contracts FIRST — skills are
@@ -129,20 +129,19 @@ House additions on top of the spec:
 
 ### Degradation contract (every skill that touches a host capability)
 
-Hooks, subagents, `/commands`, plugin path variables and MCP servers exist only
-inside Claude Code — a minority of where skills run. **Each is an accelerator
-with a written fallback; the skill still finishes its job without it, more
-slowly.** Write the three cases into the body, in the agent's words, at the
-point it will need them (shapes: `references/host-capabilities.md`):
-
-- **Not Claude Code** (Cursor, Codex, skills CLI, API): no hooks, no subagents,
-  no `/command`. Name the inline procedure; bundled `scripts/` still travel, so
-  give the path per channel.
-- **Recommended plugin/skill absent**: say once what is degraded, continue on
-  the manual path. A stage that refuses to start because an optional companion
-  is missing is broken, not strict.
-- **Tool, interpreter or MCP server absent**: state it once, fall back to the
-  by-hand procedure, never retry in a loop. Interactive auth is a human step.
+Hooks, subagents, `/commands`, plugin path variables and MCP servers are HOST
+capabilities that vary by host AND version — subagents and MCP are native to
+some non-Claude runtimes, so DETECT them, never assume "Claude Code only".
+**Each is an accelerator with a written fallback; the skill finishes its job
+without it, more slowly** — a portable body names the inline procedure, not one
+host's exact tool spelling. Write the three fallback cases into the body, in
+the agent's words, at the point it will need them — a HOST lacking a capability
+(the set differs per host: not every non-Claude runtime lacks subagents/MCP), a
+recommended companion absent, and a tool/interpreter/MCP server absent (state it
+once, fall back by hand, never loop; interactive auth is a human step). The
+fallback shapes are in `references/host-capabilities.md`; the per-host
+capability matrix (with each norm's owner and check date) in
+`references/agent-skills-spec.md`.
 
 A fallback you know but did not write is not a fallback.
 
@@ -198,28 +197,25 @@ Done = the five VERIFIED facts in that sequence's step 10 — nothing assumed.
 
 ## Retrofit (bring an existing skill/repo up to standard)
 
-Audit first, fix second, in the same session. Verdict per item: PASS / GAP /
-NOT-RUN with evidence — a `file:line` or the output of the command you actually
-ran. "Looks fine" is not a verdict, and neither is a PASS on a check that was
-reasoned about instead of executed; a check whose tool is absent is **NOT-RUN
-with the reason**, never a PASS.
+**Three modes, three effect contracts (MS-03): `audit` reads (evidence + plan
+only); `retrofit` writes only what the request scoped; `release` publishes.**
+The move between them is decided by INTENT and prior authorization, never by
+the skill invoked — a compliance QUESTION stays an audit («аудит скилов» asks
+for a verdict, not a diff). Verdict per item: PASS / GAP / NOT-RUN with
+evidence — a `file:line` or the command's actual output. "Looks fine" is not a
+verdict, nor is a PASS reasoned about instead of executed; a check whose tool
+is absent is **NOT-RUN with the reason**, never a PASS.
 
-**Run the bundled auditor first** — it does the mechanical half
-deterministically, and it never depends on an unset variable:
+**Run the bundled auditor first** (the deterministic mechanical half), then
+work the 14-item checklist — both the `make-skill-audit --house` invocation
+and the checklist live in `references/retrofit.md`; a PERSONAL skill owes only
+three of the items.
 
-```bash
-make-skill-audit <skill-dir> --house    # Claude Code: the plugin's bin/ is on PATH
-```
-
-Anywhere else, run `scripts/audit_skill.py` from the make-skill directory you
-just read this from. **Then work the 14-item checklist in
-`references/retrofit.md`** — spec floor, plugin floor, surfaces, one-job, entry
-point, layout and version sync, validator and CI, evaluations, README,
-distribution, repo meta, gotchas, protocols, host capabilities. For a PERSONAL
-skill only three items apply; that file says which.
-
-**Then:** report the gap table, fix everything fixable now, bump a minor/patch
-version, run the release checklist.
+**Then: report the gap table — and stop there in `audit` mode.** Only with
+`retrofit` granted: fix what the report names; only with `release`: bump
+minor/patch and run the release checklist. Load
+`references/outcome-evaluation.md` only when the work CHANGES behaviour — a
+conformance audit stops at its report, no outcome arms.
 
 ## Promote (personal → distributable)
 

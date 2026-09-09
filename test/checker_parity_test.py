@@ -139,23 +139,36 @@ def _():
 
 @case("--house applies the 4750 body working limit, not only the description one")
 def _():
-    body = "# s\n\n" + ("word " * int(4800 * audit_skill.CHARS_PER_TOKEN / 5))
-    d = skill_dir("name: planted\ndescription: Use when planting. Триггеры - посадить.", body)
-    assert "BODY_HEADROOM" in audit_ids(d, house=True), \
-        "a body past 4750 tokens got no gap under --house"
+    # A measured context, pinned: house thresholds ride the MEASURED count
+    # only (FIX-MS-01.01), so the fake adapter makes the case deterministic
+    # on machines with and without tiktoken alike.
+    audit_skill.TOKENIZER = (lambda text: 4800, "fake-test")
+    try:
+        d = skill_dir("name: planted\ndescription: Use when planting. Триггеры - посадить.", "# s\n\nbody")
+        assert "BODY_HEADROOM" in audit_ids(d, house=True), \
+            "a body past 4750 measured tokens got no gap under --house"
+    finally:
+        audit_skill.TOKENIZER = None
 
 
 @case("without --house the working limit is not applied — it is a house rule")
 def _():
-    body = "# s\n\n" + ("word " * int(4800 * audit_skill.CHARS_PER_TOKEN / 5))
-    d = skill_dir("name: planted\ndescription: Use when planting.", body)
-    assert "BODY_HEADROOM" not in audit_ids(d, house=False)
+    audit_skill.TOKENIZER = (lambda text: 4800, "fake-test")
+    try:
+        d = skill_dir("name: planted\ndescription: Use when planting.", "# s\n\nbody")
+        assert "BODY_HEADROOM" not in audit_ids(d, house=False)
+    finally:
+        audit_skill.TOKENIZER = None
 
 
 @case("a body inside the working limit is not gapped")
 def _():
-    d = skill_dir("name: planted\ndescription: Use when planting. Триггеры - посадить.")
-    assert "BODY_HEADROOM" not in audit_ids(d, house=True)
+    audit_skill.TOKENIZER = (lambda text: 100, "fake-test")
+    try:
+        d = skill_dir("name: planted\ndescription: Use when planting. Триггеры - посадить.")
+        assert "BODY_HEADROOM" not in audit_ids(d, house=True)
+    finally:
+        audit_skill.TOKENIZER = None
 
 
 # --- the drift guard: watched failing against a real divergence -------------
@@ -247,6 +260,56 @@ def _():
     assert audit_skill.DESC_WHAT_MIN * 2 < 149, (
         "the floor is no longer clear of the smallest measured WHAT half; re-measure "
         "before raising it, because the number 149 is a fact about a tree that moves")
+
+
+@case("empty name and empty description are rejected; valid nonempty metadata passes")
+def _():
+    # FIX-ED-01.02 — parity on the emptiest metadata, the case a parser skips.
+    empty = audit_ids(skill_dir('name: ""\ndescription: ""'))
+    assert "NAME_MISSING" in empty or "NAME_EMPTY" in empty, \
+        "an empty name was accepted"
+    assert "DESC_MISSING" in empty, "an empty description was accepted"
+    valid = audit_ids(skill_dir(
+        "name: planted\ndescription: " + ("Use when auditing a skill against the "
+        "standard; triggers audit, conformance, retrofit. " * 3).strip()))
+    assert "NAME_MISSING" not in valid and "NAME_EMPTY" not in valid, \
+        "a valid name was refused"
+    assert "DESC_MISSING" not in valid, "a valid description was refused"
+
+
+@case("the package resource closure fails on a removed required copy, keeps optionals optional")
+def _():
+    # FIX-ED-01.02 — the packaged payload, not the whole checkout.
+    import json
+    fx = json.load(open(os.path.join(os.path.dirname(__file__), "evals",
+                                     "fixtures", "resource-closure.json")))
+    for c in fx["cases"]:
+        r = audit_skill.package_closure(set(c["payload"]), c["required"], c["optional"])
+        assert r["ok"] == c["expect_ok"], "%s: ok %s != %s" % (c["id"], r["ok"], c["expect_ok"])
+        assert r["missing_required"] == c["expect_missing_required"], \
+            "%s: required %s" % (c["id"], r["missing_required"])
+        assert r["optional_unavailable"] == c["expect_optional_unavailable"], \
+            "%s: optional %s" % (c["id"], r["optional_unavailable"])
+
+
+@case("an outward symlink and an undeclared secret are refused in the payload")
+def _():
+    # FIX-ED-01.02 — DIST_* on a real planted tree.
+    d = os.path.join(residue.workspace("planted"), "planted")
+    os.makedirs(os.path.join(d, "references"))
+    with open(os.path.join(d, "SKILL.md"), "w", encoding="utf-8") as f:
+        f.write("---\nname: planted\ndescription: " +
+                ("Use when x; triggers y. " * 8).strip() + "\n---\n\n# s\n\nBody.\n")
+    # The symlink points at a sibling INSIDE the workspace tree, escaping only the
+    # skill directory — no stray TMPDIR to leak, and it is still outside the skill.
+    sibling = os.path.join(os.path.dirname(d), "elsewhere")
+    os.makedirs(sibling)
+    os.symlink(sibling, os.path.join(d, "references", "escape"))
+    with open(os.path.join(d, "references", "api_token.txt"), "w") as f:
+        f.write("shhh")
+    gaps = audit_ids(d)
+    assert "DIST_SYMLINK_ESCAPE" in gaps, "an outward symlink shipped"
+    assert "DIST_UNDECLARED_SECRET" in gaps, "an undeclared secret shipped"
 
 
 if failures:

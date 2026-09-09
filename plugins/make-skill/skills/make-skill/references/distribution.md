@@ -397,6 +397,24 @@ npx <name>                                     # from a NON-repo cwd
 claude plugin update <name>@<name>             # full id required
 ```
 
+## The publishable payload — what must NOT ride along
+
+The auditor's `DIST_*` checks (`scripts/audit_skill.py`) and this section are
+one rule: a payload is what a consumer receives, and two things leak into it by
+accident.
+
+- **An outward symlink.** A skill installed by symlink is correct; a symlink
+  INSIDE the payload pointing OUTSIDE it is not — it resolves on the author's
+  machine and dangles (or leaks a path) everywhere else. `npm pack` follows the
+  files allowlist, but a symlink caught by a glob ships as a link, so keep the
+  package's own files real and let installation create the links.
+- **An undeclared secret.** A `.env`, a `*token*` fixture, an `id_rsa`,
+  anything whose name reads as a credential must be excluded — `.npmignore` or
+  the `files` allowlist, and the auditor names any that remain. A closure
+  validated against the WHOLE checkout passes while the PACKAGED copy is
+  missing a required reference or carrying a secret; validate the payload, not
+  the checkout — `npm pack --dry-run` prints exactly what ships.
+
 ## Release checklist (every version)
 
 1. Bump the four versions together (`package.json` only if npm-distributed — else

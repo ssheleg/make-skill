@@ -47,6 +47,7 @@
     "node": ">=16"
   },
   "scripts": {
-    "test": "python3 test/validate.py && python3 test/plant_guard_test.py && python3 test/checker_parity_test.py && python3 test/residue_test.py && node test/installer_test.js"
+    "test": "python3 test/validate.py && python3 test/plant_guard_test.py && python3 test/checker_parity_test.py && python3 test/residue_test.py && node test/installer_test.js && npm run test:audit",
+    "test:audit": "for t in test/audit_regressions/*.py; do python3 \"$t\" || exit 1; done"
   }
 }
