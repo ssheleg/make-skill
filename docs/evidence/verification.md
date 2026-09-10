@@ -18,6 +18,20 @@ the release the CHANGELOG carries (MS-03).
 
 ---
 
+## Shipped state — v0.28.0 (2026-09-10)
+
+Measured on the release-candidate tree before the tag exists. Source: sherlock
+external-v3 (13 findings), the enterprise handoff (PR #18), and the CI correction
+the audit forced across the family.
+
+| REQ | What ships | How it was confirmed | Confirmed |
+|---|---|---|---|
+| SH-regressions | Every sherlock finding assigned here closes with an executable regression | `test/audit_regressions/` holds 13 suites; `npm test` runs all of them and exits 0 | **observed** |
+| SH-measure | The auditor no longer issues a token verdict from an ESTIMATE, and every member's CI measures | with no tokenizer the script falls back to chars/3.9, which overshoots prose carrying Russian and code: it gapped seven family skills — sheleg-design, seo-aeo-audit, task-pipeline, agent-evals, ux-flows, agent-sync, agent-orchestrator — every one of which is inside 4750 when measured (4730, 4685, 4691, 4374, 4607, 4693, 4309). The nine members now pin this version and `pip install tiktoken` before the audit step | **observed** — the estimate and the measurement disagreed on seven skills in CI, and the failing run printed `~4944` where the passing one printed `4830 tokens (tiktoken:cl100k_base)` |
+| SH-enterprise | `references/enterprise.md` carries the dependency-closure and provenance material for adapting someone else's skill | the handoff branch merged clean; `audit_skill.py --house` → 0 GAP on this skill | **observed** |
+| SH-budget | The row that points at it does not spend the budget it documents | the reworded row put the body at exactly ~4750 — the working limit this repo's OWN validator refuses ("a body at 99% of budget cannot absorb a correction") — and was tightened to ~4747 rather than waived | **planted** — the validator refused the tree at 4750 |
+| Gate | The whole suite on this tree | `npm test` EXIT=0 | **observed** |
+
 ## Shipped state — v0.27.1 (2026-09-06)
 
 Measured on the release-candidate tree before the tag exists. Source: family audit

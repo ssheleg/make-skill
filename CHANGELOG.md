@@ -1,3 +1,20 @@
+## v0.28.0 — the house audit measures the token budget instead of estimating it
+
+Sherlock external-v3 (13 findings) plus the enterprise handoff (PR #18) and the
+CI correction the audit forced across the family.
+
+- **The house auditor was issuing a token verdict from an estimate.** With no
+  tokenizer on the runner it fell back to chars/3.9 and gapped seven family
+  skills that are all inside the limit when actually measured. That is the defect
+  this script's own doctrine names (FIX-MS-01.01): the estimate overshoots prose
+  carrying Russian and code, and a verdict from the wrong instrument wearing the
+  right instrument's name is worse than no verdict. Every member's CI now
+  installs tiktoken and pins this version, so the budget is MEASURED.
+- `references/enterprise.md` gains the dependency-closure and provenance
+  material for reviewing or adapting someone else's skill.
+- The reworded row that pointed at it hit exactly the 4750 working limit this
+  repo's own validator refuses — tightened rather than waived.
+
 ## v0.27.1 — the tarball stops shipping compiled Python, and the audit vocabulary the routing block promised becomes advertised
 
 Family audit 2026-09-06, wave `AUDIT-WAVE-0906`. Two findings, both a gap between what
