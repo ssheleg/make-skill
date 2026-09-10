@@ -22,7 +22,7 @@ orchestrator, release automation). **make-skill itself** is built to this canon.
 | `references/agent-skills-spec.md` | authoring or auditing ANY `SKILL.md` — hard limits from both authorities, optional fields, budgets, who rejects what |
 | `references/authoring.md` | writing or tuning a body/description — naming, third person, degrees of freedom, script rules, eval loops |
 | `references/surfaces.md` | shipping anywhere but Claude Code — Skills API upload/versions/8-per-request, claude.ai zip, the no-network limits |
-| `references/enterprise.md` | installing someone else's skill, or governing a fleet — risk tiers, review checklist, approval gates, lifecycle |
+| `references/enterprise.md` | reviewing, adapting or installing an external skill — dependency closure, provenance, risk tiers, lifecycle |
 | `references/retrofit.md` | auditing an existing skill/repo — the 14-item checklist, the evidence rules, the personal-skill short form |
 | `references/outcome-evaluation.md` | proving a skill changed real outcomes — frozen inputs, baseline vs current, artifact checks, the routing/correctness/visual split, PASS/FAIL/ERROR/NOT_RUN |
 | `references/host-capabilities.md` | shipping a **hook, subagent, command, script or MCP dependency** — what each buys and costs, hook events and exit codes, the degradation clauses |
