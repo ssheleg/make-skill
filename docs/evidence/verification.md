@@ -18,6 +18,20 @@ the release the CHANGELOG carries (MS-03).
 
 ---
 
+## Shipped state — v0.29.0 (2026-09-14)
+
+Measured on the release-candidate tree before the tag exists. Source: the 2026-09-13
+family audit — one hook key, ignored by the host in two repositories for six weeks.
+
+| REQ | What ships | How it was confirmed | Confirmed |
+|---|---|---|---|
+| HK-schema | The auditor refuses a `hooks.json` key outside the set its level accepts | `test/audit_regressions/fix-hk-04.py`: a filter beside `matcher` is refused by name; the same filter on the handler passes; an invented handler key is refused; a manifest that does not parse is a GAP rather than a silence | **planted** — the fixture builds the exact shape that shipped in agent-sync 0.1.0–1.20.0 |
+| HK-sets | Both key sets come from the host, not from prose | read out of `~/.local/share/claude/versions/2.1.270`: `Rt()` is `{matcher, hooks}`; the command handler is `{type, command, args, if, shell, timeout, statusMessage, once, async, asyncRewake}` plus `rewakeMessage`/`rewakeSummary`/`cloud` marked `@internal`; `references/host-capabilities.md` states both, and the regression asserts it states them | **observed** |
+| HK-unchecked | What the check did NOT read is declared | a `prompt`/`agent`/`http`/`mcp_tool` handler passes with `handler type(s) … not checked` in the message — only the command handler's set was measured | **planted** — the fixture asserts the disclosure appears |
+| HK-pycache | `BUNDLE_NESTED` stops reporting a byte-compile cache | `__pycache__` appears whenever a test imports a shipped module and is gitignored and npm-excluded in every member; three of them carried the gap | **planted** — the fixture creates one and requires no BUNDLE_NESTED |
+| HK-family | The check is clean across everything it now covers | all 28 shipped skills in the nine members audited with this version: `0 GAP` each, `19 PASS` | **observed** |
+| Gate | The whole suite on this tree | `npm test` EXIT=0 | **observed** |
+
 ## Shipped state — v0.28.0 (2026-09-10)
 
 Measured on the release-candidate tree before the tag exists. Source: sherlock
