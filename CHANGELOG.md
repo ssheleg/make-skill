@@ -1,3 +1,30 @@
+## v0.29.0 — the standard now reads a hook key the host ignores
+
+Claude Code 2.1.270 began printing `hooks.json: unknown key "if" in
+hooks.PreToolUse[1] ignored` at every session start. The key had been there since
+agent-sync 0.1.0, and the same shape sat in the hooks template `task-pipeline`
+exports into consumer projects — where the documentation gate then ran on **every**
+Bash call rather than on commits. Nothing caught it: not nine member validators, not
+this auditor, and not `claude plugin validate --strict`, which accepts the file.
+
+- **`HOOKS_SCHEMA`** reads the plugin's `hooks/hooks.json` from a skill at
+  `<plugin>/skills/<name>` and refuses any key outside the set its level accepts —
+  a matcher group takes `matcher` + `hooks`; a `command` handler takes `type`,
+  `command`, `args`, `if`, `shell`, `timeout`, `statusMessage`, `once`, `async`,
+  `asyncRewake` and three `@internal` keys. Both sets are read out of the 2.1.270
+  binary's schema rather than from prose. A manifest that does not parse is a GAP
+  (the host then loads no hooks at all); a plugin with no manifest passes and says
+  so; a `prompt`/`agent`/`http`/`mcp_tool` handler is **declared unchecked**,
+  because only the command handler's key set was measured.
+- **`BUNDLE_NESTED` stops reporting `__pycache__`.** A byte-compile cache appears
+  the moment a test imports a shipped module; it is gitignored and npm-excluded in
+  every member, and three of them were carrying the gap for a directory that never
+  ships.
+- `references/host-capabilities.md` states both key sets, where `if` lives, the
+  loader's exact warning, and that `validate --strict` is not the gate for this.
+
+Every shipped skill in the family passes: 28 of 28 at `0 GAP`, now `19 PASS`.
+
 ## v0.28.0 — the house audit measures the token budget instead of estimating it
 
 Sherlock external-v3 (13 findings) plus the enterprise handoff (PR #18) and the

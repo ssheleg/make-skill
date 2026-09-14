@@ -247,6 +247,26 @@ TIME_BRANCH_RE = re.compile(
     r"(?:january|february|march|april|may|june|july|august|september|october|"
     r"november|december|\d{4})\b", re.I)
 BUNDLE_DIRS = ("references", "scripts", "assets")
+# A byte-compile cache is not a bundled directory: `__pycache__` appears the moment a
+# test imports a shipped module, is gitignored and npm-excluded in every member, and
+# three of them were reporting BUNDLE_NESTED for a directory that never ships.
+BUNDLE_IGNORE = ("__pycache__",)
+
+# Claude Code's hooks schema, read out of the 2.1.270 binary rather than from the
+# documentation: `Rt()` is the matcher GROUP and `Td()` the handler union. A key outside
+# these sets is IGNORED — silently before 2.1.270, and from it announced once per session
+# as `Plugin <name>: hooks.json: unknown key "<k>" in hooks.<Event>[<i>] ignored`. It is
+# not a syntax error, `claude plugin validate --strict` passes the file, and the hook goes
+# on running with the filter absent. agent-sync shipped `"if"` beside `"matcher"` from
+# 0.1.0 to 1.20.0 and task-pipeline exported the same shape in the template it tells
+# projects to paste into `settings.json`, where the gate then ran on every Bash call.
+HOOK_GROUP_KEYS = {"matcher", "hooks"}
+# The `command` handler. `if` is HERE — beside `type` and `command`, never beside
+# `matcher`. The last three are marked `@internal` in the schema and are accepted.
+HOOK_COMMAND_KEYS = {
+    "type", "command", "args", "if", "shell", "timeout", "statusMessage", "once",
+    "async", "asyncRewake", "rewakeMessage", "rewakeSummary", "cloud",
+}
 
 # A file in a publishable payload whose name reads as a credential. Fixtures and
 # test data are the common carriers; the auditor names it rather than shipping it.
@@ -447,6 +467,7 @@ def audit(skill_dir, house=False):
     _check_keys(a, fm, fm_lines, rel)
     _check_body_budget(a, body, rel, house)
     _check_bundle(a, skill_dir, text, name_on_disk)
+    _check_plugin_hooks(a, skill_dir)
     _check_links(a, skill_dir, text, rel)
     _check_distribution(a, skill_dir, name_on_disk)
     _check_prose(a, body, rel)
@@ -741,6 +762,8 @@ def _check_bundle(a, skill_dir, skill_text, dir_name):
         for entry in sorted(os.listdir(d)):
             full = os.path.join(d, entry)
             rel = os.path.join(dir_name, sub, entry)
+            if entry in BUNDLE_IGNORE:
+                continue
             if os.path.isdir(full):
                 a.gap("BUNDLE_NESTED", "%s/%s/ is nested — keep bundled files one level "
                       "deep, or the agent previews them instead of reading them"
@@ -760,6 +783,84 @@ def _check_bundle(a, skill_dir, skill_text, dir_name):
                           "rest holds" % (n, TOC_MIN_LINES), rel)
     if any(os.path.isdir(os.path.join(skill_dir, s)) for s in BUNDLE_DIRS):
         a.ok("BUNDLE_LAYOUT", "bundled directories present and checked")
+
+
+def _check_plugin_hooks(a, skill_dir):
+    """The plugin's `hooks.json` carries only keys the host evaluates.
+
+    A skill inside a Claude Code plugin sits at `<plugin>/skills/<name>`, so the hooks
+    manifest is two levels up. This runs once per skill, which means a defective manifest
+    is reported once per skill of that plugin — a repetition, never a miss.
+
+    Reported as a GAP rather than a note because the failure is silent in both
+    directions: the key does nothing, and nothing said so for six weeks across two
+    repositories. `claude plugin validate --strict` accepts the file, so a skill audit is
+    the only gate this class can be caught by before a session start.
+    """
+    d = os.path.abspath(skill_dir.rstrip("/"))
+    parent = os.path.dirname(d)
+    if os.path.basename(parent) != "skills":
+        a.ok("HOOKS_SCHEMA", "not a plugin skill layout (<plugin>/skills/<name>) — no "
+             "hooks manifest to read from here")
+        return
+    plugin = os.path.dirname(parent)
+    path = os.path.join(plugin, "hooks", "hooks.json")
+    rel = os.path.join(os.path.basename(plugin), "hooks", "hooks.json")
+    if not os.path.isfile(path):
+        a.ok("HOOKS_SCHEMA", "the plugin ships no hooks/hooks.json — nothing to read", rel)
+        return
+    try:
+        data = json.load(open(path, encoding="utf-8"))
+    except Exception as e:
+        a.gap("HOOKS_SCHEMA", "hooks.json does not parse (%s) — Claude Code loads no "
+              "hooks at all from a manifest it cannot read" % e, rel)
+        return
+    events = data.get("hooks")
+    if not isinstance(events, dict):
+        a.gap("HOOKS_SCHEMA", "hooks.json has no `hooks` object — the manifest declares "
+              "nothing the host can run", rel)
+        return
+    bad = []
+    unchecked = set()
+    for event, groups in sorted(events.items()):
+        if not isinstance(groups, list):
+            bad.append("hooks.%s is not a list of matcher groups" % event)
+            continue
+        for i, group in enumerate(groups):
+            if not isinstance(group, dict):
+                bad.append("hooks.%s[%d] is not an object" % (event, i))
+                continue
+            for k in sorted(set(group) - HOOK_GROUP_KEYS):
+                bad.append('hooks.%s[%d]: %r sits beside `matcher`, where a matcher group '
+                           'takes only matcher+hooks — the host ignores it (a filter '
+                           'belongs inside the handler)' % (event, i, k))
+            handlers = group.get("hooks")
+            if not isinstance(handlers, list):
+                bad.append("hooks.%s[%d].hooks is not a list of handlers" % (event, i))
+                continue
+            for j, h in enumerate(handlers):
+                if not isinstance(h, dict):
+                    bad.append("hooks.%s[%d].hooks[%d] is not an object" % (event, i, j))
+                    continue
+                if h.get("type") != "command":
+                    unchecked.add(str(h.get("type")))
+                    continue
+                for k in sorted(set(h) - HOOK_COMMAND_KEYS):
+                    bad.append("hooks.%s[%d].hooks[%d]: %r is not a key the command-hook "
+                               "schema knows — the host ignores it" % (event, i, j, k))
+    for msg in bad:
+        a.gap("HOOKS_SCHEMA", msg, rel)
+    if not bad:
+        note = ""
+        if unchecked:
+            # Say what was NOT read. The command handler's key set was measured; the
+            # prompt/agent/http/mcp_tool handlers were not, and claiming them clean would
+            # be a verdict about something this check never looked at.
+            note = " (handler type(s) %s not checked — only the command handler's key "
+            note %= ", ".join(sorted(unchecked))
+            note += "set is measured here)"
+        a.ok("HOOKS_SCHEMA", "every hooks.json key is one Claude Code evaluates%s" % note,
+             rel)
 
 
 def _check_links(a, skill_dir, skill_text, rel):

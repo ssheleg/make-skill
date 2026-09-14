@@ -83,7 +83,28 @@ an unanchored regex. Tool names are what you match (`Bash`, `Write`,
 `mcp__server__tool`). A plugin's OWN MCP server is matched as
 `mcp__plugin_<plugin>_<server>__<tool>`, and an `mcp_tool` hook names the server
 as `plugin:<plugin>:<server>` — the bare key never fires. Narrow further with
-`if`, a permission rule: `"if": "Bash(git commit *)"`.
+`if`, a permission rule: `"if": "Bash(git commit *)"` — **inside the handler
+object**, beside `type` and `command`.
+
+**Two key sets, and putting a key in the wrong one is silent.** Read out of the
+2.1.270 binary's schema: a matcher group takes `matcher` and `hooks`, nothing
+else; a `command` handler takes `type`, `command`, `args`, `if`, `shell`,
+`timeout`, `statusMessage`, `once`, `async`, `asyncRewake` (plus three
+`@internal` keys). Anything outside its set is **ignored** — the hook still runs,
+with the key doing nothing. Before 2.1.270 nothing said so at all; from it the
+loader prints once per session:
+
+```
+Plugin <name>: hooks.json: unknown key "if" in hooks.PreToolUse[1] ignored
+```
+
+`claude plugin validate --strict` accepts the file either way, so a skill audit
+is the only gate that catches this before a session starts — `HOOKS_SCHEMA` in
+`scripts/audit_skill.py` reads both sets. The family paid for that check: `if`
+sat beside `matcher` in `agent-sync` from 0.1.0 to 1.20.0 (harmless — its guard
+narrowed to a commit with its own parser), and in the hooks template
+`task-pipeline` tells projects to paste into `settings.json`, where the
+documentation gate then ran on **every** Bash call instead of on commits.
 
 **Exit codes are the contract:**
 
@@ -245,6 +266,8 @@ what the agent reads at the exact moment something is missing.
 - [ ] Hook scripts exit 0 silently on "not mine" and on a missing interpreter
 - [ ] `PostToolUse` advises (`systemMessage`), `PreToolUse` blocks — not the reverse
 - [ ] Hook commands quote `"${CLAUDE_PLUGIN_ROOT}"` and set a `timeout`
+- [ ] Every key is in the set its level accepts — a filter goes on the handler,
+      never beside `matcher`, where the host ignores it without failing
 - [ ] Hook scripts are executable, have a shebang, and need no `jq`
 - [ ] No command named after a skill — or the collision is on a recorded, dated
       exception list (see *Commands*); every `argument-hint` quoted
