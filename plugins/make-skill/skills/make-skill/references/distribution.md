@@ -83,10 +83,12 @@ registry fields and the risk table honestly. A skill is text an agent executes,
 so "review before installing" belongs in writing — and anything that runs
 without being asked belongs at the top of it.
 
-**What travels where.** Only `skills/<skill>/` reaches non-Claude channels, so
-scripts and skeletons live inside it. `hooks/`, `agents/` and `commands/` reach
-Claude Code alone: they are accelerators, and the skill body owes each one a
-written fallback (`references/host-capabilities.md`).
+**What travels where.** The skills-CLI channel copies `skills/<skill>/`, so
+required scripts, skeletons and procedures must stay inside that directory.
+Native plugin channels can carry additional components, including in Codex; their
+schemas and activation differ. Never infer hook, agent or command registration
+from a skill-only install. Each component needs a fallback and host readback
+(`references/host-capabilities.md`).
 
 **Version sync (hard rule):** `marketplace.json`, `plugin.json`, `package.json`
 and the top CHANGELOG entry carry the SAME semver, bumped together; the validator
@@ -101,8 +103,8 @@ names: `references/claude-code-plugin.md`):
   `displayName` in both, keep component paths `./`-relative. Unrecognized fields
   are warnings the runtime tolerates and only `--strict` shows — that is how
   `homepage`/`repository`, plugin-ENTRY fields, sat at the marketplace root of
-  this repo unnoticed. It reads the MANIFEST only: front-matter rules stay in
-  your own validator, whatever the troubleshooting table promises.
+  this repo unnoticed. Recent versions also check selected skill metadata;
+  retain the house validator and negative probes because coverage is not complete.
 - **`claude plugin details <name>@<marketplace>`** — the only view of what Claude
   Code *thinks* the plugin contains and what it costs every session. Catches a
   component listed twice and a description worth trimming.
@@ -253,8 +255,9 @@ The canon, for every bin installer that targets `~/.claude/skills/`:
 - **Absence fails open; corruption never crashes.** A missing or unparsable
   `installed_plugins.json` reads as "no plugin" — the fresh HOME is the common case,
   and an installer that dies on a parse error refuses the machines that need it most.
-- **Only Claude Code has plugins.** The check gates the `~/.claude` write alone;
-  installs into other agents' skill directories are untouched by it.
+- **This guard covers the Claude channel.** It gates the `~/.claude` write alone.
+  Other hosts can have native plugins too; their provider resolution and lifecycle
+  need separate checks. This guard cannot establish their absence or precedence.
 - **CI runs the plugin-present case, not only a fresh HOME.** A fake HOME whose
   `installed_plugins.json` declares the plugin, asserting all three at once: the
   non-zero exit, the remedy in the output, and that nothing was written — plus the

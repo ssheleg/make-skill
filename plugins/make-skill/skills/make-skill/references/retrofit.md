@@ -125,7 +125,7 @@ Report the table before changing anything, then fix.
 14. **Host capabilities and their fallbacks**
     (`references/host-capabilities.md`) if it ships a hook, subagent, command or
     MCP server: the degradation contract written in the body for all three axes
-    (not Claude Code / recommended plugin absent / tool absent); hooks that
+    (required host capability absent / recommended plugin absent / tool absent); hooks that
     exit 0 silently when the event is not theirs; `PostToolUse` advising rather
     than blocking; commands quoted and never named after a skill (a collision on
     the recorded, dated exception list in `references/host-capabilities.md` —

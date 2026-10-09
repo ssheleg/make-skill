@@ -7,7 +7,9 @@ keep it working where those do not exist.
 Sources: [Claude Code hooks reference](https://code.claude.com/docs/en/hooks) and
 the [plugins reference](https://code.claude.com/docs/en/plugins-reference)
 (*read 2026-08-03, Claude Code 2.1.212*), plus `references/claude-code-plugin.md`
-for the manifest side.
+for the manifest side. Portability and path-substitution corrections checked
+2026-10-09 against the linked current docs; the older event examples are versioned
+examples, not a promise that another runtime accepts their payloads.
 
 ## Contents
 
@@ -24,9 +26,10 @@ for the manifest side.
 
 ## The rule: accelerator, never precondition
 
-Everything on this page exists only inside Claude Code. A skill that *needs* one
-of them is broken on Cursor, Codex, the skills CLI, the Claude API and claude.ai
-— which is most of where skills run. So:
+The concrete schemas below describe Claude Code. Other coding hosts also provide
+hooks, subagents, commands or MCP, with different contracts and versions. Detect
+the actual capability and delivery channel; the skills CLI is an installer, not a
+runtime. A directory copied successfully does not register a hook or agent. So:
 
 > **Every host capability is an accelerator with a stated fallback. The skill
 > must complete its job without it, more slowly and with less polish.**
@@ -48,8 +51,10 @@ but did not write is not a fallback.
 | `lspServers`, `monitors`, `themes`, `outputStyles`, `workflows` | narrow, real, and rarely what a skill wants | always-on where they load | you can name the user who asked for it |
 | `userConfig` | values prompted at enable time | a prompt in everyone's install | the skill genuinely cannot guess (a path, a workspace id) |
 
-Everything in that table is Claude-Code-only. `scripts/` is the exception that
-travels: it lives inside the skill directory, so every channel ships it.
+The table uses Claude Code component names and cost estimates. Do not apply them
+as other hosts' schemas or token measurements. A skill-directory install carries
+its own scripts and references; native plugin channels may carry more components.
+Verify each advertised component in the receiving host before claiming support.
 
 ## Hooks — events, handlers, matchers, exit codes
 
@@ -154,8 +159,10 @@ an audit across twenty skills, a survey, a long verification — because its out
 is a summary while its reading stays in its own context. It does not earn it when
 the main thread needs the intermediate detail anyway.
 
-Fallback: on any other host there are no subagents. The skill body must describe
-the same procedure inline, so a Cursor session does the work in one context.
+Fallback: if this runtime exposes no suitable delegation tool, run the same
+procedure inline and report that self-review is weaker than independent review.
+If delegation exists, use its native contract; a Claude `agents/*.md` definition
+is not evidence that another host registered that agent.
 
 ## Commands
 
@@ -179,19 +186,21 @@ body receives `$ARGUMENTS`. Two rules cost a debugging round each:
   inside it drops the entire frontmatter block, leaving a command with no
   description and no warning.
 
-Fallback: elsewhere there is no `/command`. The skill's own description must
-carry the trigger phrases that reach the same behavior in plain language.
+Fallback: if this host has no matching command registration, select the skill
+through its description or explicit path and follow its procedure. Do not assume
+a Claude command file, slash spelling or argument substitution works elsewhere.
 
 ## Scripts
 
-The one accelerator that travels. Keep it inside the skill directory
+The portable payload. Keep it inside the skill directory
 (`scripts/`), stdlib-only, and invoke it by a path the agent can actually
 resolve.
 
-**The trap that costs the most here: `${CLAUDE_PLUGIN_ROOT}` does not work in a
-command you tell the agent to run.** It is substituted into skill, command and
-agent *text*, and it is exported to *hook and monitor* processes — but it is
-**not** in the Bash tool's environment. Measured on Claude Code 2.1.220:
+**Distinguish text substitution from a shell environment.** Claude Code replaces
+`${CLAUDE_PLUGIN_ROOT}` in loaded Markdown; it does not export that variable to
+commands the Bash tool runs. Current plugin docs also say monitor commands receive
+substitution but no exported variables. The older direct-shell probe below
+(Claude Code 2.1.220) demonstrates the environment case, not failed substitution:
 
 ```bash
 $ echo "[${CLAUDE_PLUGIN_ROOT}]"
@@ -238,7 +247,7 @@ silently. Declare it in frontmatter `compatibility`, and write the branch:
 
 Claude Code's manifest `dependencies` field can express a hard requirement
 between plugins. Use it only when the skill genuinely cannot function — and know
-that it means nothing on any other host.
+that enforcement outside this plugin channel must be verified separately.
 
 ## The three degradation cases, written out
 
@@ -247,9 +256,9 @@ Put these in the skill body, in this shape:
 ```markdown
 ## Degradation
 
-- **Not Claude Code** (Cursor, Codex, skills CLI, API): hooks, subagents and
-  `/commands` do not exist. Run <procedure> inline; the bundled `scripts/` still
-  work wherever `python3` does.
+- **Required host capability unavailable** (hook, delegation or command): run
+  <procedure> inline and state the missing enforcement or independence. Detect
+  actual tools first; bundled scripts still need their declared interpreter.
 - **Recommended plugin absent** (<name>): <what is lost>. Continue with
   <manual path>, and say once that the result is <weaker in this way>.
 - **Tool or interpreter absent** (`python3`, `gh`, `npm`, an MCP server): state
@@ -273,6 +282,6 @@ what the agent reads at the exact moment something is missing.
       exception list (see *Commands*); every `argument-hint` quoted
 - [ ] Plugin agents carry no `hooks` / `mcpServers` / `permissionMode`
 - [ ] Scripts are stdlib-only, inside the skill dir, invoked by a resolvable path
-- [ ] No command the agent is told to RUN contains `${CLAUDE_PLUGIN_ROOT}` — it is
-      empty in the Bash tool; ship a `bin/` wrapper and call it by name
+- [ ] Runnable paths use loaded-Markdown substitution, a `bin/` wrapper, or a
+      resolved skill-relative path; never depend on plugin variables in raw Bash env
 - [ ] MCP and sibling-skill dependencies declared in `compatibility` with a branch
