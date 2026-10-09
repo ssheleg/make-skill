@@ -35,3 +35,16 @@ Candidate 0.29.2; not yet released.
 Next: normal reviewed PR merge/tag, exact registry readback, then hub pin and
 installed channels. Preserve the historical probes and their measurement scope.
 The hub owns the cross-host source matrix and subsequent parent pin/readback.
+
+
+## Published receipt — 2026-10-10
+
+PR [#27](https://github.com/ssheleg/make-skill/pull/27) merged at
+`c0fe080a46dd2a98fa78d7cd1aee26fb0261d25c`; v0.29.2 resolves to that commit.
+[Release workflow 37997168633](https://github.com/ssheleg/make-skill/actions/runs/37997168633)
+completed successfully. [Canonical registry readback](registry.json) verified
+npm gitHead, SHA-512/SHA-1 integrity and every one of 32 published files against
+that source. Independent reader `/root/host_contracts` performed the comparison.
+The candidate statements above describe the pre-release check; this appended
+receipt closes source and publication, not installed model execution.
+Next owner: hub HC-6 pins, installed channels and native readback.
