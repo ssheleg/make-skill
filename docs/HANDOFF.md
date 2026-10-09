@@ -1,7 +1,9 @@
 # Current task: host compatibility
 
-See [HC-4 authoring correction](evidence/host-compat/README.md). Candidate 0.29.2;
-source checks and release receipts belong there. Historical audit follows.
+See [HC-4 authoring correction and release receipt](evidence/host-compat/README.md).
+Version 0.29.2 is published at `c0fe080a46dd2a98fa78d7cd1aee26fb0261d25c`.
+Next: hub HC-6 parent pins and installed readback; model acceptance remains separate.
+Historical audit follows.
 
 # Sherlock family audit: handoff
 

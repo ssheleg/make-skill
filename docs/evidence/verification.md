@@ -28,7 +28,7 @@ runtime acceptance. See [HC-4 evidence](host-compat/README.md).
 | HC-capabilities | Capability detection replaces blanket Claude-only claims | Shipped `references/host-capabilities.md` and `agent-skills-spec.md`, dated primary sources | Independent review ACCEPT; see HC-4 evidence |
 | HC-validator | Strict validation coverage is bounded by actual CLI behavior | `host-compat/claude-validation-probe.json`, Claude Code 2.1.296: valid 0, missing description 1, invented field 0 | Observed, local fixture |
 | HC-gate | Structural and audit checks remain passing | Full `npm test` exited 0 on final candidate payload | PASS, local |
-| HC-release | Source, registry and installed payload | Hub delivery receipt | NOT_RUN |
+| HC-release | Source and registry | [Published receipt](host-compat/README.md#published-receipt--2026-10-10), exact commit and all 32 file hashes | Published; installed/model checks owned by hub |
 
 ## Shipped state — v0.29.1 (2026-10-09)
 
