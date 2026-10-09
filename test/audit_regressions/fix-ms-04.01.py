@@ -54,8 +54,10 @@ def t_spec_has_the_capability_matrix():
     flat = " ".join(read("references/agent-skills-spec.md").split())
     for needle in ("Host capability matrix",
                    "presence varies by host AND version",
-                   "| Subagents | yes | **yes (native)** | no | no | runtime probe |",
-                   "| MCP servers | yes | **yes (native)** |"):
+                   "| Subagents | procedure remains executable inline |",
+                   "| MCP servers | declare dependency and missing-server fallback |",
+                   "discover the actual delegation tool",
+                   "2026-10-09"):
         assert needle in flat, f"agent-skills-spec.md lacks the capability matrix: {needle!r}"
 
 

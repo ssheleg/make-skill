@@ -5,7 +5,7 @@ license: MIT
 compatibility: Authoring works on any agent. The bundled scripts/ need python3. Publishing steps need git, gh, node and npm; the plugin gates need the claude CLI. Not usable on the Claude API surface, which has no network and no runtime package install.
 metadata:
   author: ssheleg
-  version: "0.29.1"
+  version: "0.29.2"
   homepage: https://github.com/ssheleg/make-skill
 ---
 
@@ -75,8 +75,8 @@ differences and the checklist: `references/agent-skills-spec.md`.
   plugin listing nor an installed skill, and nothing errors, so the gap stays
   open (all six repos here, 2026-07-30).
 - **Host extensions are legal, never load-bearing.** Claude Code reads a further
-  host-only set (`references/claude-code-plugin.md`); other agents ignore it, so
-  a skill DEPENDING on one is broken everywhere else. Outside spec ∪ host = typo.
+  host-specific set (`references/claude-code-plugin.md`). Detect host support;
+  keep a portable fallback.
 - Body **< 500 lines and < 5000 tokens**, and hold **5% headroom** — a body at
   99% of budget turns the next correction into a fight with the validator.
   Heavier material goes to `references/`, `scripts/`, `assets/` INSIDE the skill
@@ -86,10 +86,10 @@ differences and the checklist: `references/agent-skills-spec.md`.
 - Gotchas stay in `SKILL.md`: the agent can't know to open a file about a trap
   it doesn't know exists.
 - **Write for the weakest surface you claim** (`references/surfaces.md`): the
-  Claude API container has NO network and NO package install, claude.ai varies,
-  only Claude Code has both. A script that `pip install`s or curls is a Claude
-  Code skill — say so in `compatibility` or drop it. Nothing syncs between
-  surfaces; git is the source of truth.
+  Claude API container has NO network and NO package install, claude.ai varies.
+  Other coding hosts follow their sandbox policy. Declare network/interpreter
+  requirements and an offline/manual fallback. Deploy per channel; see
+  `references/surfaces.md` for account-sync exceptions.
 
 House additions on top of the spec:
 
@@ -179,8 +179,8 @@ regardless:
 - **Version sync (hard rule):** marketplace.json, plugin.json, package.json and
   the top CHANGELOG entry carry the SAME semver, bumped together (+ a 5th point
   if `SKILL.md` carries `metadata.version`).
-- **Both `--strict` runs green, in CI, as their own job** — they read MANIFESTS
-  only, so front-matter rules live in your own `test/validate.py`, which needs a
+- **Both `--strict` runs green, in CI, as their own job** — coverage varies by CLI version; keep
+  front-matter rules in your own `test/validate.py`, which needs a
   negative self-test: a validator that can't fail is decoration. Ship `$schema`
   and `displayName` in `plugin.json` AND the marketplace ENTRY (the marketplace
   root takes neither).

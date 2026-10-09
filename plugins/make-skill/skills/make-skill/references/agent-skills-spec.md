@@ -143,13 +143,24 @@ Rules:
 (Codex) provide subagents and MCP natively. DETECT the capability; do not
 assume its absence. Presence is per host AND per version.
 
-| Capability | Claude Code | Codex | Cursor | skills CLI / API | Detect by |
-|---|---|---|---|---|---|
-| Hooks | yes | no | no | no | host docs / config |
-| Subagents | yes | **yes (native)** | no | no | runtime probe |
-| MCP servers | yes | **yes (native)** | varies | no | runtime probe |
-| `/commands` | yes | no | no | no | host docs |
-| Plugin path vars | yes | no | no | no | env presence |
+| Capability | Portable contract | Host-specific verification |
+|---|---|---|
+| Hooks | no portable skill hook lifecycle | inspect the host's supported events, payloads and installation scope |
+| Subagents | procedure remains executable inline | discover the actual delegation tool; verify agent definition format separately |
+| MCP servers | declare dependency and missing-server fallback | discover authenticated tools; do not hardcode vendor tool names |
+| Commands | natural-language or explicit skill invocation remains possible | verify command registration, namespace and argument substitution |
+| Plugin paths | resolve bundled files relative to the loaded skill directory | distinguish Markdown substitution from exported shell variables |
+
+Current examples, checked 2026-10-09: [Codex subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents)
+and [hooks](https://learn.chatgpt.com/docs/hooks) are real capabilities. Its
+[plugin packaging](https://developers.openai.com/plugins/build/plugins) supports
+portable root manifests and Codex compatibility layouts; public-directory and
+manual-install hook eligibility differ. [Local skills](https://learn.chatgpt.com/docs/build-skills)
+can have `agents/openai.yaml` for optional UI, invocation and tool dependencies.
+Those files do not replace the portable skill or grant unavailable permissions.
+
+The skills CLI installs files; an API/container surface has its own runtime.
+Neither belongs in a single yes/no column with an interactive coding host.
 
 And every NORM this skill enforces carries its **owner** (spec = the Agent
 Skills standard, host = a runtime's own rule, house = this family), whether it

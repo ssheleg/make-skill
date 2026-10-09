@@ -18,9 +18,9 @@ trusting a version-gated field in a new quarter.*
 
 The [Agent Skills spec](https://agentskills.io/specification) (see
 `references/agent-skills-spec.md`) is the portable floor. **This file is the
-host layer on top of it**: everything here is Claude-Code-specific and is
-ignored by other agents — so nothing here may be load-bearing for a skill that
-must also run on Cursor, Codex, or the skills CLI.
+host layer on top of it**. Other hosts may support selected compatibility fields,
+but cannot be assumed to implement this whole contract. Keep a portable skill
+procedure and verify extensions separately for each claimed host and version.
 
 ## Contents
 
@@ -53,12 +53,10 @@ Both must exit 0. Rules that decide the outcome:
 - Wrong **types** always fail (`keywords` as a string, not an array).
 - It runs offline and needs no auth, so it belongs in CI:
   `npm i -g @anthropic-ai/claude-code && claude plugin validate … --strict`.
-- **It validates the MANIFEST, whatever the docs promise.** The troubleshooting
-  table says the command checks "`plugin.json`, skill/agent/command frontmatter,
-  and `hooks/hooks.json`"; on 2.1.212 a `SKILL.md` carrying an invented
-  front-matter key passed `--strict` untouched, and the output names only the
-  manifest it read. Keep front-matter rules in your own validator — this gate
-  does not cover them.
+- **Coverage is versioned and partial.** The older 2.1.212 probe only inspected
+  manifests. On 2.1.296, a missing skill description fails `--strict`, while an
+  invented front-matter key still passes (probe dated 2026-10-09). Keep the house
+  validator; manifest success is neither complete format nor runtime acceptance.
 
 ## `plugin.json` — `.claude-plugin/plugin.json`
 
@@ -206,8 +204,11 @@ Portable floor (`name`, `description`, `license`, `compatibility`, `metadata`,
 `allowed-tools`) is in `references/agent-skills-spec.md`. **`allowed-tools` is
 looser here than in the spec**: Claude Code takes a space- OR comma-separated
 string OR a YAML list, the spec takes only the space-separated string. Write the
-spec form — a list works here and breaks everywhere else. Claude Code also
-reads:
+spec form for portable authoring; list acceptance elsewhere is host-specific.
+`allowed-tools` pre-approves named tools for the invocation turn; it does not
+remove other tools and the grant clears on the next user message. Managed policy
+may ignore these grants. This is host behavior, never permission supplied by a
+portable skill. Claude Code also reads:
 
 | Field | Effect |
 |---|---|
@@ -297,18 +298,15 @@ They substitute in skill/agent content, hook and monitor commands, MCP
 `command`/`args`/`env`/`workspaceFolder`. In shell-form commands, quote them:
 `"${CLAUDE_PLUGIN_ROOT}"/scripts/x.sh`.
 
-**They are NOT exported to the Bash tool.** Substitution into text and export
-into a process are different things: a hook script sees `CLAUDE_PLUGIN_ROOT` in
-its environment, a `Bash` tool call does not (measured empty on 2.1.220). So a
-skill that *prints* the variable gets a real path, and a skill that tells the
-agent to *run* a command containing it gets `/skills/...` and a missing-file
-error. Put runnable scripts in the plugin's `bin/`, which lands on the Bash
-tool's PATH, and call them by name — `references/host-capabilities.md` →
-*Scripts*.
+**They are NOT exported to the Bash tool.** A command in loaded Markdown can
+contain a substituted absolute path and run correctly. A raw shell command that
+expects the variable in its process environment cannot: the older 2.1.220 probe
+measured that environment case. Use quoted Markdown substitution or a plugin
+`bin/` wrapper; other hosts resolve bundled files relative to the loaded skill.
+See `references/host-capabilities.md` → *Scripts*.
 
-**Portability:** all four are Claude Code inventions. A skill that must also run
-on other agents references bundled files by **relative path** and treats the
-variables as an optimization, not the contract.
+**Portability:** verify each host's substitutions. A skill-relative path is the
+portable contract; Claude's variables and plugin PATH are optional conveniences.
 
 ## Caching, symlinks, path traversal
 
@@ -320,8 +318,8 @@ orphaned versions are cleaned up ~14 days later. Consequences:
 - Symlinks inside the plugin dir are preserved; symlinks to elsewhere in the
   same marketplace are **dereferenced** (content copied); symlinks outside the
   marketplace are skipped. This is why a meta-plugin can link sibling skills —
-  and why the same trick still breaks on non-Claude agents, which install only
-  the skill folder.
+  and why the same trick still breaks in the skills-CLI channel, which installs
+  only the skill folder. Test native plugin channels separately.
 
 ## Skills-directory plugins
 

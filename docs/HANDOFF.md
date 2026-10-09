@@ -1,3 +1,8 @@
+# Current task: host compatibility
+
+See [HC-4 authoring correction](evidence/host-compat/README.md). Candidate 0.29.2;
+source checks and release receipts belong there. Historical audit follows.
+
 # Sherlock family audit: handoff
 
 Current bounded follow-up: [SC-3 multiline plain YAML auditor correction and release receipts](evidence/handoffs/2026-10-09-multiline-plain-yaml.md).

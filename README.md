@@ -104,15 +104,15 @@ both manifests, in CI as its own job. That check is what caught this repo's own
 `marketplace.json` shipping `homepage` and `repository` at a level where Claude
 Code ignores them.
 
-**The Claude Code power set — with a fallback for everywhere else.** The skill
+**Host capabilities — detect them and provide a fallback.** The skill
 ships what it teaches: a `PostToolUse` **hook** that audits a `SKILL.md` the
 moment you save one (and exits silently for every other write, in every other
 project), a **subagent** for auditing a repo full of skills without crowding the
 main thread, a `/skill-audit` **command**, and a stdlib **script** that does the
-mechanical half of an audit deterministically. Hooks, subagents and commands
-exist only inside Claude Code — so the canon makes the fallback a rule: **every
+mechanical half of an audit deterministically. Those bundled components use
+Claude Code schemas; other hosts need their own activation checks. **Every
 host capability is an accelerator with a written fallback**, for three named
-cases (not Claude Code, recommended plugin absent, tool or MCP server absent).
+cases (required host capability absent, recommended plugin absent, tool or MCP server absent).
 A fallback you know but did not write is not a fallback.
 
 **Evaluations, not vibes.** The canon requires every skill to carry at least

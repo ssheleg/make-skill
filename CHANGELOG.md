@@ -1,3 +1,16 @@
+## v0.29.2 — portable procedures, host-specific capabilities
+
+Authoring guidance now distinguishes the skills-CLI payload from native plugin
+channels. It detects hooks, delegation, commands and MCP per host instead of
+claiming every non-Claude runtime lacks them. Network requirements describe the
+sandbox capability, and examples preserve an inline fallback.
+
+The Claude validation guidance records a 2.1.296 positive/negative probe: missing
+skill descriptions fail strict validation, while an unknown skill key still
+passes. Tool grants and plugin text substitution are separated from restrictions
+and exported shell variables. Native Codex packaging and optional skill metadata
+are linked to current primary documentation.
+
 ## v0.29.1 — indented plain descriptions are measured correctly
 
 The auditor now accepts a plain YAML description whose text begins on the

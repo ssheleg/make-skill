@@ -13,7 +13,7 @@ limits before locking a contract.
 ## Contents
 
 - The surface matrix — one table that decides portability
-- Nothing syncs — each surface is a separate deployment
+- Deploy per channel; account sync is a specific exception
 - Runtime constraints authors get wrong
 - Skills API — upload, version, attach
 - claude.ai
@@ -41,13 +41,16 @@ and pull from GitHub. Both are true per-tenant, which means neither is something
 to build on — treat claude.ai as "network may be off" and the skill still has to
 work.
 
-## Nothing syncs — each surface is a separate deployment
+## Deploy per channel; account sync is a specific exception
 
-A skill uploaded to the API is not on claude.ai and not in Claude Code, in any
-direction. There is no sync mechanism and none is planned in the docs. Keep the
-skill directory in git as the single source of truth and treat every surface as a
-publish target — which is exactly what the distribution matrix in
-`references/distribution.md` automates for the filesystem-based agents.
+API uploads and filesystem/plugin distributions remain separate deployment
+channels. Keep versioned source in Git and verify each target. Current
+[Claude Code documentation](https://code.claude.com/docs/en/skills#skills-synced-from-claudeai)
+(read 2026-10-09) documents claude.ai account skills syncing into terminal sessions
+from v2.1.273. It requires the supported account sign-in and policy; API-key,
+bare/safe-mode and managed restrictions can prevent it. This is download-only:
+local edits under `~/.claude/skills/synced/` are not uploaded and may be overwritten.
+Do not infer sync to other coding hosts or overwrite the account-managed cache.
 
 ## Runtime constraints authors get wrong
 
@@ -58,8 +61,8 @@ Written once for the surface you happen to use, a skill silently fails elsewhere
   [code execution tool](https://platform.claude.com/docs/en/agents-and-tools/tool-use/code-execution-tool)
   list) or state the dependency in `compatibility` and give a fallback path.
 - **`curl`/`requests`/any fetch inside a script** — no network on the API, maybe
-  none on claude.ai. A skill whose only path to data is an HTTP call is a Claude
-  Code skill; say so in `compatibility`.
+  none on claude.ai. Other coding agents can allow network access under their own
+  sandbox policy. Declare the capability, not a single vendor, in `compatibility`.
 - **Global installs** (`npm i -g`, `pip install --user`) — discouraged even where
   they work: the skill is a guest on the user's machine.
 - **Absolute machine paths** (`/Users/you/...`) — nothing outside the skill

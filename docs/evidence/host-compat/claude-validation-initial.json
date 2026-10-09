@@ -1,0 +1,20 @@
+{
+  "claude_version": "2.1.296",
+  "cases": [
+    {
+      "case": "valid",
+      "exit_code": 1,
+      "output": "Validating plugin manifest: <fixture>/.claude-plugin/plugin.json\n\n\u26a0 Found 1 warning:\n\n  \u276f author: No author information provided. Consider adding author details for plugin attribution\n\n\u2718 Validation failed (--strict treats warnings as errors)\n"
+    },
+    {
+      "case": "missing-description",
+      "exit_code": 1,
+      "output": "Validating plugin manifest: <fixture>/.claude-plugin/plugin.json\n\n\u26a0 Found 1 warning:\n\n  \u276f author: No author information provided. Consider adding author details for plugin attribution\n\nValidating skill: <fixture>/skills/probe/SKILL.md\n\n\u26a0 Found 1 warning:\n\n  \u276f description: No description in frontmatter. A description helps users and Claude understand when to use this skill.\n\n\u2718 Validation failed (--strict treats warnings as errors)\n"
+    },
+    {
+      "case": "unknown-field",
+      "exit_code": 1,
+      "output": "Validating plugin manifest: <fixture>/.claude-plugin/plugin.json\n\n\u26a0 Found 1 warning:\n\n  \u276f author: No author information provided. Consider adding author details for plugin attribution\n\n\u2718 Validation failed (--strict treats warnings as errors)\n"
+    }
+  ]
+}
