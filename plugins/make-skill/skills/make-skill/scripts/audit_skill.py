@@ -303,7 +303,8 @@ def parse_frontmatter(text):
     """A STRICT stdlib precheck of an explicitly bounded YAML subset — NOT full
     YAML, and it does not pretend to be (FIX-MS-02.01).
 
-    The supported subset: top-level scalars (quoted or plain), block scalars
+    The supported subset: top-level scalars (quoted or plain, including a plain
+    value starting on the next indented line), block scalars
     (`>`/`|` and their chomping variants), inline flow sequences (`[a, b]`),
     and ONE nested map. Everything else is out of subset and must be caught,
     never waved through — a precheck that silently accepts what the real
@@ -325,12 +326,34 @@ def parse_frontmatter(text):
     for a skill the Skills API rejects on upload (2026-08-16, B-63).
     """
     parse_frontmatter.last_duplicates = []
+    parse_frontmatter.last_unsupported = {}
     data, lines, key, mode = {}, {}, None, None
     scalars = set()
     duplicates = []            # (scope, key) pairs seen more than once
     nested_seen = set()
+    blank_lines = 0
+    plain_closed = False
+
+    def plain_part(value):
+        # Only plain scalars: quotes and flow values use their existing path.
+        # A hash in a URL is data; whitespace followed by # starts a comment.
+        m = re.search(r"(?:^|\s)#", value)
+        return (value[:m.start()].rstrip(), True) if m else (value, False)
+
+    def unsupported(reason):
+        parse_frontmatter.last_unsupported[key] = reason
+        data[key] = None
+        scalars.discard(key)
+
     for i, raw in enumerate(text.split("\n"), start=2):  # +2: the opening '---'
         if not raw.strip():
+            if mode == "plain":
+                blank_lines += 1
+            continue
+        if raw.lstrip().startswith("#") and (
+                raw[0] not in " \t" or mode in (None, "pending", "plain", "map")):
+            if mode == "plain":
+                plain_closed = True
             continue
         if raw[0] not in " \t":
             m = re.match(r"^([A-Za-z0-9_-]+):\s*(.*)$", raw)
@@ -342,10 +365,14 @@ def parse_frontmatter(text):
                 duplicates.append(("top", key))
             nested_seen = set()
             lines[key] = i
+            blank_lines, plain_closed = 0, False
+            # Delay the map/scalar decision: `description:` can introduce either.
+            if val.startswith("#"):
+                val = ""
             if val in (">", "|", ">-", "|-", ">+", "|+"):
                 data[key], mode = "", "block"
             elif val == "":
-                data[key], mode = {}, "map"
+                data[key], mode = None, "pending"
             else:
                 # Kept RAW here and finished at the end: a quoted scalar that
                 # spans lines carries its closing quote on the last one, so
@@ -353,10 +380,38 @@ def parse_frontmatter(text):
                 # buried in the middle of the folded value.
                 data[key], mode = val, "scalar"
                 scalars.add(key)
+                if val[0] not in "\"'[{":
+                    data[key], plain_closed = plain_part(val)
+                    mode = "plain"
+        elif mode == "pending":
+            value = raw.strip()
+            if re.match(r"^[A-Za-z0-9_-]+:(?:\s|$)", value):
+                data[key], mode = {}, "map"
+                m = re.match(r"^([A-Za-z0-9_-]+):\s*(.*)$", value)
+                nested_seen.add(m.group(1))
+                data[key][m.group(1)] = _typed_scalar(m.group(2).strip())
+            elif value[0] in "&*!{[|>" or re.match(r"^[-?:](?:\s|$)", value):
+                unsupported("indented value uses a YAML form outside the plain-scalar subset")
+                mode = "unsupported"
+            else:
+                data[key], mode = value, "scalar"
+                scalars.add(key)
+                if value[0] not in "\"'":
+                    data[key], plain_closed = plain_part(value)
+                    mode = "plain"
         elif mode == "block":
             data[key] = (data[key] + " " + raw.strip()).strip()
         elif mode == "scalar":
             data[key] = (data[key] + " " + raw.strip()).strip()
+        elif mode == "plain":
+            value, closed = plain_part(raw.strip())
+            if plain_closed or re.search(r":(?:\s|$)", value):
+                unsupported("plain scalar continuation follows a comment or contains a mapping separator")
+                mode = "unsupported"
+            else:
+                separator = "\n" * blank_lines if blank_lines else " "
+                data[key] += separator + value
+                blank_lines, plain_closed = 0, closed
         elif mode == "map":
             m = re.match(r"^\s+([A-Za-z0-9_-]+):\s*(.*)$", raw)
             if m:
@@ -405,7 +460,7 @@ def _finish_scalar(v):
     if len(v) >= 2 and v[0] == "[" and v[-1] == "]":
         inner = v[1:-1].strip()
         return [] if not inner else [_unquote(p.strip()) for p in inner.split(",")]
-    return _unquote(v)
+    return _typed_scalar(v)
 
 
 def _unquote(v):
@@ -436,6 +491,7 @@ def audit(skill_dir, house=False):
               "the file, delimited by ---", rel, 1)
         return a
     fm, fm_lines = parse_frontmatter(m.group(1))
+    unsupported = dict(getattr(parse_frontmatter, "last_unsupported", {}))
     body = text[m.end():]
 
     dups = getattr(parse_frontmatter, "last_duplicates", [])
@@ -461,9 +517,16 @@ def audit(skill_dir, house=False):
         a.ok("FM_YAML_CONFORMANCE", "the subset parse matches the installed "
              "YAML parser", rel)
 
-    _check_name(a, fm, fm_lines, name_on_disk, rel)
-    _check_description(a, fm, fm_lines, rel, house)
-    _check_optional_fields(a, fm, fm_lines, rel)
+    for key, reason in unsupported.items():
+        a.gap("FM_SUBSET_UNSUPPORTED", "%s: %s; field checks are unmeasured, "
+              "not evidence of a missing or invalid value" % (key, reason),
+              rel, fm_lines.get(key))
+    if "name" not in unsupported:
+        _check_name(a, fm, fm_lines, name_on_disk, rel)
+    if "description" not in unsupported:
+        _check_description(a, fm, fm_lines, rel, house)
+    measured = {k: v for k, v in fm.items() if k not in unsupported}
+    _check_optional_fields(a, measured, fm_lines, rel)
     _check_keys(a, fm, fm_lines, rel)
     _check_body_budget(a, body, rel, house)
     _check_bundle(a, skill_dir, text, name_on_disk)
