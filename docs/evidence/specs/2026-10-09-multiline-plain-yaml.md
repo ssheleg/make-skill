@@ -7,7 +7,9 @@ descriptions whose plain scalar begins on the next indented line. Fix the
 source-owned bundled auditor, preserve its dependency-free operation, verify
 positive and negative cases, and leave an unmerged PR for independent review.
 The operator's delegated brief authorizes implementation, commit and push;
-merge, release and installed-copy edits are explicitly excluded. The inherited
+merge, release and installed-copy edits are explicitly excluded. After accepting
+the parser review, the parent requested preparation of 0.29.1 metadata in this
+same PR; the parent still owns merge/tag/release. The inherited
 model is unchanged. No unanswered intake question changes this bounded fix.
 
 Base: `9b5af484c868d246dfc28fed83f7986e238b25f5`, fetched `origin/main`.
@@ -45,15 +47,19 @@ the central comprehensive plan retains cross-repository execution state.
 | SC3-Y2 | Absent/empty/non-string descriptions still fail; a long scalar still exceeds the length limit; duplicate metadata keys and ordinary maps remain checked. |
 | SC3-Y3 | Unsupported constructs/continuation after a terminating comment report a parser limitation; no false `DESC_MISSING` and no token/type PASS for an unparsed value. No mandatory PyYAML dependency. |
 | SC3-Y4 | Focused regression fails on the old parser and passes on the fix; existing `npm test` and native manifest validation run. Optional PyYAML differential checks explicitly skip if unavailable. |
-| SC3-Y5 | Source, tests and handoff are committed/pushed for independent review. Version remains 0.29.0 until a separately authorized release. |
+| SC3-Y5 | Source, tests and handoff are committed/pushed; independently reviewed code and synchronized 0.29.1 metadata reach the parent for the final merge/tag decision. |
 
 Order: add a self-contained synthetic regression; run it against the old
 parser; implement pending-value recognition; run the focused regression and
 existing suites; save exact receipts and create the PR. Tests use the existing
 residue ledger. The plugin script is the shipped payload; no generated copy
-or installer/template metadata changes are required.
+or installer/template changes are required. Release preparation synchronizes
+the package, marketplace, plugin, skill metadata, skill card and changelog.
 
 ## Resume
 
-Implementation and verification pending. Next action: add and run the focused
-multiline-plain regression against the base parser, then implement the fix.
+Implementation and local verification complete; see the
+[review handoff](../handoffs/2026-10-09-multiline-plain-yaml.md).
+The parent accepted the independent parser review. Next action: parent review
+of the final release metadata/head, then the normal merge and release process.
+This implementer does not release or update installs.

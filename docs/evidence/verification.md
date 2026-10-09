@@ -18,6 +18,22 @@ the release the CHANGELOG carries (MS-03).
 
 ---
 
+## Shipped state — v0.29.1 (release candidate, 2026-10-09)
+
+Release preparation only: the source below was measured on the branch, before
+a tag, package publication or installation update. The section label follows
+this ledger's existing validator contract; it is not a published-artifact claim.
+The [SC-3 handoff](handoffs/2026-10-09-multiline-plain-yaml.md) records scope,
+the exact parser commit and the independent reviewer receipt.
+
+| REQ | Prepared behavior | How it was confirmed | Confirmed |
+|---|---|---|---|
+| SC3-Y1 | Plain descriptions may start on the next indented line and retain their full folded value | `python3 test/audit_regressions/sc3-multiline-plain.py` → zero failed groups; old parser failed the positive and full-length cases | **planted**, then passed |
+| SC3-Y2 | Missing, empty, non-string and oversized descriptions still fail; maps and duplicate keys remain checked | Same regression's invalid-value and metadata/length groups | **planted**, then passed |
+| SC3-Y3 | Unsupported forms report a parser limitation without false missing-field findings; no hard parser dependency | `python3 -S test/audit_regressions/sc3-multiline-plain.py` → exit 0; optional PyYAML oracle explicitly NOT_RUN | **observed** |
+| SC3-Y4 | Existing checks remain green on parser commit `dfa8d06759455d2b384cefe5a1e186df9338f8ea` | `npm test` → exit 0; both `claude plugin validate … --strict` commands → `Validation passed`; parent `/root` independently reran the eight regression groups and three real reproductions | **observed**, locally |
+| SC3-Y5 | Synchronized 0.29.1 metadata awaits parent merge/tag review | Package, marketplace, plugin, skill metadata, skill card and top changelog; no published or installed acceptance claimed | **prepared**, release pending |
+
 ## Shipped state — v0.29.0 (2026-09-14)
 
 Measured on the release-candidate tree before the tag exists. Source: the 2026-09-13
