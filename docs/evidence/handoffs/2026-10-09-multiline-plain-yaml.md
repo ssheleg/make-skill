@@ -59,13 +59,62 @@ not claim hosted CI or deployment acceptance.
   into a plausible description. The optional oracle also identifies malformed
   YAML when installed.
 - No foreign skill content was changed merely to satisfy the auditor.
-- Version 0.29.1 is prepared across the package, marketplace, plugin, skill
-  metadata, skill card and changelog. There is no tag, package release, global
-  installation update or parent pin change from this implementer.
+- The pre-release branch prepared 0.29.1 across the package, marketplace,
+  plugin, skill metadata, skill card and changelog. The subsequent release and
+  installation state is recorded below; the earlier branch did not publish.
 
-Next task: the parent checks the final metadata/head and performs the authorized
-merge/tag/release if accepted. After a release, rerun the census with
-the released auditor rather than rewriting the immutable pre-fix snapshot.
+That pre-release next task was completed by the parent; the post-release
+receipt below is the current state. Rerun the census with the released auditor
+rather than rewriting the immutable pre-fix snapshot.
+
+## Post-release receipt — 2026-10-09
+
+[PR #25](https://github.com/ssheleg/make-skill/pull/25) was squash-merged to
+`2f5a1ad24c2145bcb72c601b3bd899f942a3acca`. The tag `v0.29.1` resolves
+to that commit. The [GitHub release](https://github.com/ssheleg/make-skill/releases/tag/v0.29.1)
+was published at 2026-10-09T13:51:04Z, without draft or prerelease status.
+
+[Release workflow 37939691841](https://github.com/ssheleg/make-skill/actions/runs/37939691841)
+completed successfully at the exact release SHA. Its six successful jobs cover
+skills discovery, native plugin manifests, the house skill audit, repository
+validation, release creation and npm publication. The independently queried
+public metadata is retained in [release.json](../releases/2026-10-09-make-skill-0.29.1/release.json).
+
+The canonical npm tarball became readable at the successful recorded probe,
+2026-10-09T13:59:45Z. The [registry receipt](../releases/2026-10-09-make-skill-0.29.1/registry.json)
+verifies exact version `@ssheleg/make-skill@0.29.1`, `gitHead` equal to the
+release SHA, SHA-512 integrity, and all **32 tarball files** byte-for-byte
+against that Git commit. No alternate URL was substituted for acceptance.
+
+Earlier canonical requests returned 404. The recorded minute-spaced
+[propagation attempts](../releases/2026-10-09-make-skill-0.29.1/propagation-attempts.json)
+retain two failed requests and the successful verifier output. Later
+[allowlisted HTTP diagnostics](../releases/2026-10-09-make-skill-0.29.1/http-diagnostics.json)
+show canonical and same-URL no-cache requests returning 200 with a Cloudflare
+cache HIT, and a separately labelled cache-busting diagnostic returning 200
+with a MISS. All three response hashes are identical. The successful canonical
+verification preceded the cache-busting diagnostic. Earlier failure headers
+did not identify a cache age/status, so negative-cache versus origin propagation
+is **unresolved**; temporary unavailability and natural recovery were observed.
+No republish or workflow dispatch was performed by this receipt task.
+
+The [native Codex receipt](../releases/2026-10-09-make-skill-0.29.1/native-codex.json)
+records 25 installed plugin files matching the pinned release source. The
+receipt writer independently rehashed each installed file and checked it
+against `git show <release-sha>:plugins/make-skill/<file>`. The canonical tree
+hash is `c57430bfd1f9c5bce14758bf43c7e1de4762a1147d93f962e81ef5a7485aa2a2`,
+computed as SHA-256 of `json.dumps(relative_path_to_sha256, sort_keys=True)`.
+
+The acceptance agent's fresh native registry receipt lists 566 entries, 537
+enabled, with `make-skill:make-skill` enabled and the legacy plain entry
+disabled. That registry result is attributed to the acceptance agent; the
+filesystem equality was independently repeated by the receipt writer. A new
+model execution testing this parser release is **NOT_RUN**. These statements
+cover native Codex only, not every installed channel or every live session.
+
+The remaining delivery is cross-channel installation and a new census against
+the released auditor. The central comprehensive task owns that work and the
+umbrella pin; this receipt-only branch changes no release metadata or installs.
 
 Skills used: `task-pipeline` for the scoped brief, evidence and handoff;
 `make-skill` for the dependency, conformance and release preparation rules;

@@ -60,6 +60,7 @@ the package, marketplace, plugin, skill metadata, skill card and changelog.
 
 Implementation and local verification complete; see the
 [review handoff](../handoffs/2026-10-09-multiline-plain-yaml.md).
-The parent accepted the independent parser review. Next action: parent review
-of the final release metadata/head, then the normal merge and release process.
-This implementer does not release or update installs.
+The parent accepted the independent parser review and released v0.29.1 at
+`2f5a1ad24c2145bcb72c601b3bd899f942a3acca`. The linked handoff's post-release
+section owns the current receipts and remaining cross-channel acceptance;
+the pre-release brief above remains the historical scope record.

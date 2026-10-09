@@ -1,0 +1,52 @@
+{
+  "headSha": "2f5a1ad24c2145bcb72c601b3bd899f942a3acca",
+  "status": "completed",
+  "conclusion": "success",
+  "url": "https://github.com/ssheleg/make-skill/actions/runs/37939691841",
+  "jobs": [
+    {
+      "name": "validate / skills-cli-discovery",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/ssheleg/make-skill/actions/runs/37939691841/job/113850605953"
+    },
+    {
+      "name": "validate / claude-plugin-validate",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/ssheleg/make-skill/actions/runs/37939691841/job/113850606245"
+    },
+    {
+      "name": "validate / House skill audit",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/ssheleg/make-skill/actions/runs/37939691841/job/113850606263"
+    },
+    {
+      "name": "validate / validate",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/ssheleg/make-skill/actions/runs/37939691841/job/113850607404"
+    },
+    {
+      "name": "release",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/ssheleg/make-skill/actions/runs/37939691841/job/113850857853"
+    },
+    {
+      "name": "publish",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/ssheleg/make-skill/actions/runs/37939691841/job/113851049359"
+    }
+  ],
+  "release": {
+    "isDraft": false,
+    "isPrerelease": false,
+    "publishedAt": "2026-10-09T13:51:04Z",
+    "tagName": "v0.29.1",
+    "targetCommitish": "main",
+    "url": "https://github.com/ssheleg/make-skill/releases/tag/v0.29.1"
+  }
+}

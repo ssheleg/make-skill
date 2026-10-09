@@ -1,8 +1,9 @@
 # Sherlock family audit: handoff
 
-Current bounded follow-up: [SC-3 multiline plain YAML auditor correction](evidence/handoffs/2026-10-09-multiline-plain-yaml.md).
-It contains the objective, exact code commit, executed checks, parser limits
-and next independent-review task. This follow-up is not released.
+Current bounded follow-up: [SC-3 multiline plain YAML auditor correction and release receipts](evidence/handoffs/2026-10-09-multiline-plain-yaml.md).
+PR #25 was squash-merged at `2f5a1ad24c2145bcb72c601b3bd899f942a3acca`
+and released as v0.29.1. The handoff distinguishes source, workflow, registry
+and installation evidence and names the remaining cross-channel work.
 
 This branch contains the prepared make-skill instruction changes from the family
 audit. The runtime backlog has not been implemented or released.

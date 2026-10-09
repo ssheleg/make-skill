@@ -1,0 +1,17 @@
+[
+  {
+    "as_of": "2026-10-09T13:57:42.542652+00:00",
+    "exit_code": 1,
+    "result": "urllib.error.HTTPError: HTTP Error 404: Not Found"
+  },
+  {
+    "as_of": "2026-10-09T13:58:43.303472+00:00",
+    "exit_code": 1,
+    "result": "urllib.error.HTTPError: HTTP Error 404: Not Found"
+  },
+  {
+    "as_of": "2026-10-09T13:59:45.149931+00:00",
+    "exit_code": 0,
+    "result": "{\"as_of\": \"2026-10-09\", \"package\": \"@ssheleg/make-skill\", \"version\": \"0.29.1\", \"source_commit\": \"2f5a1ad24c2145bcb72c601b3bd899f942a3acca\", \"registry_gitHead\": \"2f5a1ad24c2145bcb72c601b3bd899f942a3acca\", \"integrity\": \"sha512-CWrPJFmdP4tzPVwrdpMCXR6TknCmiheDwY+dy6Wcu4FQTWC1beoZV173RMS92k/JySAR8EQ/8yR03MSUqKcB2Q==\", \"files_matched\": 32}"
+  }
+]
