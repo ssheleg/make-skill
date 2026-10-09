@@ -18,11 +18,12 @@ the release the CHANGELOG carries (MS-03).
 
 ---
 
-## Shipped state — v0.29.1 (release candidate, 2026-10-09)
+## Shipped state — v0.29.1 (2026-10-09)
 
-Release preparation only: the source below was measured on the branch, before
-a tag, package publication or installation update. The section label follows
-this ledger's existing validator contract; it is not a published-artifact claim.
+The initial rows below were measured on the release-candidate branch. The
+parent subsequently released `2f5a1ad24c2145bcb72c601b3bd899f942a3acca`;
+the appended post-release rows keep source, publication and installation
+evidence separate.
 The [SC-3 handoff](handoffs/2026-10-09-multiline-plain-yaml.md) records scope,
 the exact parser commit and the independent reviewer receipt.
 
@@ -32,7 +33,10 @@ the exact parser commit and the independent reviewer receipt.
 | SC3-Y2 | Missing, empty, non-string and oversized descriptions still fail; maps and duplicate keys remain checked | Same regression's invalid-value and metadata/length groups | **planted**, then passed |
 | SC3-Y3 | Unsupported forms report a parser limitation without false missing-field findings; no hard parser dependency | `python3 -S test/audit_regressions/sc3-multiline-plain.py` → exit 0; optional PyYAML oracle explicitly NOT_RUN | **observed** |
 | SC3-Y4 | Existing checks remain green on parser commit `dfa8d06759455d2b384cefe5a1e186df9338f8ea` | `npm test` → exit 0; both `claude plugin validate … --strict` commands → `Validation passed`; parent `/root` independently reran the eight regression groups and three real reproductions | **observed**, locally |
-| SC3-Y5 | Synchronized 0.29.1 metadata awaits parent merge/tag review | Package, marketplace, plugin, skill metadata, skill card and top changelog; no published or installed acceptance claimed | **prepared**, release pending |
+| SC3-Y5 | Synchronized 0.29.1 metadata reached parent merge/tag review | Package, marketplace, plugin, skill metadata, skill card and top changelog; this row records the pre-release check | **prepared**, then released below |
+| SC3-release | Release/tag and hosted release validation match the merged SHA | [Release receipt](releases/2026-10-09-make-skill-0.29.1/release.json): workflow 37939691841, six successful jobs, exact head `2f5a1ad24c2145bcb72c601b3bd899f942a3acca`; tag resolves to the same SHA | **observed**, published |
+| SC3-registry | The exact published npm version carries the release bytes | [Registry receipt](releases/2026-10-09-make-skill-0.29.1/registry.json): exact `gitHead`, SHA-512 integrity and all 32 tarball files match the release commit; canonical URL became readable after initial 404s | **observed**, canonical tarball |
+| SC3-native | Native Codex plugin files match the release source | [Native receipt](releases/2026-10-09-make-skill-0.29.1/native-codex.json): all 25 file hashes independently rechecked; post-upgrade model execution NOT_RUN | **observed**, filesystem equality only |
 
 ## Shipped state — v0.29.0 (2026-09-14)
 

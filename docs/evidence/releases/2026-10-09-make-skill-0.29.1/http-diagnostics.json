@@ -1,0 +1,75 @@
+{
+  "as_of": "2026-10-09T14:01:14.198540+00:00",
+  "metadata_url": "https://registry.npmjs.org/@ssheleg%2fmake-skill/0.29.1",
+  "metadata_version": "0.29.1",
+  "metadata_gitHead": "2f5a1ad24c2145bcb72c601b3bd899f942a3acca",
+  "canonical_tarball_url": "https://registry.npmjs.org/@ssheleg/make-skill/-/make-skill-0.29.1.tgz",
+  "registry_integrity": "sha512-CWrPJFmdP4tzPVwrdpMCXR6TknCmiheDwY+dy6Wcu4FQTWC1beoZV173RMS92k/JySAR8EQ/8yR03MSUqKcB2Q==",
+  "probes": [
+    {
+      "name": "canonical",
+      "url": "https://registry.npmjs.org/@ssheleg/make-skill/-/make-skill-0.29.1.tgz",
+      "request_headers": {},
+      "status": 200,
+      "as_of": "2026-10-09T14:01:14.715042+00:00",
+      "headers": {
+        "Date": "Fri, 09 Oct 2026 14:01:14 GMT",
+        "Content-Type": "application/octet-stream",
+        "Content-Length": "135213",
+        "CF-Cache-Status": "HIT",
+        "Age": "124",
+        "Cache-Control": "public, must-revalidate, max-age=31557600",
+        "ETag": "\"7e95c5ac1dee9eab5ae3a28a70ef3d32\"",
+        "Last-Modified": "Fri, 09 Oct 2026 13:54:17 GMT",
+        "Server": "cloudflare"
+      },
+      "response_bytes": 135213,
+      "body_sha256": "881d605824b4e1f7a1f24e9692f55bb4515242838606c4033757fe9fbb4a1931"
+    },
+    {
+      "name": "same-url-no-cache",
+      "url": "https://registry.npmjs.org/@ssheleg/make-skill/-/make-skill-0.29.1.tgz",
+      "request_headers": {
+        "Cache-Control": "no-cache",
+        "Pragma": "no-cache"
+      },
+      "status": 200,
+      "as_of": "2026-10-09T14:01:15.063708+00:00",
+      "headers": {
+        "Date": "Fri, 09 Oct 2026 14:01:14 GMT",
+        "Content-Type": "application/octet-stream",
+        "Content-Length": "135213",
+        "CF-Cache-Status": "HIT",
+        "Age": "124",
+        "Cache-Control": "public, must-revalidate, max-age=31557600",
+        "ETag": "\"7e95c5ac1dee9eab5ae3a28a70ef3d32\"",
+        "Last-Modified": "Fri, 09 Oct 2026 13:54:17 GMT",
+        "Server": "cloudflare"
+      },
+      "response_bytes": 135213,
+      "body_sha256": "881d605824b4e1f7a1f24e9692f55bb4515242838606c4033757fe9fbb4a1931"
+    },
+    {
+      "name": "query-cachebuster-diagnostic",
+      "url": "https://registry.npmjs.org/@ssheleg/make-skill/-/make-skill-0.29.1.tgz?sc3_diagnostic=1791554474",
+      "request_headers": {
+        "Cache-Control": "no-cache",
+        "Pragma": "no-cache"
+      },
+      "status": 200,
+      "as_of": "2026-10-09T14:01:15.652469+00:00",
+      "headers": {
+        "Date": "Fri, 09 Oct 2026 14:01:15 GMT",
+        "Content-Type": "application/octet-stream",
+        "Content-Length": "135213",
+        "CF-Cache-Status": "MISS",
+        "Cache-Control": "public, must-revalidate, max-age=31557600",
+        "ETag": "\"7e95c5ac1dee9eab5ae3a28a70ef3d32\"",
+        "Last-Modified": "Fri, 09 Oct 2026 13:54:17 GMT",
+        "Server": "cloudflare"
+      },
+      "response_bytes": 135213,
+      "body_sha256": "881d605824b4e1f7a1f24e9692f55bb4515242838606c4033757fe9fbb4a1931"
+    }
+  ]
+}
