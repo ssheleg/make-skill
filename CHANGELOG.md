@@ -1,3 +1,16 @@
+## v0.29.1 — indented plain descriptions are measured correctly
+
+The auditor now accepts a plain YAML description whose text begins on the
+next indented line. It folds continuation lines, preserves paragraph breaks,
+and respects comment boundaries instead of reporting a valid description as
+missing. Bare typed values remain subject to the field's string requirement.
+
+Unsupported forms in that path produce `FM_SUBSET_UNSUPPORTED`; field checks
+remain unmeasured instead of making a missing-value claim. The parser stays
+dependency-free, with an installed full YAML parser used only as an optional
+oracle. The regression covers valid strings, actual missing/invalid values,
+length limits, metadata maps, comments and the no-PyYAML path.
+
 ## v0.29.0 — the standard now reads a hook key the host ignores
 
 Claude Code 2.1.270 began printing `hooks.json: unknown key "if" in
