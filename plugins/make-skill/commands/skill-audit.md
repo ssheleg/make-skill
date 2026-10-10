@@ -3,9 +3,11 @@ description: "Audit a skill directory against the Agent Skills standard and Anth
 argument-hint: "[path to a skill dir] [--house]"
 ---
 
-Audit the skill at `$ARGUMENTS` (default: the skill directory in the current
-working directory, or every `skills/*/` under `plugins/*/` if this is a plugin
-repo).
+Audit the skill directory named in the arguments. With no arguments, audit the
+skill directory in the current working directory, or every `skills/*/` under
+`plugins/*/` if this is a plugin repo.
+
+Arguments (empty when none were given): $ARGUMENTS
 
 1. Run the bundled auditor — it does the mechanical half deterministically. This
    plugin puts it on your PATH:

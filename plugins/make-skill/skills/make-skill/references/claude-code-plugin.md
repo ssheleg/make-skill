@@ -14,7 +14,10 @@ Upstream (read against these, not from memory — the schema grows every release
 against 2.1.236 — that pass added the `archive` and `command` sources, entry-level
 `headersHelper`, bare-name sources under `metadata.pluginRoot`, and `"skills": ["."]`,
 all of which landed between the two readings. Re-read before
-trusting a version-gated field in a new quarter.*
+trusting a version-gated field in a new quarter.* **Verified against Claude Code
+2.1.296 (2026-10-10)**: the CHANGELOG entries 2.1.287–2.1.296 and the skills,
+settings, hooks, plugins and mods reference pages, each fact dated in
+*Changes through 2.1.296* below.
 
 The [Agent Skills spec](https://agentskills.io/specification) (see
 `references/agent-skills-spec.md`) is the portable floor. **This file is the
@@ -29,12 +32,14 @@ procedure and verify extensions separately for each claimed host and version.
 - `marketplace.json` — `.claude-plugin/marketplace.json` (fields, reserved names, plugin entries)
 - Component locations
 - Skill frontmatter — host extensions
+- The skill listing budget
 - Agents, hooks, MCP inside a plugin
 - LSP servers and monitors
 - Path variables
 - Caching, symlinks, path traversal
 - Skills-directory plugins
 - CLI
+- Changes through 2.1.296
 - Conformance checklist
 
 ## The gate: `claude plugin validate`
@@ -226,9 +231,27 @@ portable skill. Claude Code also reads:
 Booleans accept `yes/no/on/off/1/0` in any case as of CC 2.1.218 — earlier
 versions read only `true`/`false`, so write `true`/`false`.
 
-Listing budget: `description` + `when_to_use` is truncated at **1,536 chars** in
-the skill listing; the spec's own `description` cap of 1024 is the tighter rule
-and stays the one to hold.
+## The skill listing budget
+
+Read from the [skills](https://code.claude.com/docs/en/skills) and
+[settings](https://code.claude.com/docs/en/settings-reference) pages, 2026-10-10.
+
+- Every turn Claude sees every skill's **name**; descriptions fit a budget of
+  `skillListingBudgetFraction` of the context window (default `0.01`, 1%).
+  Over budget, descriptions are dropped **least-used skills first** — the skill
+  stays invocable but is rarely chosen on its own. Measured here 2026-10-10
+  (`claude -p --debug`): *"Skill listing over budget: 634 skills, 274398 chars >
+  30000 budget"* — a large catalogue loses most descriptions silently.
+- Each entry's `description` + `when_to_use` is cut at `skillListingMaxDescChars`
+  (default **1,536**). The spec's own `description` cap of 1024 is tighter and
+  stays the one to hold.
+- `skillOverrides` (settings, any scope) maps a skill name to `on`, `name-only`
+  (name without description), `user-invocable-only` (hidden from Claude, `/name`
+  still works) or `off`. **It covers personal and project skills only — plugin
+  skills are managed through `/plugin`.** A hidden skill is found by searching
+  the installed catalogue, not by the listing.
+- A skill is found by its SKILL.md `name` even when its folder name differs; the
+  listing shows both (2.1.290).
 
 Command name: a plugin skill is `/<plugin>:<skill-dir>`, and frontmatter `name`
 replaces the last segment (`name: fancy` → `/my-plugin:fancy`). Personal and
@@ -237,15 +260,18 @@ there.
 
 ## Agents, hooks, MCP inside a plugin
 
-- **Agents** (`agents/*.md`) support `name`, `description`, `model`, `effort`,
-  `maxTurns`, `tools`, `disallowedTools`, `skills`, `memory`, `background`,
+- **Agents** (`agents/*.md`) support `name` (≤256 chars, 2.1.292), `description`,
+  `model`, `effort`, `maxTurns`, `tools`, `disallowedTools`, `skills` (at most 32
+  preloaded, 2.1.295), `memory`, `background`, `autoCompactWindow` (2.1.296),
   `isolation` (only value: `"worktree"`). `hooks`, `mcpServers`, and
   `permissionMode` are **rejected** for plugin-shipped agents. They appear as
   `<plugin>:<agent>`.
 - **Hooks** use the standard event set (`SessionStart`, `PreToolUse`,
   `PostToolUse`, `UserPromptSubmit`, `Stop`, `SessionEnd`, …) and types
   `command`, `http`, `mcp_tool`, `prompt`, `agent`. Event names are
-  case-sensitive; scripts need `chmod +x` and a shebang.
+  case-sensitive; scripts need `chmod +x` and a shebang. A failing hook lets the
+  action through unless a `command`/`http` hook sets `onFailure: "block"`
+  (2.1.295).
 - A hook targeting the plugin's **own** MCP server must use scoped names:
   matcher/`if` take `mcp__plugin_<plugin>_<server>__<tool>`, and an `mcp_tool`
   hook's `server` takes `plugin:<plugin>:<server>`. A matcher on the bare server
@@ -344,6 +370,7 @@ need `/reload-plugins`. Disable with `claude plugin disable <name>@skills-dir`.
 | `claude plugin validate <path> [--strict]` | the conformance gate, offline |
 | `claude plugin init <name> [--with …]` | scaffold a `@skills-dir` plugin |
 | `claude plugin install <name>@<marketplace> [-s user\|project\|local] [--config k=v]` | install |
+| `claude plugin install <name> --marketplace <source>` | **2.1.292+**: adds the marketplace if needed (same policy checks as `marketplace add`), then installs |
 | `claude plugin update <name>@<marketplace>` | update. Docs accept a bare `<name>`; **2.1.212 does not** — `claude plugin update make-skill` answers `Plugin "make-skill" not found`, exits 0, changes nothing. Always pass `name@marketplace` |
 | `claude plugin enable\|disable <name>@<marketplace>` | toggle without uninstalling |
 | `claude plugin uninstall <name>@<marketplace> [--keep-data] [--prune]` | remove (deletes the data dir unless `--keep-data`) |
@@ -354,6 +381,28 @@ need `/reload-plugins`. Disable with `claude plugin disable <name>@skills-dir`.
 
 `claude --debug` prints plugin loading, manifest errors, and component
 registration — the first stop when a component silently doesn't appear.
+
+## Changes through 2.1.296
+
+Each row read 2026-10-10 from the
+[CHANGELOG](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md)
+(release dates from the npm registry, UTC) and checked against the page named.
+
+| Version (date) | What changed | Also in |
+|---|---|---|
+| 2.1.287 (2026-10-01) | **Claude Mods**: a plugin may ship a hooks module — `hooks/hooks.json` gains `"modules": ["./register.js"]`, an ES module exporting `register(on, options)`; in the CHANGELOG's words, plugins "may now modify deeper behavior" | [mods reference](https://code.claude.com/docs/en/plugins/mods/reference) |
+| 2.1.288 (2026-10-02) | `PreToolUse` and `PermissionRequest` hooks whose matching fails, or whose tool input cannot be serialised, now **block** the call instead of being skipped | — |
+| 2.1.289 (2026-10-03) | `claude plugin validate` no longer skips a plugin whose folder also holds a marketplace manifest | — |
+| 2.1.290 (2026-10-05) | `validate` lists each hook a mod registers at a gating site and whether it has a `.catch` (`gatingHooks` in `--json`); a skill is found by SKILL.md `name` when its folder name differs | `--json` output observed locally on 2.1.296 |
+| 2.1.292 (2026-10-06) | `claude plugin install --marketplace <source>`; agent names capped at **256** chars (longer is rejected), and a skill's or plugin file's `name` over 256 is ignored | `claude plugin install --help` |
+| 2.1.295 (2026-10-08) | Command and HTTP hooks take **`onFailure: "block"`** — a hook that cannot start, times out or exits unexpectedly blocks the action; the default stays `"continue"`. `validate` advises when the README has no install line (never changes the exit code, even `--strict`). Subagents preload **at most 32** skills from `skills:`. MCP tool descriptions loaded through tool search are cut at **16,384** chars | [hooks](https://code.claude.com/docs/en/hooks) |
+| 2.1.296 (2026-10-09) | Default limit on up-front MCP tool descriptions and server instructions raised **2,048 → 4,096** chars; subagent frontmatter gains `autoCompactWindow` | — |
+
+Consequences for a plugin author: a policy hook that must not fail open sets
+`onFailure: "block"` and its own first run is watched once with the script
+missing; a hooks module (mod) is code the host runs inside the session — review
+it as such (`references/enterprise.md`); never rely on the 1% listing budget to
+show your description in a large catalogue.
 
 ## Conformance checklist
 

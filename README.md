@@ -185,6 +185,20 @@ only fields Claude Code recognizes (a seeded repo passes `claude plugin validate
 --strict` on day one), and `hooks.template.json` / `agent.template.md` /
 `command.template.md`, each with its degradation clause already in place.
 
+### The second skill: `skill-search`
+
+The plugin also ships a small skill for the step BEFORE any task: say what was
+asked in one line, decide whether a skill could help, turn the meaning into
+concepts in both languages, and search the **whole installed catalogue** —
+because a large catalogue is mostly hidden from the host's skill listing
+(Claude Code keeps only ~1% of the context window for descriptions and lets
+the operator hide skills with `skillOverrides`; Codex disables them in its
+config). It runs `npx sshlg-skills toolkit --find "<concepts>"` and falls back
+to a `find`/`grep` over the skill directories when that is unavailable. It is
+for finding a skill to **use**; building or auditing one stays with
+`make-skill`. Invoked as `/make-skill:skill-search` from the plugin, or
+`/skill-search` from a skills directory.
+
 ## Install
 
 **Claude Code (recommended):**
@@ -203,8 +217,9 @@ npx skills add ssheleg/make-skill
 Don't target `claude-code` here if you installed the plugin above — see
 one-channel-per-agent.
 
-**npx, no clone** — installs a plain copy into `~/.claude/skills/make-skill`, so
-use it only if you did **not** install the plugin above. Both installers detect
+**npx, no clone** — installs plain copies into `~/.claude/skills/make-skill` and
+`~/.claude/skills/skill-search`, so use it only if you did **not** install the
+plugin above. Both installers detect
 the plugin and refuse rather than leave a copy shadowing it:
 
 ```bash
@@ -213,7 +228,8 @@ npx @ssheleg/make-skill           # npm registry (scoped: npm blocks the bare na
 ```
 
 **Cursor, per project:** copy [`cursor/rules/make-skill.mdc`](cursor/rules/make-skill.mdc)
-into `.cursor/rules/` — it is self-contained by design.
+and [`cursor/rules/skill-search.mdc`](cursor/rules/skill-search.mdc) into
+`.cursor/rules/` — each is self-contained by design.
 
 **Plain skill** — same one-channel caveat as `npx` above:
 
@@ -243,7 +259,7 @@ same Claude Code install shadow each other, and the stale one usually wins.
 | Channel | Update |
 |---|---|
 | Claude Code (plugin) | `claude plugin marketplace update make-skill` → `claude plugin update make-skill@make-skill` → restart |
-| Any agent (skills CLI) | `npx skills update make-skill --global --yes && rm -f ~/.claude/skills/make-skill` |
+| Any agent (skills CLI) | `npx skills update make-skill skill-search --global --yes && rm -f ~/.claude/skills/make-skill ~/.claude/skills/skill-search` |
 | npx | `npx github:ssheleg/make-skill` / `npx @ssheleg/make-skill@latest` |
 | Plain skill | `git pull && ./install.sh --force` |
 
@@ -273,11 +289,12 @@ plugins/make-skill/
 │   ├── references/*.md               # loaded on demand
 │   ├── scripts/audit_skill.py        # audits any skill dir, stdlib only
 │   └── assets/*.template.*           # six skeletons: skill, manifests, hooks, agent, command
+├── skills/skill-search/SKILL.md      # the first step of any task: find the skill to use
 ├── bin/make-skill-audit              # on Claude Code's Bash PATH — the auditor by name
 ├── hooks/                            # Claude Code only — PostToolUse SKILL.md audit
 ├── agents/skill-auditor.md           # Claude Code only
 └── commands/skill-audit.md           # Claude Code only, never named after a skill
-cursor/rules/make-skill.mdc           # self-contained Cursor rule
+cursor/rules/{make-skill,skill-search}.mdc   # self-contained Cursor rules
 bin/make-skill.js + package.json      # zero-dep npx installer
 test/validate.py                      # structural validator
 test/{plant_guard,checker_parity,residue}_test.py   # the gate's three suites

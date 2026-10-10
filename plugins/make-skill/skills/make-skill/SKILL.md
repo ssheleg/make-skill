@@ -5,7 +5,7 @@ license: MIT
 compatibility: Authoring works on any agent. The bundled scripts/ need python3. Publishing steps need git, gh, node and npm; the plugin gates need the claude CLI. Not usable on the Claude API surface, which has no network and no runtime package install.
 metadata:
   author: ssheleg
-  version: "0.29.2"
+  version: "0.30.0"
   homepage: https://github.com/ssheleg/make-skill
 ---
 
@@ -44,6 +44,7 @@ Detect from the request and any path in `$ARGUMENTS`; announce the choice.
 | New skill, installable by others/other agents | Create (distributable) |
 | Existing skill or repo below this standard, "does this match the spec?" | Retrofit |
 | Personal skill should become installable | Promote |
+| Finding a skill to USE | `skill-search` |
 
 With no argument, **detect instead of asking**: a `SKILL.md`, `.claude-plugin/`
 or `plugins/*/skills/*/` here → run the Retrofit audit, report the gap table
@@ -270,8 +271,8 @@ merely incomplete:
 - **Writing the installer or validator?** More traps (piped-stdin readline,
   raw-mode pickers, ANSI literals, python 3.9 drift) are in
   `references/distribution.md` → *Installer implementation traps*.
-- **gh auth status may lie** (invalid-token report while git+ssh works): attempt
-  the operation before declaring it blocked.
+- **gh auth status may lie** (invalid token while git+ssh works): attempt the
+  operation before declaring it blocked.
 - **Duplicate-shadow: the stale copy wins, and it regrows.** A plugin install
   plus a plain `~/.claude/skills/<name>` copy = two listings; `npx skills
   add|update … --global` recreates that path **even when `claude-code` was never
