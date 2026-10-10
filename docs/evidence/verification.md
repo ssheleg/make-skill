@@ -18,11 +18,12 @@ the release the CHANGELOG carries (MS-03).
 
 ---
 
-## Shipped state — v0.30.0 (candidate, 2026-10-10)
+## Shipped state — v0.30.0 (2026-10-10)
 
 Family round `FAMILY-ROUND-1010` (hub brief `docs/evidence/briefs/2026-10-10-family-round.md`
 in ssheleg/sshlg-skills, REQ-4, REQ-6, REQ-9). Rows below were measured on the branch
-`fix/family-round-1010` before the tag; publication rows are appended after release.
+`fix/family-round-1010` before the tag; the publication rows at the end were read after
+release from the run, the tag and the registry.
 
 | REQ | What ships | How it was confirmed | Confirmed |
 |---|---|---|---|
@@ -34,6 +35,11 @@ in ssheleg/sshlg-skills, REQ-4, REQ-6, REQ-9). Rows below were measured on the b
 | Gate | All of the above together | `npm test` → exit 0 (validate, plant_guard 9, checker parity 20, residue 11, installer 11, audit regressions 0 failed); `claude plugin validate ./plugins/make-skill --strict` and `claude plugin validate . --strict` on 2.1.296 → `Validation passed`; `npm pack --dry-run` → 34 files incl. both new ones | **observed**, local |
 | REQ-9 command | `/skill-audit` with no argument states its default in prose; `$ARGUMENTS` on its own line | Validator refuses a backticked `$ARGUMENTS` in `commands/*.md`; planted → `` `$ARGUMENTS` in backticks renders as an empty pair of quotes ``; CI case `cmdargs` | **planted**, then passed |
 | REQ-6 tag | `release.yml` refuses a lightweight tag before publishing | Step present after `actions/checkout` in the `release` job; both workflows parse (`yaml.safe_load`); the step's logic run on a scratch repository: lightweight `v9.9.9` → `is a commit, not an annotated tag object`, exit 1; annotated `v9.9.8` → exit 0 | **planted**; first live run is this release's tag |
+| REQ-4 discovery, live | The skills CLI serves both skills from the merged default branch | Release run 38076672521, job `validate / skills-cli-discovery` → `OK: skills-CLI discovery serves exactly the 2 shipped skill(s): make-skill skill-search`; the PR run before the merge read the old default branch → `1 shipped skill(s): make-skill` | **observed**, CI |
+| REQ-6 tag, live | v0.30.0 is an annotated tag and the gate passed it | `git cat-file -t v0.30.0` → `tag`, peeled to `22be26d8d1f5594b23a897caecd5ad7cfda7a86e` (squash of #29); release job step → `v0.30.0 is annotated` | **observed** |
+| Release | All six jobs of the tag's release run green | Run 38076672521 (selected by `headBranch == v0.30.0`): validate ×4, release, publish → `success`, head `22be26d8…`; smoke → `OK: released v0.30.0 installs cleanly via npx` | **observed**, published |
+| Registry | npm serves 0.30.0 with the tag's bytes | `npm view @ssheleg/make-skill@0.30.0 version` → `0.30.0`; [registry receipt](releases/2026-10-10-make-skill-0.30.0/registry.json): `gitHead` = tag commit, downloaded tarball SHA-512 = registry integrity, all 33 non-manifest files byte-identical to `git show v0.30.0:<file>` (package.json compared by name+version — npm normalises it) | **observed**, canonical tarball |
+| Installed | This machine's installed payload | Owned by the hub (re-pin, `npx --yes sshlg-skills@latest update`, payload comparison) | NOT_RUN here |
 
 ## Shipped state — v0.29.2 (candidate, 2026-10-09)
 

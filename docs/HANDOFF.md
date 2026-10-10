@@ -5,6 +5,9 @@ reference verified against 2.1.296 (REQ-9), `/skill-audit` empty-argument text, 
 the annotated-tag gate in `release.yml` (REQ-6). Evidence: the v0.30.0 section of
 [verification.md](evidence/verification.md). Plan and REQ table live in the hub
 (ssheleg/sshlg-skills `docs/evidence/plans/2026-10-10-family-round.md`).
+Released 2026-10-10: PR #29 squash `22be26d8d1f5594b23a897caecd5ad7cfda7a86e`, annotated
+tag `v0.30.0`, release run 38076672521 green, npm serves 0.30.0 with the tag's bytes
+([receipt](evidence/releases/2026-10-10-make-skill-0.30.0/registry.json)).
 Next: the hub re-pins make-skill 0.30.0 and counts `skill-search` in its inventory.
 Owed: trigger evals for `skill-search` (none written; the hub's `toolkit --find`
 fixtures are its only behavioural check so far).
