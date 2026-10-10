@@ -18,6 +18,23 @@ the release the CHANGELOG carries (MS-03).
 
 ---
 
+## Shipped state — v0.30.0 (candidate, 2026-10-10)
+
+Family round `FAMILY-ROUND-1010` (hub brief `docs/evidence/briefs/2026-10-10-family-round.md`
+in ssheleg/sshlg-skills, REQ-4, REQ-6, REQ-9). Rows below were measured on the branch
+`fix/family-round-1010` before the tag; publication rows are appended after release.
+
+| REQ | What ships | How it was confirmed | Confirmed |
+|---|---|---|---|
+| REQ-4 skill | `skill-search` skill: restate → decide → concepts → `toolkit --find` → open SKILL.md; `find`/`grep` fallback | `python3 plugins/make-skill/skills/make-skill/scripts/audit_skill.py plugins/make-skill/skills/skill-search --house` → `0 GAP, 18 PASS` (body 565/4750 tokens, description 540/970 chars, tiktoken cl100k) | **observed**, local |
+| REQ-4 channels | Both installers install `skill-search`; Cursor rule `cursor/rules/skill-search.mdc`; the release smoke test asserts it lands | `node test/installer_test.js` → 11 cases PASS; planted (node installer writing elsewhere, `install.sh` copying make-skill only) → `skill-search/SKILL.md did not travel` in both channels | **planted**, then passed |
+| REQ-4 version | Every shipped skill's `metadata.version` equals the release | `test/validate.py` sibling rule; planted `0.0.1` in skill-search → `version mismatch: plugins/make-skill/skills/skill-search/SKILL.md metadata.version='0.0.1'`; CI case `sibver` | **planted**, then passed |
+| REQ-4 discovery | skills-CLI job compares the served set with the default branch's `plugins/*/skills/*/` | Not runnable locally (reads the published default branch); first exercised by the PR and post-merge push runs | NOT_RUN locally |
+| REQ-9 reference | `references/claude-code-plugin.md` verified against Claude Code 2.1.296: *Changes through 2.1.296* table and *The skill listing budget* | Each row read 2026-10-10 from the CHANGELOG (raw `main`), release dates from `npm view @anthropic-ai/claude-code time`; skills/settings/hooks/plugins/mods pages fetched as Markdown; `claude plugin install --help` shows `--marketplace`; `claude plugin validate --json` prints `gatingHooks` and `advice` | **observed**, against source |
+| Gate | All of the above together | `npm test` → exit 0 (validate, plant_guard 9, checker parity 20, residue 11, installer 11, audit regressions 0 failed); `claude plugin validate ./plugins/make-skill --strict` and `claude plugin validate . --strict` on 2.1.296 → `Validation passed`; `npm pack --dry-run` → 34 files incl. both new ones | **observed**, local |
+| REQ-9 command | `/skill-audit` with no argument states its default in prose; `$ARGUMENTS` on its own line | Validator refuses a backticked `$ARGUMENTS` in `commands/*.md`; planted → `` `$ARGUMENTS` in backticks renders as an empty pair of quotes ``; CI case `cmdargs` | **planted**, then passed |
+| REQ-6 tag | `release.yml` refuses a lightweight tag before publishing | Step present after `actions/checkout` in the `release` job; both workflows parse (`yaml.safe_load`); the step's logic run on a scratch repository: lightweight `v9.9.9` → `is a commit, not an annotated tag object`, exit 1; annotated `v9.9.8` → exit 0 | **planted**; first live run is this release's tag |
+
 ## Shipped state — v0.29.2 (candidate, 2026-10-09)
 
 NOT_RELEASED. This section records candidate verification, not publication or

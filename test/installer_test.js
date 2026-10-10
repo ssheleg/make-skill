@@ -60,6 +60,12 @@ function skillDir(home) {
   return path.join(home, '.claude', 'skills', 'make-skill');
 }
 
+// The plugin ships two skills; every installer channel carries both, or the
+// first step (skill-search) is missing wherever the plugin is not installed.
+function searchSkill(home) {
+  return path.join(home, '.claude', 'skills', 'skill-search', 'SKILL.md');
+}
+
 function declarePlugin(home, spec) {
   const dir = path.join(home, '.claude', 'plugins');
   fs.mkdirSync(dir, { recursive: true });
@@ -93,6 +99,7 @@ caseRun('fresh HOME installs the whole skill, and says how updates arrive', (hom
   assert(r.status === 0, `exit ${r.status}, expected 0\n${r.out}`);
   assert(/^Installed/m.test(r.out), `no "Installed" line:\n${r.out}`);
   assert(fs.existsSync(path.join(skillDir(home), 'SKILL.md')), 'SKILL.md missing');
+  assert(fs.existsSync(searchSkill(home)), 'skill-search/SKILL.md did not travel');
   // no ~/.claude/commands/make-skill.md: a command sharing the skill's name
   // registers /make-skill twice
   assert(!fs.existsSync(path.join(home, '.claude', 'commands', 'make-skill.md')),
@@ -131,6 +138,7 @@ caseRun('plugin present in installed_plugins.json: refuse, exit 3, remedy, nothi
     `remedy does not name the plugin spec:\n${r.out}`);
   assert(r.out.includes('--force'), `override flag not offered:\n${r.out}`);
   assert(!fs.existsSync(skillDir(home)), 'the plain copy was written despite the refusal');
+  assert(!fs.existsSync(searchSkill(home)), 'skill-search was written despite the refusal');
 });
 
 caseRun('plugin under a differently-named marketplace: remedy names the real spec', (home) => {
@@ -190,6 +198,7 @@ if (POSIX) {
     const r = shInstaller(home);
     assert(r.status === 0, `exit ${r.status}, expected 0\n${r.out}`);
     assert(fs.existsSync(path.join(skillDir(home), 'SKILL.md')), 'SKILL.md missing');
+    assert(fs.existsSync(searchSkill(home)), 'install.sh: skill-search/SKILL.md did not travel');
     const skip = shInstaller(home);
     assert(skip.status === 0 && /^skip:/m.test(skip.out),
       `rerun: ${skip.status}\n${skip.out}`);

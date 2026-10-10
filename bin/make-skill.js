@@ -3,7 +3,8 @@
  * make-skill installer CLI.
  *
  * Installs the make-skill skill into ~/.claude/skills/make-skill, which is what
- * provides /make-skill (same layout as install.sh). No separate command file:
+ * provides /make-skill, and its sibling skill-search into
+ * ~/.claude/skills/skill-search (same layout as install.sh). No separate command file:
  * a command sharing a skill's name registers the same slash command twice.
  * Idempotent: existing installs are skipped unless --force. Zero dependencies.
  *
@@ -68,8 +69,9 @@ function usage() {
   console.log(`make-skill installer v${version()}
 
 Usage:
-  npx @ssheleg/make-skill [--force]   install the make-skill skill into
-                                      ~/.claude (skip existing unless --force)
+  npx @ssheleg/make-skill [--force]   install the make-skill and skill-search
+                                      skills into ~/.claude/skills (skip
+                                      existing unless --force)
   npx @ssheleg/make-skill --version
   npx @ssheleg/make-skill --help
 
@@ -158,9 +160,12 @@ function main(argv) {
   }
 
   const skillSrc = path.join(ROOT, 'plugins/make-skill/skills/make-skill');
-  if (!fs.existsSync(skillSrc)) {
-    console.error(`error: skill sources missing at ${skillSrc} — corrupted package?`);
-    return 1;
+  const searchSrc = path.join(ROOT, 'plugins/make-skill/skills/skill-search');
+  for (const src of [skillSrc, searchSrc]) {
+    if (!fs.existsSync(path.join(src, 'SKILL.md'))) {
+      console.error(`error: skill sources missing at ${src} — corrupted package?`);
+      return 1;
+    }
   }
 
   const home = os.homedir();
@@ -206,6 +211,13 @@ function main(argv) {
     'make-skill skill',
     skillSrc,
     path.join(home, '.claude', 'skills', 'make-skill'),
+    true,
+    force
+  );
+  installOne(
+    'skill-search skill',
+    searchSrc,
+    path.join(home, '.claude', 'skills', 'skill-search'),
     true,
     force
   );

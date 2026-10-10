@@ -14,7 +14,11 @@ Two rules this skeleton exists to enforce:
      no description and no warning.
 -->
 
-Do <the task> for `$ARGUMENTS`.
+Do <the task> for what the arguments name; with none, <the stated default>.
+Never wrap the substitution in backticks mid-sentence — empty, it renders as a
+stray pair of quotes.
+
+Arguments (empty when none were given): $ARGUMENTS
 
 1. The deterministic part, by script. Ship a wrapper in the plugin's `bin/`
    (Claude Code puts it on the Bash tool's PATH) and call it by name:

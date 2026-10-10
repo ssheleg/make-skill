@@ -601,6 +601,18 @@ skill_ver = skill_meta.get("version") if isinstance(skill_meta, dict) else None
 if skill_ver and plg_ver and skill_ver != plg_ver:
     fail(f"version mismatch: SKILL.md metadata.version={skill_ver!r} plugin.json={plg_ver!r}")
 
+# Every OTHER skill the plugin ships carries the same 5th point. skill-search arrived
+# in 0.30.0 as the plugin's second skill; the rules above read make-skill alone, so a
+# sibling's metadata.version could drift a release behind with nothing comparing it.
+for _sib in sorted(glob.glob(os.path.join(ROOT, "plugins", "*", "skills", "*", "SKILL.md"))):
+    if os.path.abspath(_sib) == os.path.abspath(skill_path):
+        continue
+    _rel = os.path.relpath(_sib, ROOT)
+    _fm = re.match(r"^---\n(.*?)\n---\n", open(_sib, encoding="utf-8").read(), re.S)
+    _m = re.search(r'^\s+version:\s*"?([^"\s]+)"?\s*$', _fm.group(1), re.M) if _fm else None
+    if _m and plg_ver and _m.group(1) != plg_ver:
+        fail(f"version mismatch: {_rel} metadata.version={_m.group(1)!r} plugin.json={plg_ver!r}")
+
 # commands are skills now: a commands/<x>.md next to a skills/<x>/ registers the
 # same /<x> twice — the skill wins and the command is unreachable always-on cost
 # (visible only in `claude plugin details`). Any command that does exist must
@@ -627,6 +639,13 @@ for plugin_dir in sorted(glob.glob(os.path.join(ROOT, "plugins", "*"))):
         cfm = cm.group(1)
         if not re.search(r"^description:\s*\S", cfm, re.M):
             fail(f"{rel}: empty/missing description in frontmatter")
+        # An empty argument list renders `$ARGUMENTS` in backticks as a stray pair
+        # of quotes mid-sentence: "Audit the skill at `` (default: …)" shipped in
+        # /skill-audit until 0.30.0. Put the substitution on its own labelled line.
+        if "`$ARGUMENTS`" in ctxt:
+            fail(f"{rel}: `$ARGUMENTS` in backticks renders as an empty pair of "
+                 "quotes when no argument is given — state the default in prose and "
+                 "put the substitution on its own labelled line")
         hint = re.search(r"^argument-hint:\s*(\S.*)$", cfm, re.M)
         if hint and not re.match(r"""^["'].*["']$""", hint.group(1).strip()):
             fail(f"{rel}: argument-hint must be quoted — bare [a | b] is a YAML "

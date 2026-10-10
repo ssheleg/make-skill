@@ -1,4 +1,15 @@
-# Current task: host compatibility
+# Current task: family round 2026-10-10 (v0.30.0)
+
+Branch `fix/family-round-1010`: new `skill-search` skill (REQ-4), Claude Code plugin
+reference verified against 2.1.296 (REQ-9), `/skill-audit` empty-argument text, and
+the annotated-tag gate in `release.yml` (REQ-6). Evidence: the v0.30.0 section of
+[verification.md](evidence/verification.md). Plan and REQ table live in the hub
+(ssheleg/sshlg-skills `docs/evidence/plans/2026-10-10-family-round.md`).
+Next: the hub re-pins make-skill 0.30.0 and counts `skill-search` in its inventory.
+Owed: trigger evals for `skill-search` (none written; the hub's `toolkit --find`
+fixtures are its only behavioural check so far).
+
+# Previous task: host compatibility
 
 See [HC-4 authoring correction and release receipt](evidence/host-compat/README.md).
 Version 0.29.2 is published at `c0fe080a46dd2a98fa78d7cd1aee26fb0261d25c`.

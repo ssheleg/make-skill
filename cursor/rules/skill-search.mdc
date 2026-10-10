@@ -1,0 +1,29 @@
+---
+description: "skill-search: the first step of a task — restate the request in one line, decide whether an installed skill could help, turn the meaning into concepts (English and Russian, with synonyms), search the whole installed skill catalogue including hidden skills, open the matching SKILL.md and follow it. Apply at the start of any task that is more than a question, an explanation or a one-line edit, and when asked which skill fits («какой скилл», «есть ли скилл», «найди скилл»). Not for building or auditing a skill."
+alwaysApply: false
+---
+
+# skill-search — the first step of every task (Cursor)
+
+Self-contained rule: Cursor copies this file into foreign projects, so it uses
+absolute URLs only. Source: <https://github.com/ssheleg/make-skill>.
+
+Most installed skills are hidden from the host's skill listing on purpose, so
+the listing is not the catalogue. Search the catalogue.
+
+1. Restate the request in one line — the meaning, not the literal phrasing.
+2. Decide whether a skill could help. None for a question, an explanation or a
+   one-line edit: say so and proceed.
+3. Turn the meaning into 3–8 concepts in English AND Russian, plus synonyms and
+   the artifact involved (`pdf, документ, extract text, извлечь текст`).
+4. Search: `npx --yes sshlg-skills toolkit --find "<concept>, <concept>, …"` —
+   it prints id, score, matched concepts, visibility and the SKILL.md path.
+   Hidden matches count exactly as listed ones.
+5. No node/network, or the launcher does not know `--find` (older than 1.55.0):
+   `find -L ~/.agents/skills ~/.claude/skills ~/.cursor/skills -name SKILL.md -exec grep -ilE "^description:.*(<concept>|<concept>)" {} + 2>/dev/null`
+   — once; nothing found means no skill, never a loop.
+6. Open the SKILL.md of what fits, read it, follow it, and say in one line which
+   skill you took (or that none applied).
+
+Building, auditing or publishing a skill is the `make-skill` rule, not this one.
+A third-party skill nobody reviewed gets an install review before its scripts run.

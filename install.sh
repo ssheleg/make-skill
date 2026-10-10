@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Installs the make-skill skill into ~/.claude/skills (that is what gives
-# /make-skill; a same-named command file would register it a second time).
+# Installs the make-skill and skill-search skills into ~/.claude/skills (that
+# is what gives /make-skill and /skill-search; a same-named command file would
+# register one a second time).
 # Idempotent: skips anything already installed; pass --force to overwrite.
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -13,8 +14,13 @@ elif [[ -n "${1:-}" ]]; then
   exit 2
 fi
 
-SRC="$HERE/plugins/make-skill/skills/make-skill"
-DEST="${HOME}/.claude/skills/make-skill"
+SKILLS=(make-skill skill-search)
+for S in "${SKILLS[@]}"; do
+  if [[ ! -f "$HERE/plugins/make-skill/skills/$S/SKILL.md" ]]; then
+    echo "error: skill sources missing at $HERE/plugins/make-skill/skills/$S" >&2
+    exit 1
+  fi
+done
 
 # One channel per agent: a plain copy beside an installed plugin is two listings
 # of the same skill, and the stale one wins. Refuse rather than create that, and
@@ -48,14 +54,18 @@ if [[ ( -n "$SPEC" || -e "$MARKETPLACE" ) && "$FORCE" -eq 0 ]]; then
   exit 3
 fi
 
-if [[ -e "$DEST" && "$FORCE" -eq 0 ]]; then
-  echo "skip: skill already installed at $DEST (rerun with --force to overwrite)"
-else
-  mkdir -p "$(dirname "$DEST")"
-  rm -rf "$DEST"
-  cp -R "$SRC" "$DEST"
-  echo "Installed make-skill skill   -> $DEST"
-  # The last line says how the next version arrives.
-  echo "Updates: git pull && ./install.sh --force, or npx --yes sshlg-skills@latest update"
-fi
+for S in "${SKILLS[@]}"; do
+  SRC="$HERE/plugins/make-skill/skills/$S"
+  DEST="${HOME}/.claude/skills/$S"
+  if [[ -e "$DEST" && "$FORCE" -eq 0 ]]; then
+    echo "skip: $S skill already installed at $DEST (rerun with --force to overwrite)"
+  else
+    mkdir -p "$(dirname "$DEST")"
+    rm -rf "$DEST"
+    cp -R "$SRC" "$DEST"
+    echo "Installed $S skill -> $DEST"
+  fi
+done
+# The last line says how the next version arrives.
+echo "Updates: git pull && ./install.sh --force, or npx --yes sshlg-skills@latest update"
 

@@ -1,3 +1,41 @@
+## v0.30.0 — skill-search: the first step of every task
+
+**New skill `skill-search`** in the plugin, beside `make-skill`. Most of a large
+catalogue is hidden from the host's listing (Claude Code keeps ~1% of the context
+window for descriptions; the family hides most skills with `skillOverrides` or
+Codex `enabled = false`), so the first step of a task is now written down:
+restate the request in one line, decide whether any skill could help, turn the
+meaning into concepts in both languages, search the whole installed catalogue with
+`npx sshlg-skills toolkit --find`, open the matching `SKILL.md`, proceed. A
+`find`/`grep` fallback covers hosts without node or a launcher older than 1.55.0.
+It ships through every channel the plugin uses: the plugin, the skills CLI, both
+installers (which now install both skills and test that they do) and a
+self-contained Cursor rule `cursor/rules/skill-search.mdc`. `make-skill` names it
+as the route for finding a skill to use. The validator now holds every shipped
+skill's `metadata.version` to the release, and the skills-CLI discovery job
+compares the served set with the default branch's tree instead of expecting one.
+
+**Claude Code plugin reference verified against 2.1.296 (2026-10-10).** A dated
+*Changes through 2.1.296* table: Claude Mods and the hooks module (2.1.287),
+match-failure blocking for `PreToolUse`/`PermissionRequest` (2.1.288), validator
+fixes and `gatingHooks` (2.1.289–2.1.290), `claude plugin install --marketplace`
+and the 256-character name cap (2.1.292), `onFailure: "block"`, the README
+install-line advice, the 32-skill subagent preload and the 16,384-character
+tool-search cut (2.1.295), the 4,096-character MCP description default and
+`autoCompactWindow` (2.1.296). A new *skill listing budget* section:
+`skillListingBudgetFraction`, `skillListingMaxDescChars`, `skillOverrides`
+(personal and project skills only), least-used descriptions dropped first, and
+the 30,000-character budget measured on this machine.
+
+**`/skill-audit` with no argument reads correctly.** It rendered *"Audit the skill
+at `` (default: …)"*; the default is now stated in prose and the arguments sit on
+their own line. Behaviour is unchanged. The command skeleton carries the same
+fix, and the validator refuses a backticked `$ARGUMENTS` in any command.
+
+**Releases refuse a lightweight tag.** `release.yml` checks `git cat-file -t` on
+the tag before anything is published (v0.29.2's tag was lightweight, so
+`git describe` and the family's submodule status read the previous release).
+
 ## v0.29.2 — portable procedures, host-specific capabilities
 
 Authoring guidance now distinguishes the skills-CLI payload from native plugin

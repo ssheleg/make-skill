@@ -313,7 +313,8 @@ jobs:
                       ledgerunship:'no version beside it' boardunship:'backlog.md' \
                       ledgerbehind:'newest' ledgeruncut:'nobody cut' \
                       tpcdate:'no ISO date' tpcclaim:'no longer carries it' \
-                      tpcproof:'without naming'; do
+                      tpcproof:'without naming' cmdargs:'empty pair of quotes' \
+                      sibver:'skill-search/SKILL.md metadata.version'; do
             name="${case%%:*}"; expect="${case#*:}"
             rm -rf "/tmp/cl-$name"
             cp -R . "/tmp/cl-$name"
@@ -346,6 +347,19 @@ jobs:
                   "make-skill-audit <skill-dir> --house",
                   'python3 "${CLAUDE_PLUGIN_ROOT}/skills/make-skill/scripts/audit_skill.py" x',
                   1), encoding="utf-8")
+          elif case == "cmdargs":    # a backticked substitution renders as `` when empty
+              p = root / "plugins/make-skill/commands/skill-audit.md"
+              s = p.read_text(encoding="utf-8")
+              out = s.replace("Audit the skill directory named in the arguments.",
+                              "Audit the skill at `$ARGUMENTS`.", 1)
+              assert out != s, f"PLANT DID NOT LAND: {case} changed nothing"
+              p.write_text(out, encoding="utf-8")
+          elif case == "sibver":     # a second shipped skill a release behind
+              p = root / "plugins/make-skill/skills/skill-search/SKILL.md"
+              s = p.read_text(encoding="utf-8")
+              out = re.sub(r'^(\s+version:\s*)"[^"]+"', r'\g<1>"0.0.1"', s, count=1, flags=re.M)
+              assert out != s, f"PLANT DID NOT LAND: {case} changed nothing"
+              p.write_text(out, encoding="utf-8")
           elif case == "mdclayout":  # the Cursor rule teaching a rejected layout
               p = root / "cursor/rules/make-skill.mdc"
               p.write_text(p.read_text(encoding="utf-8").replace(
@@ -434,6 +448,8 @@ jobs:
           # 1. the skill that ships the auditor must pass it, house rules included —
           #    through the bin/ wrapper, which is the invocation the docs promise
           ./plugins/make-skill/bin/make-skill-audit "$S" --house
+          #    and so must every other skill the plugin ships
+          ./plugins/make-skill/bin/make-skill-audit plugins/make-skill/skills/skill-search --house
           # 2. the evaluation fixture, materialised as a skill directory, must fail
           #    with every one of its nine planted defects named
           rm -rf /tmp/aud && mkdir -p /tmp/aud/invoices
@@ -544,13 +560,26 @@ jobs:
   skills-cli-discovery:
     runs-on: ubuntu-latest
     steps:
+      # The expected set comes from the tree the CLI actually reads — the default
+      # branch — not from this checkout. Until 0.30.0 this asserted "exactly one
+      # skill, make-skill"; with skill-search shipped, a typed count would fail the
+      # PR (default branch: one) or the push after merge (two). Computing it from
+      # the same tree keeps both runs honest, and a stray SKILL.md still shows up
+      # as one skill more than plugins/*/skills/*/ holds.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
 
-      - name: Exactly one skill is discoverable, and it is make-skill
+      - name: Discovery serves exactly the shipped skills, and nothing else
         run: |
           set -eu
+          expected="$(for f in plugins/*/skills/*/SKILL.md; do basename "$(dirname "$f")"; done | sort)"
+          n="$(printf '%s\n' "$expected" | grep -c .)"
+          test "$n" -ge 1 || { echo "ERROR: no plugins/*/skills/*/SKILL.md on the default branch"; exit 1; }
           if ! out="$(npx --yes skills add ssheleg/make-skill --list 2>&1)"; then
             printf '%s\n' "$out"
             echo "ERROR: skills CLI discovery run failed"; exit 1
@@ -559,12 +588,14 @@ jobs:
           # The CLI decorates with ANSI when it thinks it has a TTY — strip
           # before asserting, so the check reads the words, not the colours.
           clean="$(printf '%s\n' "$out" | sed -E 's/\x1b\[[0-9;?]*[A-Za-z]//g')"
-          printf '%s\n' "$clean" | grep -qE 'Found 1 skills?' || {
-            echo "ERROR: discovery did not report exactly one skill — a stray"
+          printf '%s\n' "$clean" | grep -qE "Found $n skills?\b" || {
+            echo "ERROR: discovery did not report exactly $n skill(s) — a stray"
             echo "SKILL.md anywhere in the tree ships as a real skill"; exit 1; }
-          printf '%s\n' "$clean" | tr -d '│' | grep -qE '^[[:space:]]*make-skill[[:space:]]*$' || {
-            echo "ERROR: the one discovered skill is not named make-skill"; exit 1; }
-          echo "OK: skills-CLI discovery serves exactly one skill: make-skill"
+          for s in $expected; do
+            printf '%s\n' "$clean" | tr -d '│' | grep -qE "^[[:space:]]*$s[[:space:]]*\$" || {
+              echo "ERROR: shipped skill $s is not among the discovered skills"; exit 1; }
+          done
+          echo "OK: skills-CLI discovery serves exactly the $n shipped skill(s):" $expected
 
   skill-audit:
     name: House skill audit

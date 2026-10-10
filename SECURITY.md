@@ -32,8 +32,9 @@ is the only thing that runs without you asking:
   Claude Code places on the Bash tool's PATH while the plugin is enabled. It
   resolves the auditor relative to its own location and `exec`s it; it runs only
   when you invoke it, and it touches nothing else.
-- **`bin/make-skill.js`** (run via `npx`) and **`install.sh`** copy the skill
-  directory into `~/.claude/skills/make-skill` and nothing else — no command file,
+- **`bin/make-skill.js`** (run via `npx`) and **`install.sh`** copy the two skill
+  directories into `~/.claude/skills/make-skill` and `~/.claude/skills/skill-search`
+  and nothing else — no command file,
   no other path in `$HOME` — and overwrite only with `--force`. Both refuse to
   install at all when the Claude Code plugin is present, rather than leaving a
   plain copy that shadows it. Both are zero-dependency: no network calls, no
