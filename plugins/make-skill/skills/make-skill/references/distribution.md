@@ -437,10 +437,16 @@ accident.
    that has not armed it yet — not the normal path, and leaving it as the
    normal path is how a family ends up with a release step nobody performs and
    everybody documents. Then e2e `npx <name>@<ver>` from a non-repo cwd.
-6. **Refresh THIS machine's global installs — always, as Definition of Done:**
-   `claude plugin marketplace update <name>` → `claude plugin update
-   <name>@<name>` → `npx skills update <name> --global --yes && rm -f
-   ~/.claude/skills/<name>`; then remind the user to restart the agent.
+6. **Refresh THIS machine's global installs — always, as Definition of Done.**
+   A member of a family with its own launcher updates through it, the whole set
+   at once: for the ssheleg family `npx --yes sshlg-skills@latest update` (no
+   member argument — it runs the plugin, skills-CLI and prune steps together and
+   keeps the pins). Never a bare `npx skills update <name>` for a plugin member:
+   it recreates the shadow and bypasses the family's pins; a non-family plugin
+   falls back to its full id, `claude plugin update <plugin>@<marketplace>`.
+   A standalone skill: `claude plugin marketplace update <name>` → `claude plugin
+   update <name>@<name>` → `npx skills update <name> --global --yes && rm -f
+   ~/.claude/skills/<name>`. Then remind the user to restart the agent.
 7. Family member? Bump its pin in the umbrella `skills.json` and release the
    umbrella (§5) — until that lands, `list` advertises the old version.
 8. Global `~/.claude/CLAUDE.md` — only for rules that must fire even without the

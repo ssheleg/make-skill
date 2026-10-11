@@ -1,3 +1,14 @@
+## v0.30.1 — a family member updates through its family's launcher
+
+`references/distribution.md` step 6 told a release to refresh this machine with
+`npx skills update <name> --global --yes` for every skill. For a member of a family
+with its own launcher that is the wrong door: a bare skills-CLI update of a plugin
+member recreates the plain `~/.claude/skills` shadow and bypasses the family's pins.
+The step now sends a family member through its launcher (`npx --yes
+sshlg-skills@latest update`, no member argument), a non-family plugin through its
+full id, and keeps the update-plus-prune recipe for standalone skills. Reported
+2026-10-11 by a peer session against the operator's standing rule.
+
 ## v0.30.0 — skill-search: the first step of every task
 
 **New skill `skill-search`** in the plugin, beside `make-skill`. Most of a large
