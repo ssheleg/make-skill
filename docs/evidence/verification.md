@@ -18,6 +18,12 @@ the release the CHANGELOG carries (MS-03).
 
 ---
 
+## Shipped state — v0.30.1 (candidate, 2026-10-11)
+
+| REQ | What ships | How it was confirmed | Confirmed |
+|---|---|---|---|
+| FIX-family-update | `references/distribution.md` step 6 sends a family member through its launcher, a non-family plugin through `<plugin>@<marketplace>`, and keeps update-plus-prune for standalone skills | the step read after the edit; `npm test` | **observed** |
+
 ## Shipped state — v0.30.0 (2026-10-10)
 
 Family round `FAMILY-ROUND-1010` (hub brief `docs/evidence/briefs/2026-10-10-family-round.md`
