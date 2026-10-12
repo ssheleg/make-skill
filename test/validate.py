@@ -1213,6 +1213,114 @@ def check_routed_triggers_still_advertised():
 check_routed_triggers_still_advertised()
 
 
+# ------------------------------ every temp tree goes through the residue ledger (MS-05)
+#
+# `test/residue.py` accounts for what a run leaves in `$TMPDIR`, but only for trees taken
+# through `residue.workspace()`. A bare temp-dir call anywhere in `test/` is invisible to
+# it, and the gate then prints "this run left nothing" over a live leak — a bypass that
+# reports clean is indistinguishable from no leak. `agent-stack` closed the same hole with
+# a source check (`check_temp_trees_go_through_the_residue_ledger`); this is that check,
+# ported, and WIDER: it walks `test/` recursively, because here the bypasses lived in
+# `test/audit_regressions/`, a directory a non-recursive scan never reads.
+#
+# The pattern is assembled from parts on purpose: spelled out, it would contain the very
+# literals it looks for, and this file is inside the set it scans.
+TEMP_MAKERS = re.compile(r"(?<![\w.])(?:tempfile\.)?(?:" + "mkdtemp" + "|Temporary"
+                         + "Directory" + r")\s*\(")
+TEMP_LEDGER_EXEMPT = {os.path.join("test", "residue.py")}
+
+
+def temp_maker_hit(text):
+    """The first temp-dir call that would RUN in `text`, as (match, line), else None.
+
+    Comments and docstrings mention the banned names when they explain why; a guard that
+    reads an explanation as a violation refuses the document that records the fix. The
+    line number is counted on the unstripped text, so it can be opened directly.
+    """
+    code = "\n".join("" if ln.lstrip().startswith("#") else ln for ln in text.split("\n"))
+    code = re.sub(r'"""(?:.|\n)*?"""', lambda m: "\n" * m.group(0).count("\n"), code)
+    hit = TEMP_MAKERS.search(code)
+    return (hit.group(0), code[:hit.start()].count("\n") + 1) if hit else None
+
+
+def check_temp_trees_go_through_the_residue_ledger(root):
+    found = []
+    for dirpath, dirnames, filenames in os.walk(os.path.join(root, "test")):
+        dirnames[:] = [d for d in dirnames if d not in ("fixtures", "__pycache__")]
+        found.extend(os.path.join(dirpath, f) for f in filenames if f.endswith(".py"))
+    if not found:
+        fail("test/: no python files — the suite cannot be checked for temp-tree accounting")
+        return
+    for path in sorted(found):
+        rel = os.path.relpath(path, root)
+        if rel in TEMP_LEDGER_EXEMPT:
+            continue
+        with open(path, encoding="utf-8") as fh:
+            hit = temp_maker_hit(fh.read())
+        if hit:
+            fail(f"{rel}: creates a temp tree outside the residue ledger — {hit[0]!r} at "
+                 f"line {hit[1]}. Use `residue.workspace(tag)`: a tree the ledger never "
+                 "saw is a tree the gate's residue line reports as nothing")
+
+
+# Negative controls, computed on every run: a guard nobody has watched refuse is not one.
+_plant = "import tempfile\nd = tempfile." + "mkdtemp" + "()\n"
+if not temp_maker_hit(_plant) or temp_maker_hit(_plant)[1] != 2:
+    fail("MS-05 self-test: a planted bare temp-dir call was not found at line 2")
+if not temp_maker_hit("with Temporary" + "Directory() as d:\n    pass\n"):
+    fail("MS-05 self-test: a planted context-manager temp dir was not found")
+if temp_maker_hit('"""why ' + "mkdtemp" + '() is banned"""\n# or ' + "mkdtemp" + "()\n"):
+    fail("MS-05 self-test: an explanation in a docstring/comment was read as a violation")
+check_temp_trees_go_through_the_residue_ledger(ROOT)
+
+
+# ------------------------------------ back-links to the skills this one routes work to (R25)
+#
+# The Fabric adapter skills route a skill author to make-skill; make-skill used to point
+# nowhere in return, so an author starting from here never learned that a skill which must
+# be a Fabric agent or service has its own builders. The references live in the one file
+# that discusses protocol-connected skills, with one line each, and the SKILL.md section
+# points at that file. Descriptions are untouched: they sit at their character cap.
+BACKLINKS = (
+    ("fabric-agent-adapter:creating-fabric-agents", None),
+    ("fabric-agent-adapter:adapting-projects-to-fabric", None),
+    ("fabric-agent-adapter:building-fabric-services", None),
+    ("observatory-log:handling-secrets", None),
+)
+BACKLINK_FILE = os.path.join("plugins", "make-skill", "skills", "make-skill", "references", "mcp.md")
+BACKLINK_POINTER = os.path.join("plugins", "make-skill", "skills", "make-skill", "SKILL.md")
+
+
+def backlink_gaps(text):
+    return [name for name, _ in BACKLINKS if "`" + name + "`" not in text]
+
+
+def check_backlinks_to_routed_skills():
+    rel = BACKLINK_FILE
+    p = os.path.join(ROOT, rel)
+    if not os.path.isfile(p):
+        fail(f"{rel}: missing — it carries the back-links to the Fabric adapter skills")
+    else:
+        with open(p, encoding="utf-8") as fh:
+            for name in backlink_gaps(fh.read()):
+                fail(f"{rel}: no back-link to `{name}` — the adapter skills route authors "
+                     "here and this skill must route them back")
+    p = os.path.join(ROOT, BACKLINK_POINTER)
+    with open(p, encoding="utf-8") as fh:
+        section = fh.read().split("## Protocol-connected skills", 1)[-1].split("\n## ", 1)[0]
+        if "`mcp.md`" not in section or "Fabric" not in section:
+            fail(f"{BACKLINK_POINTER}: the protocol-connected section does not say that "
+                 "`mcp.md` routes Fabric agents, where the back-links live")
+
+
+_names = "".join("`" + n + "` " for n, _ in BACKLINKS)
+if backlink_gaps(_names):
+    fail("R25 self-test: references present in the text were reported missing")
+if backlink_gaps(_names.replace("`observatory-log:handling-secrets`", "")) != ["observatory-log:handling-secrets"]:
+    fail("R25 self-test: a removed back-link was not reported")
+check_backlinks_to_routed_skills()
+
+
 if errors:
     print("FAIL: make-skill structure invalid")
     for e in errors:

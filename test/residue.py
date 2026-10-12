@@ -45,8 +45,9 @@ and left alone rather than swept.
 **What this ledger does NOT see.** It accounts for trees `workspace()` handed out. A bare
 `tempfile.mkdtemp()` anywhere in this suite is invisible to it, and the report then prints
 *left nothing* over a live leak — watched happening in `agent-stack`, which ported this
-module and closed the hole with a source check over its own `test/*.py`. There is no such
-check here: board row **MS-05**.
+module and closed the hole with a source check over its own `test/*.py`. Here the same
+check lives in `test/validate.py` (`check_temp_trees_go_through_the_residue_ledger`, MS-05)
+and walks `test/` recursively, since the bypasses were under `test/audit_regressions/`.
 
     import residue
     residue.open_case(name)

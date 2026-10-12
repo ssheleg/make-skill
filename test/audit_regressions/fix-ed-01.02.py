@@ -17,9 +17,18 @@ Standard library only.
 """
 import importlib.util
 import json
+import contextlib
 import os
 import sys
-import tempfile
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+import residue  # noqa: E402  every temp tree goes through the ledger (MS-05)
+
+
+@contextlib.contextmanager
+def _workspace(tag):
+    """A ledger-accounted temp tree with the shape of a context manager."""
+    yield residue.workspace(tag)
+
 
 sys.dont_write_bytecode = True
 
@@ -89,7 +98,7 @@ def _gaps(d):
 
 
 def t_distribution_secret_and_symlink():
-    with tempfile.TemporaryDirectory() as base:
+    with _workspace('fix-ed-01.02') as base:
         d = os.path.join(base, "planted")
         outside = os.path.join(base, "outside")   # inside `base`, cleaned with it
         os.makedirs(outside)
@@ -100,7 +109,7 @@ def t_distribution_secret_and_symlink():
 
 
 def t_clean_payload_passes():
-    with tempfile.TemporaryDirectory() as base:
+    with _workspace('fix-ed-01.02') as base:
         d = os.path.join(base, "planted")
         _skill(d)
         a = M.audit(d, house=True)
