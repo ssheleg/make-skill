@@ -14,6 +14,7 @@ model's behavior with the skill installed, which no unit test can stand in for.
 |---|---|
 | `triggers.json` | 22 trigger queries, half `should_trigger: true`, half near-misses that share keywords but need something else |
 | `scenarios.json` | behavioral evaluations in Anthropic's shape — `skills`, `query`, `files`, `expected_behavior` |
+| `skill-search/triggers.json` | trigger queries for the `skill-search` skill, English and Russian in both classes (B-147; count computed by `evals_validate.py`). Authored and structurally validated by `evals_validate.py`; **not yet run against a model** |
 | `fixtures/` | inputs a scenario points at (never named `SKILL.md`: the skills CLI ships every one it finds) |
 
 ## Running the trigger set

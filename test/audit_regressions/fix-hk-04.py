@@ -15,11 +15,20 @@ lives there. The key sets come from the 2.1.270 binary's schema (`Rt()` group,
 Standard library only.
 """
 import json
+import contextlib
 import os
 import shutil
 import subprocess
 import sys
-import tempfile
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+import residue  # noqa: E402  every temp tree goes through the ledger (MS-05)
+
+
+@contextlib.contextmanager
+def _workspace(tag):
+    """A ledger-accounted temp tree with the shape of a context manager."""
+    yield residue.workspace(tag)
+
 
 sys.dont_write_bytecode = True
 
@@ -72,7 +81,7 @@ def _hooks(group_extra=None, handler_extra=None, handler_type="command"):
 
 
 def t_a_filter_beside_the_matcher_is_refused():
-    with tempfile.TemporaryDirectory() as tmp:
+    with _workspace('fix-hk-04') as tmp:
         skill = _plugin(tmp, _hooks(group_extra={"if": "Bash(git commit *)"}))
         code, out = _audit(skill)
         assert code != 0, "the auditor accepted the exact shape that shipped for six weeks"
@@ -81,7 +90,7 @@ def t_a_filter_beside_the_matcher_is_refused():
 
 
 def t_the_same_filter_on_the_handler_passes():
-    with tempfile.TemporaryDirectory() as tmp:
+    with _workspace('fix-hk-04') as tmp:
         skill = _plugin(tmp, _hooks(handler_extra={"if": "Bash(git commit *)"}))
         code, out = _audit(skill)
         assert code == 0, f"a handler-level `if` is where the schema puts it:\n{out}"
@@ -89,7 +98,7 @@ def t_the_same_filter_on_the_handler_passes():
 
 
 def t_an_unknown_handler_key_is_refused():
-    with tempfile.TemporaryDirectory() as tmp:
+    with _workspace('fix-hk-04') as tmp:
         skill = _plugin(tmp, _hooks(handler_extra={"when": "always"}))
         code, out = _audit(skill)
         assert code != 0, "an invented handler key was accepted"
@@ -97,7 +106,7 @@ def t_an_unknown_handler_key_is_refused():
 
 
 def t_a_plugin_without_hooks_is_not_a_gap():
-    with tempfile.TemporaryDirectory() as tmp:
+    with _workspace('fix-hk-04') as tmp:
         skill = _plugin(tmp, None)
         code, out = _audit(skill)
         assert code == 0, f"a plugin that ships no hooks was gapped:\n{out}"
@@ -105,7 +114,7 @@ def t_a_plugin_without_hooks_is_not_a_gap():
 
 
 def t_an_unreadable_manifest_is_a_gap_not_a_silence():
-    with tempfile.TemporaryDirectory() as tmp:
+    with _workspace('fix-hk-04') as tmp:
         skill = _plugin(tmp, _hooks())
         open(os.path.join(tmp, "plugins", "demo", "hooks", "hooks.json"), "w").write("{oops")
         code, out = _audit(skill)
@@ -117,7 +126,7 @@ def t_an_unreadable_manifest_is_a_gap_not_a_silence():
 def t_a_non_command_handler_is_declared_unchecked():
     """The command handler's key set was measured; the other four were not. Saying
     nothing about them would be a verdict about something never looked at."""
-    with tempfile.TemporaryDirectory() as tmp:
+    with _workspace('fix-hk-04') as tmp:
         skill = _plugin(tmp, _hooks(handler_type="prompt", handler_extra={"prompt": "hi"}))
         code, out = _audit(skill)
         assert code == 0, out
@@ -125,7 +134,7 @@ def t_a_non_command_handler_is_declared_unchecked():
 
 
 def t_pycache_is_not_a_nested_bundle():
-    with tempfile.TemporaryDirectory() as tmp:
+    with _workspace('fix-hk-04') as tmp:
         skill = _plugin(tmp, None)
         os.makedirs(os.path.join(skill, "scripts", "__pycache__"))
         open(os.path.join(skill, "scripts", "__pycache__", "x.pyc"), "wb").write(b"\x00")

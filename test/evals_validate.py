@@ -53,6 +53,58 @@ def results_count_gaps(results_text: str, actual: dict) -> list[str]:
     return gaps
 
 
+# skill-search ships trigger evals of its own (B-147). They are authored data, not yet
+# run against a model, so what can be refused here is shape: same fields as the main
+# trigger file, both classes AND both languages on each side of the split — a Russian
+# trigger phrase nobody probes is exactly the one that rots — and a skill name that
+# resolves to a shipped SKILL.md.
+SKILL_SEARCH_TRIGGERS = Path("skill-search") / "triggers.json"
+SKILL_SEARCH_SKILL = Path("plugins/make-skill/skills/skill-search/SKILL.md")
+
+
+def skill_search_gaps(doc, repo: Path) -> list[str]:
+    label = "skill-search/triggers.json"
+    gaps: list[str] = []
+    if doc.get("skill") != "skill-search":
+        gaps.append(f"{label}: skill must be 'skill-search'")
+    if not (repo / SKILL_SEARCH_SKILL).is_file():
+        gaps.append(f"{label}: {SKILL_SEARCH_SKILL} does not resolve")
+    queries = doc.get("queries")
+    if not isinstance(queries, list) or len(queries) < 16:
+        return gaps + [f"{label}: at least 16 queries are required"]
+    by_id: dict[str, dict] = {}
+    for q in queries:
+        qid = q.get("id") if isinstance(q, dict) else None
+        if not isinstance(qid, str) or not qid or qid in by_id:
+            gaps.append(f"{label}: every query needs a unique string id")
+            continue
+        by_id[qid] = q
+        if type(q.get("should_trigger")) is not bool:
+            gaps.append(f"{label}: {qid} should_trigger must be boolean")
+        if q.get("lang") not in ("en", "ru"):
+            gaps.append(f"{label}: {qid} lang must be 'en' or 'ru'")
+        for field in ("query", "why"):
+            if not isinstance(q.get(field), str) or not q[field].strip():
+                gaps.append(f"{label}: {qid} needs non-empty {field}")
+    split = doc.get("split") if isinstance(doc.get("split"), dict) else {}
+    seen: list[str] = []
+    for half in ("train", "validation"):
+        members = split.get(half)
+        if not isinstance(members, list) or not members:
+            gaps.append(f"{label}: split.{half} must be a non-empty list")
+            continue
+        seen.extend(members)
+        cells = {(by_id[i].get("should_trigger"), by_id[i].get("lang"))
+                 for i in members if i in by_id}
+        want = {(c, l) for c in (True, False) for l in ("en", "ru")}
+        if cells != want:
+            gaps.append(f"{label}: split.{half} lacks {sorted(want - cells, key=str)} "
+                        "(class, language) — each half needs both classes in both languages")
+    if sorted(seen) != sorted(by_id):
+        gaps.append(f"{label}: split must cover every query exactly once")
+    return gaps
+
+
 def validate(root: Path, trigger_override=None) -> list[str]:
     gaps: list[str] = []
     required = ("README.md", "RESULTS.md", "triggers.json", "scenarios.json")
@@ -149,6 +201,11 @@ def validate(root: Path, trigger_override=None) -> list[str]:
     gaps.extend(results_count_gaps(
         results_text, {"queries": len(queries), "scenarios": len(scenarios)}
     ))
+    ss = root / SKILL_SEARCH_TRIGGERS
+    if not ss.is_file():
+        gaps.append(f"missing {ss}")
+    else:
+        gaps.extend(skill_search_gaps(load(ss), repo))
     return gaps
 
 
@@ -177,6 +234,20 @@ def self_test(root: Path) -> None:
     print("OK: negative self-test caught a planted off-by-one count and refused a "
           "claim-free RESULTS.md")
 
+    repo = root.parent.parent
+    base = load(root / SKILL_SEARCH_TRIGGERS)
+    if skill_search_gaps(base, repo):
+        raise SystemExit("negative self-test failed: the shipped skill-search evals have gaps")
+    planted = copy.deepcopy(base)
+    for q in planted["queries"]:
+        if q["lang"] == "ru" and q["should_trigger"]:
+            q["lang"] = "en"
+    gaps = skill_search_gaps(planted, repo)
+    if not any("(class, language)" in gap for gap in gaps):
+        raise SystemExit("negative self-test failed: skill-search evals with no Russian "
+                         "positive were accepted")
+    print("OK: negative self-test refused skill-search evals with no Russian positive")
+
 
 def main() -> int:
     parser = argparse.ArgumentParser()
@@ -193,7 +264,9 @@ def main() -> int:
         return 1
     triggers = load(args.root / "triggers.json")["queries"]
     scenarios = load(args.root / "scenarios.json")["scenarios"]
-    print(f"OK: {len(triggers)} trigger cases and {len(scenarios)} scenarios validate")
+    ss = load(args.root / SKILL_SEARCH_TRIGGERS)["queries"]
+    print(f"OK: {len(triggers)} trigger cases and {len(scenarios)} scenarios validate; "
+          f"{len(ss)} skill-search trigger cases validate (authored, not yet model-run)")
     return 0
 
 

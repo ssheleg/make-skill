@@ -17,7 +17,8 @@ Standard library only (tiktoken used only if already present).
 import importlib.util
 import os
 import sys
-import tempfile
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+import residue  # noqa: E402  every temp tree goes through the ledger (MS-05)
 
 sys.dont_write_bytecode = True
 
@@ -44,7 +45,7 @@ def case(name, fn):
 
 
 def skill_dir(body):
-    root = tempfile.mkdtemp()
+    root = residue.workspace('fix-ms-01.01')
     d = os.path.join(root, "planted")
     os.makedirs(d)
     with open(os.path.join(d, "SKILL.md"), "w", encoding="utf-8") as fh:

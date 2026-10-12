@@ -23,7 +23,8 @@ import os
 import shutil
 import subprocess
 import sys
-import tempfile
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+import residue  # noqa: E402  every temp tree goes through the ledger (MS-05)
 
 sys.dont_write_bytecode = True
 
@@ -66,7 +67,7 @@ EN_BODY = ("## Contents\n\n" + "The programme rule, stated in English. " * 400)
 
 
 def fixture(body, refs):
-    d = tempfile.mkdtemp(prefix="adopt-m-0101-")
+    d = residue.workspace('adopt-m-01.01')
     skill_dir = os.path.join(d, "fixture-skill")
     os.makedirs(os.path.join(skill_dir, "references"))
     with open(os.path.join(skill_dir, "SKILL.md"), "w") as fh:

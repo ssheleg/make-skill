@@ -1,3 +1,24 @@
+## v0.31.0 — a temp tree outside the residue ledger is refused, skill-search has trigger evals
+
+**MS-05: a source check that every test temp tree goes through the residue ledger.**
+`test/validate.py` now refuses a `mkdtemp()` or `TemporaryDirectory()` call through any
+receiver (`tempfile.`, an alias, or none) and a from-import that renames either, anywhere
+under `test/` (recursively; comments and `"""` docstrings are not read as calls). It reads
+Python only: `installer_test.js` keeps its own ledger, and `mkstemp`/`NamedTemporaryFile`
+make files, not trees. Ported from
+`agent-stack`, widened to subdirectories — and it found six real bypasses in
+`test/audit_regressions/`, now routed through `residue.workspace()`.
+**Back-links to the skills this one routes work to.** `references/mcp.md` now points a
+skill about a Fabric agent or service at `fabric-agent-adapter:creating-fabric-agents`,
+`:adapting-projects-to-fabric` and `:building-fabric-services`, and credentials at
+`observatory-log:handling-secrets`; the validator checks the names appear (not that the
+targets still say what the one-liners say — read against fabric-agent-adapter 0.20.0). Only
+`creating-fabric-agents` points back here.
+**skill-search trigger evals (authored, not yet model-run).** 20 queries in English and
+Russian, both classes in both languages on each side of the split, in
+`test/evals/skill-search/triggers.json`; `test/evals_validate.py` validates them and is
+now part of `npm test`.
+
 ## v0.30.1 — a family member updates through its family's launcher
 
 `references/distribution.md` step 6 told a release to refresh this machine with

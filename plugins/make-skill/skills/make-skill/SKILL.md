@@ -5,7 +5,7 @@ license: MIT
 compatibility: Authoring works on any agent. The bundled scripts/ need python3. Publishing steps need git, gh, node and npm; the plugin gates need the claude CLI. Not usable on the Claude API surface, which has no network and no runtime package install.
 metadata:
   author: ssheleg
-  version: "0.30.1"
+  version: "0.31.0"
   homepage: https://github.com/ssheleg/make-skill
 ---
 
@@ -235,7 +235,7 @@ review that approved it.
 ## Protocol-connected skills (MCP / A2A)
 
 A skill is instructions; it cannot grant capability. New capability against a live
-system is an **MCP server** (`mcp.md`); delegating an outcome to another agent is
+system is an **MCP server** (`mcp.md`, Fabric); delegating an outcome to another agent is
 **A2A** (`a2a.md`). Both carry only what changes *because you write a skill*.
 
 **The protocols have one home, and it is not this skill:** `agent-interop` in

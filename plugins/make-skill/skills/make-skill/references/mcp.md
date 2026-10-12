@@ -17,6 +17,7 @@ what changes because the thing you are writing is a **skill**.
 ## Contents
 
 - Skill vs MCP server — pick the right one
+- When the skill's subject is a Fabric agent or service
 - Declaring the dependency
 - Security a skill must respect
 - Gotchas when writing an MCP-adjacent skill
@@ -38,6 +39,25 @@ needs judgement and sequencing, it is a skill.
 Designing the server's *tool set* — which tools, which schemas, which descriptions — is
 neither this file's job nor `agent-interop`'s; Anthropic's `mcp-server-dev` plugin exists
 for exactly that.
+
+## When the skill's subject is a Fabric agent or service
+
+A skill that *documents* an agent is this skill's job. Building the agent itself, or
+making an existing one speak the Fabric Agent Contract, belongs to the
+`fabric-agent-adapter` plugin (PassionCode; read against 0.20.0). Of its skills,
+`creating-fabric-agents` routes packaging an agent as a skill or plugin here; the other two
+do not point back:
+
+- `fabric-agent-adapter:creating-fabric-agents` — a NEW agent or provider that must be
+  Fabric-compatible from its first commit (intake, knowledge pack, pinned contract bundle).
+- `fabric-agent-adapter:adapting-projects-to-fabric` — an EXISTING agent, MCP server, A2A
+  peer, HTTP service or CLI: choose the MCP / A2A / local-runner profile, scaffold the
+  provider bundle, check compatibility.
+- `fabric-agent-adapter:building-fabric-services` — a local or online agent that must be a
+  Fabric service with a dashboard (the `fabric-service` protocol).
+
+Credentials the skill or the agent needs are never written into either: use
+`observatory-log:handling-secrets` (named slots, nothing copied into prompts or argv).
 
 ## Declaring the dependency
 
