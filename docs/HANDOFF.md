@@ -1,4 +1,33 @@
-# Current task: integration wave 4, packet W4-B (v0.31.0 candidate)
+# Current task: v0.31.1 patch, then packet W4-C
+
+**v0.31.0 is published.** Annotated tag `v0.31.0` → `5556e8877233b1f0b92ee4e0b69533358cfc0047`
+(squash of PR #33); release run [38241946211](https://github.com/ssheleg/make-skill/actions/runs/38241946211)
+started 2026-10-12T11:19Z, conclusion success; npm `@ssheleg/make-skill` serves `0.31.0` as
+`latest`; the hub ssheleg/sshlg-skills pins `skills/make-skill` at `5556e88` since its release
+1.57.0. Evidence: the *Publication, live* row of the v0.31.0 section of
+[verification.md](evidence/verification.md).
+
+**v0.31.1 (branch `fix/0311`, PR open, not merged, tagged or published).**
+- The missing-back-link message in `test/validate.py` now says how the routing runs: only
+  `creating-fabric-agents` routes packaging here; this skill names the three builders and
+  `handling-secrets` in return. An in-gate self-test refuses the old wording (watched failing).
+- CHANGELOG v0.31.1 corrects v0.31.0's MS-05 wording to what `temp_maker_hit()` sees: a direct
+  call through one receiver or none, a one-line renaming from-import; only whole-line `#`
+  comments and `"""` blocks skipped; chained receivers, function references, `getattr` and
+  parenthesised multi-line imports not seen.
+- Evidence: the v0.31.1 section of [verification.md](evidence/verification.md).
+
+**Open.**
+- The skill-search evals are authored and structurally validated, **never run against a model**.
+- v0.31.1 release (merge, tag, publish, hub re-pin) belongs to the orchestrator.
+- `test/installer_test.js` makes temp homes with its own ledger (JS); the check reads `*.py` only.
+
+**Next task, exactly (single).** Packet W4-C: run `test/evals/skill-search/triggers.json` against a
+model, three fresh-session probes per query, and record the result in `test/evals/RESULTS.md`.
+Scoring rule for s19: the case passes on whether a catalogue search ran, not on which skill it
+named. **Gated:** the Sonnet weekly limit resets 2026-10-16; do not start W4-C before then.
+
+# Previous task: integration wave 4, packet W4-B (v0.31.0, published)
 
 **Objective.** Close the make-skill residue of the hub's integration waves
 (`docs/evidence/plans/2026-10-11-integration-waves.md` § Wave 4 in ssheleg/sshlg-skills; REQ R25, R27
@@ -18,16 +47,15 @@ authoring part, R28, R29). Branch `w4/residue-evals`, from origin/main `60ca8e2`
 
 **Open.**
 - The skill-search evals are authored and structurally validated, **never run against a model**.
-- The release: no PR merge, tag or publish was done by this packet.
+- The release was not done by this packet; it has since happened (PR #33 merged, tag v0.31.0,
+  npm 0.31.0, hub pin in 1.57.0 — see the current task above).
 - `test/installer_test.js` makes temp homes with its own ledger (JS); the new check reads `*.py` only.
 
 **Checks run.** `npm test` exit 0 and `claude plugin validate ./plugins/make-skill --strict`
 (see verification.md for the lines).
 
-**Next task, exactly.** Packet W4-C: run `test/evals/skill-search/triggers.json` against a model,
-three fresh-session probes per query, and record the result in `test/evals/RESULTS.md`.
-Then (the orchestrator's release steps, gated on PR #33 merging): tag v0.31.0, read the release
-run and npm, and the hub re-pins make-skill 0.31.0 in wave 5.
+**Next task at the time** (superseded by the current task above): packet W4-C, then the
+orchestrator's v0.31.0 release steps, which are now done.
 
 # Previous task: family round 2026-10-10 (v0.30.0, v0.30.1)
 

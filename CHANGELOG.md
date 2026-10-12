@@ -1,3 +1,20 @@
+## v0.31.1 — what the temp-tree check actually sees, and who routes back
+
+**Correction to v0.31.0's MS-05 entry.** That entry said the check refuses a temp-dir call
+"through any receiver". Measured against `temp_maker_hit()`: it catches a direct call through
+one receiver or none (`tempfile.mkdtemp(`, `tf.mkdtemp(`, `mkdtemp(`) and a one-line renaming
+from-import (`from tempfile import mkdtemp as m`); only whole-line `#` comments and `"""`
+blocks are skipped (chained receivers, function references, `getattr` and parenthesised
+multi-line imports are not seen). A trailing `#` comment or a `'''` block that names a
+maker is read as code and refused, which errs toward a false refusal, not a miss.
+**The missing-back-link message says how the routing runs.** `test/validate.py` told an
+author that "the adapter skills route authors here and this skill must route them back";
+only `creating-fabric-agents` routes here. The message now reads *no back-link to `<name>` —
+creating-fabric-agents routes packaging here; this skill names all three builders and
+handling-secrets in return*, and an in-gate self-test refuses the old wording.
+**HANDOFF records v0.31.0 as published** (tag, release run, npm, hub pin) and keeps W4-C as
+the single next task.
+
 ## v0.31.0 — a temp tree outside the residue ledger is refused, skill-search has trigger evals
 
 **MS-05: a source check that every test temp tree goes through the residue ledger.**

@@ -1302,6 +1302,11 @@ def backlink_gaps(text):
     return [name for name, _ in BACKLINKS if "`" + name + "`" not in text]
 
 
+def backlink_failure(rel, name):
+    return (f"{rel}: no back-link to `{name}` — creating-fabric-agents routes packaging "
+            "here; this skill names all three builders and handling-secrets in return")
+
+
 def check_backlinks_to_routed_skills():
     rel = BACKLINK_FILE
     p = os.path.join(ROOT, rel)
@@ -1310,8 +1315,7 @@ def check_backlinks_to_routed_skills():
     else:
         with open(p, encoding="utf-8") as fh:
             for name in backlink_gaps(fh.read()):
-                fail(f"{rel}: no back-link to `{name}` — the adapter skills route authors "
-                     "here and this skill must route them back")
+                fail(backlink_failure(rel, name))
     p = os.path.join(ROOT, BACKLINK_POINTER)
     with open(p, encoding="utf-8") as fh:
         section = fh.read().split("## Protocol-connected skills", 1)[-1].split("\n## ", 1)[0]
@@ -1325,6 +1329,14 @@ if backlink_gaps(_names):
     fail("R25 self-test: references present in the text were reported missing")
 if backlink_gaps(_names.replace("`observatory-log:handling-secrets`", "")) != ["observatory-log:handling-secrets"]:
     fail("R25 self-test: a removed back-link was not reported")
+# The message must say how the routing actually runs: only creating-fabric-agents routes
+# packaging here; this skill names all four in return. A message claiming every adapter skill
+# routes here sent a reader looking for back-links that do not exist.
+_msg = backlink_failure("mcp.md", "observatory-log:handling-secrets")
+if ("`observatory-log:handling-secrets`" not in _msg
+        or "creating-fabric-agents routes packaging here" not in _msg
+        or "the adapter skills route" in _msg):
+    fail("R25 self-test: the missing-back-link message misstates who routes to whom: " + _msg)
 check_backlinks_to_routed_skills()
 
 
