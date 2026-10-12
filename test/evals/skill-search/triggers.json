@@ -1,6 +1,6 @@
 {
   "skill": "skill-search",
-  "note": "20 queries, 10 should fire and 10 near-misses, English and Russian in both classes. AUTHORED AND VALIDATED STRUCTURALLY ONLY — never run against a model (B-147 / R27: the model run is a separate packet). Run each 3x in a fresh session; pass threshold 0.5. See README.md.",
+  "note": "AUTHORED AND VALIDATED STRUCTURALLY ONLY — never run against a model (B-147 / R27: the model run is a separate packet). Run each 3x in a fresh session; pass threshold 0.5. See ../README.md for the run protocol.",
   "split": {
     "comment": "60/40, fixed across iterations; both classes and both languages on each side.",
     "train": [
@@ -90,14 +90,14 @@
       "lang": "en",
       "query": "add Stripe checkout with webhooks to our Node backend",
       "should_trigger": true,
-      "why": "substantial integration task with no skill named — the skill's job is to run the catalogue search as step one"
+      "why": "substantial integration task with no skill named — the skill's job is to run the catalogue search as step one (labelled from the description's 'when starting any task' clause and step 2's 'everything else continues' to the search, not from a catalogue question)"
     },
     {
       "id": "s10",
       "lang": "ru",
       "query": "подключи вход через Google к нашему веб-приложению",
       "should_trigger": true,
-      "why": "substantial task, no skill named — search the catalogue first"
+      "why": "substantial task, no skill named — search the catalogue first (labelled from the description's 'when starting any task' clause and step 2's 'everything else continues' to the search, not from a catalogue question)"
     },
     {
       "id": "s11",
@@ -158,9 +158,9 @@
     {
       "id": "s19",
       "lang": "en",
-      "query": "write a commit message for the staged changes",
+      "query": "rename the variable `cnt` to `count` on line 12 of utils.py",
       "should_trigger": false,
-      "why": "tiny task with no catalogue relevance — must not steal the turn"
+      "why": "a one-line edit — step 2 of the skill (SKILL.md:23-24) lets it continue without a catalogue search"
     },
     {
       "id": "s20",

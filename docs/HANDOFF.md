@@ -24,9 +24,10 @@ authoring part, R28, R29). Branch `w4/residue-evals`, from origin/main `60ca8e2`
 **Checks run.** `npm test` exit 0 and `claude plugin validate ./plugins/make-skill --strict`
 (see verification.md for the lines).
 
-**Next task, exactly.** (1) Packet W4-C runs the `skill-search` trigger evals against a model and
-records the result in `test/evals/RESULTS.md`. (2) After the PR merges and the release run is green,
-the tag is pushed and the hub re-pins make-skill 0.31.0 in wave 5.
+**Next task, exactly.** Packet W4-C: run `test/evals/skill-search/triggers.json` against a model,
+three fresh-session probes per query, and record the result in `test/evals/RESULTS.md`.
+Then (the orchestrator's release steps, gated on PR #33 merging): tag v0.31.0, read the release
+run and npm, and the hub re-pins make-skill 0.31.0 in wave 5.
 
 # Previous task: family round 2026-10-10 (v0.30.0, v0.30.1)
 

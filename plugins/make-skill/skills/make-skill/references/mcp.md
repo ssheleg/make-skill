@@ -44,7 +44,9 @@ for exactly that.
 
 A skill that *documents* an agent is this skill's job. Building the agent itself, or
 making an existing one speak the Fabric Agent Contract, belongs to the
-`fabric-agent-adapter` plugin (PassionCode), whose skills route authors here in return:
+`fabric-agent-adapter` plugin (PassionCode; read against 0.20.0). Of its skills,
+`creating-fabric-agents` routes packaging an agent as a skill or plugin here; the other two
+do not point back:
 
 - `fabric-agent-adapter:creating-fabric-agents` — a NEW agent or provider that must be
   Fabric-compatible from its first commit (intake, knowledge pack, pinned contract bundle).

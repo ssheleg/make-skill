@@ -1225,8 +1225,11 @@ check_routed_triggers_still_advertised()
 #
 # The pattern is assembled from parts on purpose: spelled out, it would contain the very
 # literals it looks for, and this file is inside the set it scans.
-TEMP_MAKERS = re.compile(r"(?<![\w.])(?:tempfile\.)?(?:" + "mkdtemp" + "|Temporary"
-                         + "Directory" + r")\s*\(")
+# Any receiver counts (`tempfile.`, an alias such as `tf.`, or none after a from-import), and
+# a from-import that renames one of the two is refused outright: `as m` would hide the call.
+TEMP_MAKERS = re.compile(r"(?<![\w.])(?:[A-Za-z_]\w*\.)?(?:" + "mkdtemp" + "|Temporary"
+                         + "Directory" + r")\s*\(|\bfrom\s+tempfile\s+import\b[^\n]*\b(?:"
+                         + "mkdtemp" + "|Temporary" + "Directory" + r")\s+as\b")
 TEMP_LEDGER_EXEMPT = {os.path.join("test", "residue.py")}
 
 
@@ -1269,6 +1272,10 @@ if not temp_maker_hit(_plant) or temp_maker_hit(_plant)[1] != 2:
     fail("MS-05 self-test: a planted bare temp-dir call was not found at line 2")
 if not temp_maker_hit("with Temporary" + "Directory() as d:\n    pass\n"):
     fail("MS-05 self-test: a planted context-manager temp dir was not found")
+if not temp_maker_hit("import tempfile as tf\nd = tf." + "mkdtemp" + "()\n"):
+    fail("MS-05 self-test: a temp-dir call through a module alias was not found")
+if not temp_maker_hit("from tempfile import " + "mkdtemp" + " as m\nd = m()\n"):
+    fail("MS-05 self-test: a renamed from-import of a temp-dir maker was not found")
 if temp_maker_hit('"""why ' + "mkdtemp" + '() is banned"""\n# or ' + "mkdtemp" + "()\n"):
     fail("MS-05 self-test: an explanation in a docstring/comment was read as a violation")
 check_temp_trees_go_through_the_residue_ledger(ROOT)
@@ -1276,8 +1283,8 @@ check_temp_trees_go_through_the_residue_ledger(ROOT)
 
 # ------------------------------------ back-links to the skills this one routes work to (R25)
 #
-# The Fabric adapter skills route a skill author to make-skill; make-skill used to point
-# nowhere in return, so an author starting from here never learned that a skill which must
+# The Fabric adapter's creating-fabric-agents routes packaging to make-skill; make-skill used
+# to point nowhere in return, so an author starting from here never learned that a skill which must
 # be a Fabric agent or service has its own builders. The references live in the one file
 # that discusses protocol-connected skills, with one line each, and the SKILL.md section
 # points at that file. Descriptions are untouched: they sit at their character cap.

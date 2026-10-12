@@ -297,7 +297,8 @@ plugins/make-skill/
 cursor/rules/{make-skill,skill-search}.mdc   # self-contained Cursor rules
 bin/make-skill.js + package.json      # zero-dep npx installer
 test/validate.py                      # structural validator
-test/{plant_guard,checker_parity,residue}_test.py   # the gate's three suites
+test/{plant_guard,checker_parity,residue}_test.py   # three of the gate's suites
+test/evals_validate.py                # eval-set validator (+ --self-test), run by npm test
 test/{plant_guard,residue}.py         # did the plant land · what did the run leave
 test/evals/                           # trigger set + behavioral scenarios (data)
 .github/workflows/{validate,release}.yml

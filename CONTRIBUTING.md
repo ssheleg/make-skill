@@ -38,10 +38,11 @@ python3 test/validate.py
 
 Exit 0 prints `PASS: …`. Every failure names the file and the rule.
 
-`npm test` is the gate proper — the validator, then the four suites, in order:
+`npm test` is the gate proper — the validator, the eval-set validator and its self-test,
+the four suites, then the audit regressions, in order:
 
 ```bash
-npm test        # validate.py · plant_guard_test.py · checker_parity_test.py · residue_test.py · installer_test.js
+npm test        # validate.py · evals_validate.py (+ --self-test) · plant_guard_test.py · checker_parity_test.py · residue_test.py · installer_test.js · test:audit
 ```
 
 `test/installer_test.js` runs both installers against throwaway HOMEs — fresh,
