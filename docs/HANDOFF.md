@@ -1,3 +1,23 @@
+# FW01 release packaging — 2026-10-13
+
+Branch `release/fw01-0.31.2` prepares patch 0.31.2 from accepted source
+`712d960b0bad66347570dc00650b1ea12bf94664` (PR35). Genuine validation
+[38335197073](https://github.com/ssheleg/make-skill/actions/runs/38335197073)
+passed at candidate `93263410b6608beaf1d618528e8e80ae313a59ad` before normal merge.
+Independent review and local gates: [FW01 receipt](evidence/runs/2026-10-13-fw01-temp-guard.md).
+Registry `@ssheleg/make-skill` and remote tags read 0.31.1 before this preparation.
+This branch changes version metadata, card and release documentation only.
+
+Packaging validator passed: `python3 test/validate.py`, exit 0.
+Independent packaging review passed at `dabc1febfa660226c88356df9594c342c6190a5a`: metadata
+and release documentation only; no implementation or workflow changes.
+Next: frozen PR promotion,
+normal merge, exact-source checks, then an annotated tag under the existing
+release workflow. No tag, publication, hub pin or installed update has occurred.
+The skill-search model-eval prerequisite remains separate and open.
+
+---
+
 # FW01 temporary-tree guard follow-up, 2026-10-13
 
 Objective: close the source-scan omissions referred by agent-stack B-159/B-160.

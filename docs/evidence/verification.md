@@ -18,6 +18,17 @@ the release the CHANGELOG carries (MS-03).
 
 ---
 
+## Shipped state — v0.31.2 (candidate, 2026-10-13; publication pending)
+
+This section records candidate source checks only. The version heading is the
+ledger's required namespace, not proof of an npm publication.
+
+| REQ | What is checked | Evidence | Confirmed |
+|---|---|---|---|
+| FW01 source | Repository scan and exact residue-ledger exception | [FW01 receipt](runs/2026-10-13-fw01-temp-guard.md); independent review of eb978ea; merged PR35 at 712d960; genuine run 38335197073 at 9326341 | observed on source candidate, not a new model result |
+| Packaging | Metadata/card/CHANGELOG agree on 0.31.2 | `python3 test/validate.py` → `PASS: make-skill structure valid (2 cursor rule(s))`, exit 0 | observed, source candidate |
+| Publication | Annotated tag, release run, npm registry readback and umbrella pins | not performed in this preparation | pending |
+
 ## Shipped state — v0.31.1 (candidate, 2026-10-12)
 
 Patch on top of the published v0.31.0. Measured on the branch `fix/0311` before the tag.
