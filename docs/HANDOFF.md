@@ -1,3 +1,13 @@
+# FW01 temporary-tree guard follow-up, 2026-10-13
+
+Objective: close the source-scan omissions referred by agent-stack B-159/B-160.
+The bounded implementation is complete on this branch: repository-wide Python scan,
+exact-path/count/call-shape ledger exception and eight regression cases. Read the
+[receipt](evidence/runs/2026-10-13-fw01-temp-guard.md) for checked commands, lexical
+limitations, companion SEO revision and prerequisites. Exact next task: independent
+review, then parent-owned integration and aggregate checks. No release, model eval or
+referral-board closure is claimed. The previous skill-search model-eval gate remains.
+
 # Current task: v0.31.1 patch, then packet W4-C
 
 **v0.31.0 is published.** Annotated tag `v0.31.0` → `5556e8877233b1f0b92ee4e0b69533358cfc0047`

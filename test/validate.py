@@ -1215,13 +1215,16 @@ check_routed_triggers_still_advertised()
 
 # ------------------------------ every temp tree goes through the residue ledger (MS-05)
 #
-# `test/residue.py` accounts for what a run leaves in `$TMPDIR`, but only for trees taken
-# through `residue.workspace()`. A bare temp-dir call anywhere in `test/` is invisible to
-# it, and the gate then prints "this run left nothing" over a live leak — a bypass that
-# reports clean is indistinguishable from no leak. `agent-stack` closed the same hole with
-# a source check (`check_temp_trees_go_through_the_residue_ledger`); this is that check,
-# ported, and WIDER: it walks `test/` recursively, because here the bypasses lived in
-# `test/audit_regressions/`, a directory a non-recursive scan never reads.
+# `test/residue.py` accounts only for trees taken through `workspace()`. FW01
+# extends MS-05 to repository Python sources: shipped scripts and helpers outside
+# test/ used to escape this check. The ledger is an exact-path/count/call-shape
+# exception, not a whole-file exclusion. This is a source lint, not runtime proof.
+# Explicit dependency/generated/fixture exclusions are below. JS/shell allocations
+# are not scanned. As in agent-stack's reference implementation, the lexical matcher
+# misses chained receivers, stored function references, getattr and parenthesised
+# multi-line renaming imports. Its triple-double-quote blanking is lexical, not a
+# Python parse: embedded quote markers can hide code. A green run does not prove
+# absence of allocations expressed in unsupported forms.
 #
 # The pattern is assembled from parts on purpose: spelled out, it would contain the very
 # literals it looks for, and this file is inside the set it scans.
@@ -1230,40 +1233,66 @@ check_routed_triggers_still_advertised()
 TEMP_MAKERS = re.compile(r"(?<![\w.])(?:[A-Za-z_]\w*\.)?(?:" + "mkdtemp" + "|Temporary"
                          + "Directory" + r")\s*\(|\bfrom\s+tempfile\s+import\b[^\n]*\b(?:"
                          + "mkdtemp" + "|Temporary" + "Directory" + r")\s+as\b")
-TEMP_LEDGER_EXEMPT = {os.path.join("test", "residue.py")}
+TEMP_SCAN_SKIP_DIRS = {".git", "node_modules", "__pycache__", "fixtures", ".venv",
+                       "venv", ".tox", ".pytest_cache", ".mypy_cache", "build", "dist"}
+TEMP_TREE_ALLOWED = {
+    os.path.join("test", "residue.py"): (1, "the ledger allocates attributed trees", "ledger"),
+}
+# Pin the one maker's attributed call, not just its count. Accounting/cleanup behavior
+# remains the job of residue_test.py; this guard does not prove append/atexit semantics.
+TEMP_LEDGER_FORM = re.compile(
+    r"^\s*path\s*=\s*tempfile\." + "mkdtemp" +
+    r"\(prefix=PREFIX \+ RUN_TAG, suffix=[\"']-[\"'] \+ tag\)\s*$")
+
+
+def temp_maker_hits(text):
+    """Lexical maker hits with source line numbers; see bounds above."""
+    code = "\n".join("" if ln.lstrip().startswith("#") else ln for ln in text.split("\n"))
+    code = re.sub(r'"""(?:.|\n)*?"""', lambda m: "\n" * m.group(0).count("\n"), code)
+    return [(hit.group(0), code[:hit.start()].count("\n") + 1)
+            for hit in TEMP_MAKERS.finditer(code)]
 
 
 def temp_maker_hit(text):
-    """The first temp-dir call that would RUN in `text`, as (match, line), else None.
+    hits = temp_maker_hits(text)
+    return hits[0] if hits else None
 
-    Comments and docstrings mention the banned names when they explain why; a guard that
-    reads an explanation as a violation refuses the document that records the fix. The
-    line number is counted on the unstripped text, so it can be opened directly.
-    """
-    code = "\n".join("" if ln.lstrip().startswith("#") else ln for ln in text.split("\n"))
-    code = re.sub(r'"""(?:.|\n)*?"""', lambda m: "\n" * m.group(0).count("\n"), code)
-    hit = TEMP_MAKERS.search(code)
-    return (hit.group(0), code[:hit.start()].count("\n") + 1) if hit else None
+
+def temp_scan_files(root):
+    found = []
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = sorted(d for d in dirnames if d not in TEMP_SCAN_SKIP_DIRS)
+        found.extend(os.path.join(dirpath, f) for f in filenames if f.endswith(".py"))
+    return sorted(found)
 
 
 def check_temp_trees_go_through_the_residue_ledger(root):
-    found = []
-    for dirpath, dirnames, filenames in os.walk(os.path.join(root, "test")):
-        dirnames[:] = [d for d in dirnames if d not in ("fixtures", "__pycache__")]
-        found.extend(os.path.join(dirpath, f) for f in filenames if f.endswith(".py"))
-    if not found:
+    files = temp_scan_files(root)
+    rels = [os.path.relpath(p, root) for p in files]
+    if not any(rel.startswith("test" + os.sep) for rel in rels):
         fail("test/: no python files — the suite cannot be checked for temp-tree accounting")
         return
-    for path in sorted(found):
-        rel = os.path.relpath(path, root)
-        if rel in TEMP_LEDGER_EXEMPT:
-            continue
+    for path, rel in zip(files, rels):
         with open(path, encoding="utf-8") as fh:
-            hit = temp_maker_hit(fh.read())
-        if hit:
-            fail(f"{rel}: creates a temp tree outside the residue ledger — {hit[0]!r} at "
-                 f"line {hit[1]}. Use `residue.workspace(tag)`: a tree the ledger never "
-                 "saw is a tree the gate's residue line reports as nothing")
+            text = fh.read()
+        hits = temp_maker_hits(text)
+        allowed, why, shape = TEMP_TREE_ALLOWED.get(rel, (0, "", None))
+        if len(hits) != allowed:
+            where = f" at line {hits[min(allowed, len(hits) - 1)][1]}" if hits else ""
+            fail(f"{rel}: temp tree allocation count {len(hits)}, expected {allowed}{where}" +
+                 (f" ({why})" if allowed else
+                  ". Creates a temp tree outside the residue ledger; use residue.workspace(tag) "
+                  "in tests. A shipped tool needs its own reviewed cleanup contract and an "
+                  "exact-path/count/shape exception, not a whole-file skip."))
+        if shape == "ledger":
+            lines = text.splitlines()
+            for hit, line in hits:
+                if not TEMP_LEDGER_FORM.fullmatch(lines[line - 1]):
+                    fail(f"{rel}: temp tree call at line {line} changed the ledger's attributed "
+                         "allocation shape (PREFIX + RUN_TAG and tag suffix required)")
+    for rel in sorted(TEMP_TREE_ALLOWED):
+        if rel not in rels:
+            fail(f"{rel}: temp tree exception names an absent or unscanned file")
 
 
 # Negative controls, computed on every run: a guard nobody has watched refuse is not one.
