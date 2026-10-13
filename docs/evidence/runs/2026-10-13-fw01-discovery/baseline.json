@@ -1,0 +1,25 @@
+{
+  "source": "c6b047057559f8dd2fe12dec59e4a4bee374fac2",
+  "scope": "actual whole validator, no full owner suite",
+  "permission_plant_confirmed": true,
+  "results": [
+    {
+      "case": "healthy",
+      "exit": 0,
+      "stdout": "  unlooked: routed triggers \u2014 no sshlg-skills umbrella above this checkout\nPASS: make-skill structure valid (2 cursor rule(s))\nresidue: this run left nothing \u2014 0 temp tree(s) created, 0 removed\n",
+      "stderr": ""
+    },
+    {
+      "case": "readable unauthorized allocation",
+      "exit": 1,
+      "stdout": "  unlooked: routed triggers \u2014 no sshlg-skills umbrella above this checkout\nFAIL: make-skill structure invalid\n - scripts/fw01_hidden/leak.py: temp tree allocation count 1, expected 0 at line 2. Creates a temp tree outside the residue ledger; use residue.workspace(tag) in tests. A shipped tool needs its own reviewed cleanup contract and an exact-path/count/shape exception, not a whole-file skip.\nresidue: this run left nothing \u2014 0 temp tree(s) created, 0 removed\n",
+      "stderr": ""
+    },
+    {
+      "case": "unreadable source directory",
+      "exit": 0,
+      "stdout": "  unlooked: routed triggers \u2014 no sshlg-skills umbrella above this checkout\nPASS: make-skill structure valid (2 cursor rule(s))\nresidue: this run left nothing \u2014 0 temp tree(s) created, 0 removed\n",
+      "stderr": ""
+    }
+  ]
+}

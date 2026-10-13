@@ -1,0 +1,17 @@
+{
+  "owner": "make-skill-fw01-scan",
+  "source": "75ab2d0ad03e231ce465fa5d3d95776e8be0c3f4",
+  "command": "npm test",
+  "exit_code": 0,
+  "seconds": 22.08,
+  "minimum_free_bytes": 1391476736,
+  "disk_stopped": false,
+  "log": "owner-full.log.gz",
+  "log_sha256": "56e5d9fdeeb8e3119490ca3ce4417aa9ab0c4c48ec81e29b9bbd559414982950",
+  "scratch_removed": true,
+  "independent_review": "https://github.com/ssheleg/sshlg-skills/blob/85d1758e02cbf1759be861a7af2108d267c339a3/docs/evidence/completion-1013/fw01-sibling-peer.json",
+  "scratch_remaining_before_owned_cleanup": [
+    "data-gym-cache",
+    "node-compile-cache"
+  ]
+}

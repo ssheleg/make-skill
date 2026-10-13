@@ -1,3 +1,13 @@
+# FW01 source discovery correction — 2026-10-13
+
+The [source packet and receipt](evidence/runs/2026-10-13-fw01-discovery/README.md)
+records actual healthy/readable/unreadable baseline evidence and the bounded
+permission-error fix. New focused controls pass; source payload and version stay
+unchanged. Next: independent review, serialized owner aggregate and genuine normal
+PR admission. No full-scan/runtime completeness, publication or installation claim.
+
+---
+
 # Current evidence update — skill-search native loading, 2026-10-13
 
 The skill-search corpus now has a completed, independently replayed native-loading
