@@ -1,3 +1,20 @@
+# Current evidence update — skill-search native loading, 2026-10-13
+
+The skill-search corpus now has a completed, independently replayed native-loading
+run against frozen v0.31.2 source. Its 20 query majorities passed; individual cells
+matched 59/60, with s09/repetition0 retained as the miss. This supersedes the older
+"never run against a model" prerequisite below only for native Skill loading.
+Read the [dated receipt](evidence/runs/2026-10-13-skill-search-native/README.md)
+and [appended eval result](../test/evals/RESULTS.md#skill-search-native-loading-2026-10-13)
+for protocol errors, limits, independent proof and costs. The older packaging and
+evaluation sections remain historical; this docs change makes no publication claim.
+
+Next: normal docs PR checks and integration, then an outcome-grounded evaluation of
+actual catalogue execution and task quality. Neither is proven by native loading.
+No skill body, description, version or published payload is changed here.
+
+---
+
 # FW01 release packaging — 2026-10-13
 
 Branch `release/fw01-0.31.2` prepares patch 0.31.2 from accepted source
