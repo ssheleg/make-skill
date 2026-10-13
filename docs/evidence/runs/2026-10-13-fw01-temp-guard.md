@@ -110,6 +110,21 @@ the owner structural validator exited 0 after the trigger edit. Candidate hosted
 execution and its exact head/status must be recorded by the coordinator before merge;
 this paragraph alone is not CI success or release authority.
 
+## Candidate-trigger correction, 2026-10-13
+
+Both the local full gate and explicit workflow-dispatch run passed, but the latter
+could not satisfy required PR checks: GitHub excludes workflow_dispatch from eligible
+PR check events. Successful direct-head jobs are retained as validation evidence,
+not represented as merge acceptance. See [GitHub's required-check troubleshooting](https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/troubleshooting-required-status-checks).
+
+The frozen-candidate route is now `pull_request: types: [ready_for_review]`. The
+coordinator deliberately promotes its own draft PR once after review and local checks;
+opened, reopened, synchronize and push remain absent, so normal edits do not trigger
+full CI. Nightly and callable-release validation remain. Dispatch remains available for
+manual diagnostics but is not a PR approval route. No status is fabricated and no
+branch-protection bypass is part of this change. This entry corrects the earlier
+candidate-dispatch assumption above; the eligible PR run must be checked separately.
+
 ---
 
 **Made with [ssheleg skills](https://github.com/ssheleg/sshlg-skills)**

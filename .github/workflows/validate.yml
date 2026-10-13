@@ -7,6 +7,10 @@ on:
   # Operator policy: routine complete CI is nightly. One frozen explicit candidate
   # may be dispatched for genuine required-status evidence before integration.
   workflow_dispatch:
+  # Required PR checks need a PR event. Promote a frozen draft candidate once;
+  # ordinary PR edits/pushes do not run the complete suite.
+  pull_request:
+    types: [ready_for_review]
   # Release publication still calls this same suite, including its negative controls.
   workflow_call:
 
