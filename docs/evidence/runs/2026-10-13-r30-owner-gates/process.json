@@ -1,0 +1,51 @@
+{
+  "source_hashes": {
+    "test/validate.py": "6069ab3cdc11041ea961b6a2a1ebc8787d71b4132272fe79d8550ec7fdea2fb8",
+    "test/owner_board.py": "131f6e1cc6e762cfd26aceddcbbe6284db00fda8f0a4dc8772573c1fb3274079",
+    "test/owner_release.py": "1a79a87a5344d0755f885e48c1c828aadfdab0c53d64afbdad89667c641d4305"
+  },
+  "cases": [
+    {
+      "case": "healthy",
+      "returncode": 0,
+      "expected_diagnostic": null,
+      "accepted": true,
+      "output": "  unlooked: routed triggers \u2014 no sshlg-skills umbrella above this checkout\nPASS: make-skill structure valid (2 cursor rule(s))\nresidue: this run left nothing \u2014 0 temp tree(s) created, 0 removed\n"
+    },
+    {
+      "case": "duplicate",
+      "returncode": 1,
+      "expected_diagnostic": "board duplicate ID",
+      "accepted": true,
+      "output": "  unlooked: routed triggers \u2014 no sshlg-skills umbrella above this checkout\nFAIL: make-skill structure invalid\n - docs/evidence/backlog.md: 24: board duplicate ID MS-01; first at 23\nresidue: this run left nothing \u2014 0 temp tree(s) created, 0 removed\n"
+    },
+    {
+      "case": "width",
+      "returncode": 1,
+      "expected_diagnostic": "row width",
+      "accepted": true,
+      "output": "  unlooked: routed triggers \u2014 no sshlg-skills umbrella above this checkout\nFAIL: make-skill structure invalid\n - docs/evidence/backlog.md: 23: board row width: MS-01 has 9 cells; header declares 8\nresidue: this run left nothing \u2014 0 temp tree(s) created, 0 removed\n"
+    },
+    {
+      "case": "ancestry removed",
+      "returncode": 1,
+      "expected_diagnostic": "release ancestry guard",
+      "accepted": true,
+      "output": "  unlooked: routed triggers \u2014 no sshlg-skills umbrella above this checkout\nFAIL: make-skill structure invalid\n - .github/workflows/release.yml: release ancestry guard missing from a live run block\nresidue: this run left nothing \u2014 0 temp tree(s) created, 0 removed\n"
+    },
+    {
+      "case": "shallow",
+      "returncode": 1,
+      "expected_diagnostic": "release full-history checkout",
+      "accepted": true,
+      "output": "  unlooked: routed triggers \u2014 no sshlg-skills umbrella above this checkout\nFAIL: make-skill structure invalid\n - .github/workflows/release.yml: release full-history checkout missing before ancestry guard\nresidue: this run left nothing \u2014 0 temp tree(s) created, 0 removed\n"
+    },
+    {
+      "case": "escaped pipe",
+      "returncode": 0,
+      "expected_diagnostic": null,
+      "accepted": true,
+      "output": "  unlooked: routed triggers \u2014 no sshlg-skills umbrella above this checkout\nPASS: make-skill structure valid (2 cursor rule(s))\nresidue: this run left nothing \u2014 0 temp tree(s) created, 0 removed\n"
+    }
+  ]
+}

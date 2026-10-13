@@ -1,0 +1,16 @@
+{
+  "owner": "make-skill-r30",
+  "source": "2785f6c253374f81165fff880abfcc4dd2221d96",
+  "command": "npm test",
+  "returncode": 0,
+  "disk_stop": false,
+  "elapsed_seconds": 24.09,
+  "free_before": 1959571456,
+  "free_after": 1735643136,
+  "owned_temporary_removed": true,
+  "log_original_sha256": "491480ff567ccdaffe5c39ee0fa2e4bef95854c71e04aeec6df01332d31ce15d",
+  "log_sanitized_sha256": "491480ff567ccdaffe5c39ee0fa2e4bef95854c71e04aeec6df01332d31ce15d",
+  "log": "full.log.gz",
+  "log_sanitization": "literal /Users/sshlg replaced by $HOME; test output otherwise preserved",
+  "scope": "npm test as declared by owner; CI-only checks and live/provider acceptance are separate"
+}
