@@ -1,3 +1,14 @@
+## v0.31.2 — source guard covers the repository and its exact exception
+
+- FW01 expands the Python temporary-tree source check to the owning repository,
+  with the documented excluded directories and lexical limits preserved.
+- Only the exact ledger path, allocation count and call shape receive the existing
+  exception. Negative controls cover absent/wrong-path ledgers and changed calls.
+- Validation follows nightly and deliberate frozen-candidate promotion policy.
+  This patch packages source-validation maintenance; no new model-eval result or
+  broader lexical/dataflow guarantee is claimed.
+- [FW01 source evidence](docs/evidence/runs/2026-10-13-fw01-temp-guard.md).
+
 ## v0.31.1 — what the temp-tree check actually sees, and who routes back
 
 **Correction to v0.31.0's MS-05 entry.** That entry said the check refuses a temp-dir call
