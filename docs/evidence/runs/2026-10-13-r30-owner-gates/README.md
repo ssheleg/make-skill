@@ -21,3 +21,7 @@ For the three sibling process suites, healthy and legitimate escaped-pipe rows p
 ## Handoff and remaining work
 
 Branch `fix/r30-owner-board-1013`. Next: independent diff review, one serial full owner gate using an owned temporary root, then normal frozen draft-to-ready PR admission. No package version, published payload, installed state, source release or hub pin is changed here. Original historical board states remain historical; this bounded candidate does not close every R30 requirement or every owner task. Local task/resource leases are advisory to this machine, not a cross-machine lock.
+
+## Local acceptance and next integration step
+
+The independently reviewed implementation completed the owner's `npm test` with exit 0; [full.json](full.json) records exact source, timing, cleanup and hashes of [compressed output](full.log.gz). This does not assign local execution to CI-only checks. [Payload parity](payload-parity.json) compares every dry-run npm payload file byte-for-byte with the prior source: no package bump is needed for this guard-only change. This following receipt-only commit does not pretend the suite ran at its new commit; implementation bytes remain those in the source-bound result. Exact-head hosted admission and normal merge are next; no release or installed-state claim.
