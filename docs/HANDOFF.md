@@ -9,7 +9,9 @@ Registry `@ssheleg/make-skill` and remote tags read 0.31.1 before this preparati
 This branch changes version metadata, card and release documentation only.
 
 Packaging validator passed: `python3 test/validate.py`, exit 0.
-Next: independent diff review, frozen PR promotion,
+Independent packaging review passed at `dabc1febfa660226c88356df9594c342c6190a5a`: metadata
+and release documentation only; no implementation or workflow changes.
+Next: frozen PR promotion,
 normal merge, exact-source checks, then an annotated tag under the existing
 release workflow. No tag, publication, hub pin or installed update has occurred.
 The skill-search model-eval prerequisite remains separate and open.
