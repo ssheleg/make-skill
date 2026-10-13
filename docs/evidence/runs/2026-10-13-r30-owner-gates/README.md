@@ -25,3 +25,21 @@ Branch `fix/r30-owner-board-1013`. Next: independent diff review, one serial ful
 ## Local acceptance and next integration step
 
 The independently reviewed implementation completed the owner's `npm test` with exit 0; [full.json](full.json) records exact source, timing, cleanup and hashes of [compressed output](full.log.gz). This does not assign local execution to CI-only checks. [Payload parity](payload-parity.json) compares every dry-run npm payload file byte-for-byte with the prior source: no package bump is needed for this guard-only change. This following receipt-only commit does not pretend the suite ran at its new commit; implementation bytes remain those in the source-bound result. Exact-head hosted admission and normal merge are next; no release or installed-state claim.
+
+---
+
+# Shared mechanism declaration correction, 2026-10-13
+
+Objective: make the copied helper declarations match the umbrella contract.
+`diverges` names differing module constants, not the extraction history.
+The copies differ on no constants. The extraction explanation remains an ordinary comment.
+
+Completed: comment-only correction; all nine Python ASTs equal their accepted bases.
+`shared-headers.json` binds the actual umbrella guard source and records nine baseline refusals,
+zero corrected refusals and five refusals after an undeclared constant plant in one release copy.
+The synthetic fixture contains only the nine scoped owner helpers; it is not a full hub validation.
+
+Checks and payload readback are in `shared-headers-local.json`. No release, installed change
+or runtime/model quality claim follows from this correction. Versions remain unchanged.
+Next: independent source review, one frozen candidate PR admission, normal merge after genuine
+checks, then umbrella pin reconciliation with merged payload readback.
