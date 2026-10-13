@@ -37,3 +37,26 @@ Its lexical/exemption policy is not copied into this owner.
 
 Implementation is the next step. No scanner, runtime, board closure, publication
 or installation is claimed by this source-first packet.
+
+## Implemented and focused verification
+
+Only the scanner's `os.walk` call gained an error callback (relative path and error
+class); the owner's lexical rules, exemptions and skip set are unchanged. The new
+`test/audit_regressions/fw01_discovery.py` passes 9 controls: helper healthy,
+permission refusal, restoration, excluded dependency and absent-root admission;
+actual whole-validator healthy, readable unauthorized maker, unreadable directory,
+and restoration. Permission tests explicitly prove OS denial and restore modes in
+finally. Both owned fixture trees were removed after success.
+
+Existing `fw01_temp_guard.py` also passes all 8 groups; its 8 owned fixtures were removed.
+
+The [pack comparison](payload-parity.json) checks all 34 current npm payload
+files (394,624 bytes) against accepted baseline Git blobs. Only test/docs
+paths change; package selection and version are unchanged. Registry metadata confirms
+that version exists; this is not a fresh immutable-tarball readback. No new release
+or installed update is needed for this excluded validation/evidence source change.
+
+Independent review, the serialized owner aggregate and genuine candidate PR checks
+remain pending. Next: review this bounded source, then admit the frozen owner PR
+normally. Keep this permission-discovery claim separate from unsupported lexical
+forms and runtime allocations.

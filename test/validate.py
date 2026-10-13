@@ -1266,7 +1266,10 @@ def temp_maker_hit(text):
 
 def temp_scan_files(root):
     found = []
-    for dirpath, dirnames, filenames in os.walk(root):
+    def cannot_read(error):
+        relative = os.path.relpath(error.filename or root, root)
+        fail(f"{relative}: temp tree scan cannot read directory ({error.__class__.__name__})")
+    for dirpath, dirnames, filenames in os.walk(root, onerror=cannot_read):
         dirnames[:] = sorted(d for d in dirnames if d not in TEMP_SCAN_SKIP_DIRS)
         found.extend(os.path.join(dirpath, f) for f in filenames if f.endswith(".py"))
     return sorted(found)
