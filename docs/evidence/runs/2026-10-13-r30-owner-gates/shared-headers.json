@@ -1,0 +1,101 @@
+{
+  "scope": "nine comment-only declarations in five owner repos; extracted exact hub guard replay on synthetic copies",
+  "guard_source": {
+    "commit": "ad76ce51596885186995de59ceaa5fd6054c566a",
+    "path": "test/validate.py",
+    "sha256": "bd4cd704a2bf5ec616cc9f2cdc3d0125c30cbd7d2ef1bd17a03a764179d5d408"
+  },
+  "baseline_failures": [
+    "skills/agent-sync/test/owner_board.py: owner_board.py declares `diverges: board-only extraction; identifiers allow a lowercase hyphen suffix for AW-0906-desc/refusal.` and the copies actually differ on ['nothing']. An undeclared divergence is the ALL-44 defect; a declared one that is not real is a reader looking for a seam that moved",
+    "skills/make-skill/test/owner_board.py: owner_board.py declares `diverges: board-only extraction; identifiers allow a lowercase hyphen suffix for AW-0906-desc/refusal.` and the copies actually differ on ['nothing']. An undeclared divergence is the ALL-44 defect; a declared one that is not real is a reader looking for a seam that moved",
+    "skills/sheleg-design/test/owner_board.py: owner_board.py declares `diverges: board-only extraction; identifiers allow a lowercase hyphen suffix for AW-0906-desc/refusal.` and the copies actually differ on ['nothing']. An undeclared divergence is the ALL-44 defect; a declared one that is not real is a reader looking for a seam that moved",
+    "skills/sheleg-dev/test/owner_board.py: owner_board.py declares `diverges: board-only extraction; identifiers allow a lowercase hyphen suffix for AW-0906-desc/refusal.` and the copies actually differ on ['nothing']. An undeclared divergence is the ALL-44 defect; a declared one that is not real is a reader looking for a seam that moved",
+    "skills/agent-sync/test/owner_release.py: owner_release.py declares `diverges: release-only extraction; readable file failures include invalid UTF-8.` and the copies actually differ on ['nothing']. An undeclared divergence is the ALL-44 defect; a declared one that is not real is a reader looking for a seam that moved",
+    "skills/make-skill/test/owner_release.py: owner_release.py declares `diverges: release-only extraction; readable file failures include invalid UTF-8.` and the copies actually differ on ['nothing']. An undeclared divergence is the ALL-44 defect; a declared one that is not real is a reader looking for a seam that moved",
+    "skills/sheleg-design/test/owner_release.py: owner_release.py declares `diverges: release-only extraction; readable file failures include invalid UTF-8.` and the copies actually differ on ['nothing']. An undeclared divergence is the ALL-44 defect; a declared one that is not real is a reader looking for a seam that moved",
+    "skills/sheleg-dev/test/owner_release.py: owner_release.py declares `diverges: release-only extraction; readable file failures include invalid UTF-8.` and the copies actually differ on ['nothing']. An undeclared divergence is the ALL-44 defect; a declared one that is not real is a reader looking for a seam that moved",
+    "skills/ux/test/owner_release.py: owner_release.py declares `diverges: release-only extraction; readable file failures include invalid UTF-8.` and the copies actually differ on ['nothing']. An undeclared divergence is the ALL-44 defect; a declared one that is not real is a reader looking for a seam that moved"
+  ],
+  "corrected_failures": [],
+  "negative_undeclared_constant_failures": [
+    "skills/agent-sync/test/owner_release.py: owner_release.py declares `diverges: none` and the copies actually differ on ['HEADER_PROBE']. An undeclared divergence is the ALL-44 defect; a declared one that is not real is a reader looking for a seam that moved",
+    "skills/make-skill/test/owner_release.py: owner_release.py declares `diverges: none` and the copies actually differ on ['HEADER_PROBE']. An undeclared divergence is the ALL-44 defect; a declared one that is not real is a reader looking for a seam that moved",
+    "skills/sheleg-design/test/owner_release.py: owner_release.py declares `diverges: none` and the copies actually differ on ['HEADER_PROBE']. An undeclared divergence is the ALL-44 defect; a declared one that is not real is a reader looking for a seam that moved",
+    "skills/sheleg-dev/test/owner_release.py: owner_release.py declares `diverges: none` and the copies actually differ on ['HEADER_PROBE']. An undeclared divergence is the ALL-44 defect; a declared one that is not real is a reader looking for a seam that moved",
+    "skills/ux/test/owner_release.py: owner_release.py declares `diverges: none` and the copies actually differ on ['HEADER_PROBE']. An undeclared divergence is the ALL-44 defect; a declared one that is not real is a reader looking for a seam that moved"
+  ],
+  "copies": [
+    {
+      "owner": "agent-sync",
+      "base": "7a1dbe7dcdaff1786fad38dbd2ee742266d1a39a",
+      "file": "test/owner_release.py",
+      "before_sha256": "1a79a87a5344d0755f885e48c1c828aadfdab0c53d64afbdad89667c641d4305",
+      "after_sha256": "4a0a4b5e7f757c00eec245b8f8165c87a10007e356311d1123b87c0a753202c3",
+      "ast_equal": true
+    },
+    {
+      "owner": "agent-sync",
+      "base": "7a1dbe7dcdaff1786fad38dbd2ee742266d1a39a",
+      "file": "test/owner_board.py",
+      "before_sha256": "131f6e1cc6e762cfd26aceddcbbe6284db00fda8f0a4dc8772573c1fb3274079",
+      "after_sha256": "c1d74c5dcd17f39b620bb5779693f9c1d061d5a46fb4afacaf45f9f3e8c4a52f",
+      "ast_equal": true
+    },
+    {
+      "owner": "make-skill",
+      "base": "3740043608a2d2969982ed304eebfd5313c06b19",
+      "file": "test/owner_release.py",
+      "before_sha256": "1a79a87a5344d0755f885e48c1c828aadfdab0c53d64afbdad89667c641d4305",
+      "after_sha256": "4a0a4b5e7f757c00eec245b8f8165c87a10007e356311d1123b87c0a753202c3",
+      "ast_equal": true
+    },
+    {
+      "owner": "make-skill",
+      "base": "3740043608a2d2969982ed304eebfd5313c06b19",
+      "file": "test/owner_board.py",
+      "before_sha256": "131f6e1cc6e762cfd26aceddcbbe6284db00fda8f0a4dc8772573c1fb3274079",
+      "after_sha256": "c1d74c5dcd17f39b620bb5779693f9c1d061d5a46fb4afacaf45f9f3e8c4a52f",
+      "ast_equal": true
+    },
+    {
+      "owner": "sheleg-design",
+      "base": "b017f5143284538d2670d22aab1f1403da459d87",
+      "file": "test/owner_release.py",
+      "before_sha256": "1a79a87a5344d0755f885e48c1c828aadfdab0c53d64afbdad89667c641d4305",
+      "after_sha256": "4a0a4b5e7f757c00eec245b8f8165c87a10007e356311d1123b87c0a753202c3",
+      "ast_equal": true
+    },
+    {
+      "owner": "sheleg-design",
+      "base": "b017f5143284538d2670d22aab1f1403da459d87",
+      "file": "test/owner_board.py",
+      "before_sha256": "131f6e1cc6e762cfd26aceddcbbe6284db00fda8f0a4dc8772573c1fb3274079",
+      "after_sha256": "c1d74c5dcd17f39b620bb5779693f9c1d061d5a46fb4afacaf45f9f3e8c4a52f",
+      "ast_equal": true
+    },
+    {
+      "owner": "sheleg-dev",
+      "base": "02655faeb525e5b65b628f65671a5b047eff5d0d",
+      "file": "test/owner_release.py",
+      "before_sha256": "1a79a87a5344d0755f885e48c1c828aadfdab0c53d64afbdad89667c641d4305",
+      "after_sha256": "4a0a4b5e7f757c00eec245b8f8165c87a10007e356311d1123b87c0a753202c3",
+      "ast_equal": true
+    },
+    {
+      "owner": "sheleg-dev",
+      "base": "02655faeb525e5b65b628f65671a5b047eff5d0d",
+      "file": "test/owner_board.py",
+      "before_sha256": "131f6e1cc6e762cfd26aceddcbbe6284db00fda8f0a4dc8772573c1fb3274079",
+      "after_sha256": "c1d74c5dcd17f39b620bb5779693f9c1d061d5a46fb4afacaf45f9f3e8c4a52f",
+      "ast_equal": true
+    },
+    {
+      "owner": "ux",
+      "base": "5482c4762f648ab33f2f9c3a075f2c2866e4bc17",
+      "file": "test/owner_release.py",
+      "before_sha256": "1a79a87a5344d0755f885e48c1c828aadfdab0c53d64afbdad89667c641d4305",
+      "after_sha256": "4a0a4b5e7f757c00eec245b8f8165c87a10007e356311d1123b87c0a753202c3",
+      "ast_equal": true
+    }
+  ]
+}
