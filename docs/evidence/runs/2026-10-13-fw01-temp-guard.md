@@ -51,6 +51,40 @@ No referral row is closed and no package release is made here. Exclusive local o
 was claimed as FW01-TEMP-GUARD; the configured lease is advisory across machines and the
 tool reports this project UNGATED.
 
+## Independent review
+
+Reviewer: `fresh_research`, independent of this implementation. **Bounded PASS** at
+[`eb978ea72b4fb6977059569bb0688ea832af37dc`](https://github.com/ssheleg/make-skill/commit/eb978ea72b4fb6977059569bb0688ea832af37dc).
+Read `AGENTS.md` and its required `docs/HANDOFF.md`; the worktree was clean before
+and after verification. No model evaluation or release was attempted.
+
+Replayed `python3 -B test/audit_regressions/fw01_temp_guard.py`: 8/8 passed,
+exit 0, eight owned fixture trees removed. Its public-validator plant/removal case
+confirms the source guard is called by the actual entry point. No complete owner
+suite was run by this reviewer.
+
+An additional independent harness extracted the actual `TEMP_*` constants and
+guard function definitions through Python AST, then executed them against seven
+isolated tiny source trees. All seven matched their expected result:
+
+| Control | Observed result |
+|---|---|
+| Missing `test/residue.py`, with another test Python source present | Refused absent exception |
+| Copy of the ledger under `scripts/residue.py` | Refused; basename does not confer exemption |
+| Shipped plugin script using `tempfile.TemporaryDirectory()` as a context manager | Refused; a cleanup contract requires an explicit reviewed exception |
+| Outside-test `from tempfile import TemporaryDirectory as scratch` | Refused |
+| Original ledger maker with an anonymous suffix | Refused changed attributed shape |
+| Outside-test code calling `residue.workspace()` | Accepted |
+| Direct maker under documented `dist/` exclusion | Accepted as excluded, not certified safe |
+
+The harness removed only its owned outer fixture directory. `git diff --check`
+passed and no source bytes changed. The AST harness checks guard behavior, not
+runtime allocation or Python-language completeness. The receipt's lexical,
+language and directory exclusions remain material; this is not proof that every
+possible temporary tree is accounted for. No remaining reproduced blocker was
+found within the declared source-lint contract. Parent integration, broader owner
+gates and referral-board reconciliation remain separate.
+
 ---
 
 **Made with [ssheleg skills](https://github.com/ssheleg/sshlg-skills)**
