@@ -53,8 +53,8 @@ def results_count_gaps(results_text: str, actual: dict) -> list[str]:
     return gaps
 
 
-# skill-search ships trigger evals of its own (B-147). They are authored data, not yet
-# run against a model, so what can be refused here is shape: same fields as the main
+# skill-search ships trigger evals of its own (B-147). This checker validates
+# their structure only; dated model observations live in RESULTS.md. Same fields as the main
 # trigger file, both classes AND both languages on each side of the split — a Russian
 # trigger phrase nobody probes is exactly the one that rots — and a skill name that
 # resolves to a shipped SKILL.md.
@@ -266,7 +266,7 @@ def main() -> int:
     scenarios = load(args.root / "scenarios.json")["scenarios"]
     ss = load(args.root / SKILL_SEARCH_TRIGGERS)["queries"]
     print(f"OK: {len(triggers)} trigger cases and {len(scenarios)} scenarios validate; "
-          f"{len(ss)} skill-search trigger cases validate (authored, not yet model-run)")
+          f"{len(ss)} skill-search trigger cases validate (structural validation only; dated model receipts in RESULTS.md)")
     return 0
 
 

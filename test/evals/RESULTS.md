@@ -164,3 +164,22 @@ candidate list is the missing measurement.
 
 Re-measure the neighbour table whenever the installed set changes: coexistence
 is a property of the set, not of the skill.
+
+
+## Skill-search native loading, 2026-10-13
+
+This separate skill-search observation leaves the dated make-skill runs above unchanged.
+Frozen plugin source was v0.31.2 at `78d67651611f50e2af531ab04916e680c2a2680d`;
+Claude Code 2.1.296 reported model `claude-opus-5-5`. The existing skill-search
+corpus ran three times per query in fresh restricted CLI contexts. Majority results
+were 20/20, with 59/60 individual expected-load matches: positive 29/30, negative
+30/30; train 35/36 and validation 24/24. The sole miss, s09/repetition0, is retained.
+
+The [owner receipt](../../docs/evidence/runs/2026-10-13-skill-search-native/README.md)
+contains exact hub sources, hashes, the independent replay and immutable A/B error
+receipts. C completed 61 invocations at reported USD 2.3410576; A+B+C totalled
+64 invocations and USD 2.4620616. This is a list estimate, not subscription billing.
+Earlier stopped protocols were not retroactively counted. Native successful Skill
+loads were measured; catalogue-search execution, task artifact quality, compression
+adoption and broader family coexistence remain unmeasured. The corpus's authored-only
+note records its frozen source state and is not rewritten by this dated observation.

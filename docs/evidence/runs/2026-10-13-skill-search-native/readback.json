@@ -1,0 +1,34 @@
+{
+  "schema": "owner-native-evidence/1",
+  "owner_source": "6d99cacc9eb21d6542919e399ab295957826fd4c",
+  "evaluated_plugin_source": "78d67651611f50e2af531ab04916e680c2a2680d",
+  "plugin_version": "0.31.2",
+  "plugin_files_byte_equal": 26,
+  "hub_results_commit": "0d051b1f2b5cabd31781c5c795d98adba915e666",
+  "hub_peer_commit": "45ad0580f5db71132eaebd10cba4d4902bdeb080",
+  "artifact_hashes": {
+    "results-a.json": "ea6bdfe0276986275f5da774c90d95a4b76b438e662aec676ec85326fa2485f5",
+    "results-b.json": "a837e392ee5b9bbaf5044254b1e3204f55abb7bebf009f36229d555ddfba744b",
+    "results-c.json": "4390977ff6610d45b7c6d02f728448cef1335258db2483f47a1d0a45a14efe53",
+    "peer-results-c.json": "c8b44c9926c7308caa975ee42c228c5b649099fe671b0eb5681b84eed4efcf11",
+    "source.json": "c5bceee2ca514dad2da292a58853587e39c637f73f86352e3704544f48ce4b4a",
+    "cases.json": "60bb503edc49063cfb897ff371f021ed017def5fb3be4c14c9b413545975d06a"
+  },
+  "splits": {
+    "train": {
+      "matching_cells": 35,
+      "cells": 36,
+      "majority_queries_pass": 12,
+      "queries": 12
+    },
+    "validation": {
+      "matching_cells": 24,
+      "cells": 24,
+      "majority_queries_pass": 8,
+      "queries": 8
+    }
+  },
+  "model_observed": "claude-opus-5-5",
+  "cli_observed": "2.1.296",
+  "scope": "Native Skill loading only; no executed catalogue search or task-quality claim"
+}
