@@ -73,3 +73,12 @@ No provider, native-host or model behavior was exercised.
 Next: commit this documentation freeze, promote the existing draft PR once, and
 require genuine eligible PR jobs before normal integration. Hosted checks and merge
 remain pending; no release or installed update is needed for this excluded source.
+
+## Normal integration observed
+
+[Eligible checks and merge receipt](normal-integration.json) records all genuine
+PR jobs succeeding at the frozen head, followed by normal squash integration at
+[df53aaa](https://github.com/ssheleg/make-skill/commit/df53aaa93def11d587943e119761605c64186e0c).
+The complete accepted Git tree equals the checked candidate tree. This follow-up
+receipt is a documentation-only branch update; the accepted source above is the
+pin target. No tag, registry publication or installed runtime update was performed.
