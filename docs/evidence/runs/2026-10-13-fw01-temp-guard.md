@@ -85,6 +85,31 @@ possible temporary tree is accounted for. No remaining reproduced blocker was
 found within the declared source-lint contract. Parent integration, broader owner
 gates and referral-board reconciliation remain separate.
 
+## Post-review owner gate
+
+On 2026-10-13, `npm test` exited 0 at commit `c7a22889b285600dcff81b344468c8eeb8983365`, after independent-review
+documentation was committed. Its existing audit-regression glob ran 16 Python files,
+including FW01. Owner gates ran sequentially, not alongside the hub's full suite.
+No model evaluation, package release or hosted CI success is inferred. Earlier
+NOT_RUN full-gate statements above describe the initial bounded pass; this entry
+supersedes that local owner-gate status only. Full workflow negative/registry/network
+steps outside `npm test` were not run by this command.
+
+## CI policy alignment before integration
+
+The standing operator policy calls for complete hosted CI nightly at 23:00
+Europe/Warsaw, with manual hosted CI allowed for an explicit candidate. The old
+push/pull-request triggers were still present in this owner. `validate.yml` now
+uses that schedule, `workflow_dispatch` for a frozen candidate, and `workflow_call`
+for release gating. Job bodies and required-status checks are unchanged. The
+explicit candidate route avoids a circular gate: nightly default-branch validation
+cannot certify an unmerged branch. No automatic per-push or per-PR full run remains.
+
+A parsed-YAML assertion checked exactly these three event keys and the cron/timezone;
+the owner structural validator exited 0 after the trigger edit. Candidate hosted
+execution and its exact head/status must be recorded by the coordinator before merge;
+this paragraph alone is not CI success or release authority.
+
 ---
 
 **Made with [ssheleg skills](https://github.com/ssheleg/sshlg-skills)**
