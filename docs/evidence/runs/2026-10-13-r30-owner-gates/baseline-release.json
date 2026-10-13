@@ -1,0 +1,16 @@
+[
+  {
+    "owner": "make-skill-r30",
+    "baseline_head": "78d67651611f50e2af531ab04916e680c2a2680d",
+    "case": "ancestry removed",
+    "returncode": 0,
+    "output": "  unlooked: routed triggers \u2014 no sshlg-skills umbrella above this checkout\nPASS: make-skill structure valid (2 cursor rule(s))\nresidue: this run left nothing \u2014 0 temp tree(s) created, 0 removed\n"
+  },
+  {
+    "owner": "make-skill-r30",
+    "baseline_head": "78d67651611f50e2af531ab04916e680c2a2680d",
+    "case": "shallow",
+    "returncode": 0,
+    "output": "  unlooked: routed triggers \u2014 no sshlg-skills umbrella above this checkout\nPASS: make-skill structure valid (2 cursor rule(s))\nresidue: this run left nothing \u2014 0 temp tree(s) created, 0 removed\n"
+  }
+]

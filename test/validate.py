@@ -24,6 +24,12 @@ def fail(m):
     errors.append(m)
 
 
+from owner_board import check as check_owner_board
+check_owner_board(ROOT, fail)
+from owner_release import check as check_owner_release
+check_owner_release(ROOT, fail)
+
+
 def load_json(rel):
     p = os.path.join(ROOT, rel)
     if not os.path.isfile(p):
