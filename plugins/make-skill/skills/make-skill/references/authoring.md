@@ -340,9 +340,9 @@ local, which is the right default for an unreleased skill.
 **Measured 2026-10-19 on Claude Code 2.1.299: the runner opens.**
 `claude plugin eval --help` prints its usage and exits 0, and
 `claude plugin eval init --bare <name> --eval-dir evals` writes `evals/<name>/prompt.md` plus
-`graders/criteria.md` and exits 0. The earlier measurement (2026-08-31, Claude Code
-2.1.236), in which every path printed ``plugin eval` is currently in early access`,
-wrote nothing and exited 1, no longer holds on that version. No scored run was made
+`graders/criteria.md` and exits 0. The earlier measurement on Claude Code 2.1.236, in
+which every path printed ``plugin eval` is currently in early access`, wrote nothing
+and exited 1, does not hold on 2.1.299. No scored run was made
 for this note, because a run spends model calls on the reader's own credential, so
 the first scored run of a suite is still its proof. Its help adds two things worth
 keeping: the suite runs on your machine as you, and "a bundled suite passing is not

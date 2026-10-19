@@ -422,10 +422,10 @@ jobs:
               p = root / "plugins/make-skill/skills/make-skill/references/authoring.md"
               s = p.read_text(encoding="utf-8")
               if case == "tpcdate":
-                  out = s.replace("Measured 2026-08-31 on Claude Code 2.1.236",
+                  out = s.replace("Measured 2026-10-19 on Claude Code 2.1.299",
                                   "Measured recently on a recent Claude Code")
               elif case == "tpcclaim":
-                  out = re.sub(r"currently in\s+early access", "currently unavailable", s)
+                  out = re.sub(r"prints its usage\s+and exits 0", "works", s)
               else:
                   out = s.replace("`claude plugin eval --help`", "the help output")
               assert out != s, f"PLANT DID NOT LAND: {case} changed nothing"

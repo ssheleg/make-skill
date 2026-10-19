@@ -16,6 +16,8 @@
   writes a case and exits 0. `references/authoring.md` no longer says every path
   prints "early access" and exits 1 (that was 2.1.236, 2026-08-31); `retrofit.md`
   and `distribution.md` drop "gated". No scored run was made.
+  The `validate.yml` negative self-tests for this claim now plant against the new
+  wording and date.
 - **Codex `AGENTS.md` byte budget.** `references/distribution.md` records, from the
   Codex guide, that Codex takes one file per directory from the project root down,
   concatenates root first and stops adding files at `project_doc_max_bytes`
