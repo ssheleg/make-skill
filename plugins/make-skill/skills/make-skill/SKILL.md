@@ -5,7 +5,7 @@ license: MIT
 compatibility: Authoring works on any agent. The bundled scripts/ need python3. Publishing steps need git, gh, node and npm; the plugin gates need the claude CLI. Not usable on the Claude API surface, which has no network and no runtime package install.
 metadata:
   author: ssheleg
-  version: "0.31.2"
+  version: "0.32.0"
   homepage: https://github.com/ssheleg/make-skill
 ---
 
@@ -226,11 +226,10 @@ old `~/.claude/skills/<skill>` copy only AFTER the plugin install is verified.
 
 ## Installing someone else's skill
 
-A skill is instructions an agent executes plus code it runs without reading —
-installing one is installing software. Anything you did not write gets the
-review checklist in `references/enterprise.md` FIRST. Highest-risk shape: a
-skill that fetches its instructions from a URL — that content changes after the
-review that approved it.
+Installing a skill is installing software. Anything you did not write gets the
+review checklist and checks SC-1..SC-5 in `references/enterprise.md` FIRST
+(`scripts/audit_skill.py <dir> --supply-chain`). Riskiest: a skill fetching its
+instructions from a URL, which can change after the review approved it.
 
 ## Protocol-connected skills (MCP / A2A)
 

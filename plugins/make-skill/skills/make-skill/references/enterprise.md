@@ -15,6 +15,7 @@ plus the security section of the
 - Why this is a security boundary at all
 - Risk tiers — what to look for
 - Review checklist before installing anything
+- Supply-chain checks SC-1..SC-5
 - Approval gates — the five evaluation dimensions
 - Lifecycle
 - Registry — what to record per skill
@@ -67,10 +68,83 @@ different question from either alone.
 7. **Confirm redirect destinations** — external URLs must point where the docs say.
 8. **Look for exfiltration shapes**: read sensitive data → write, send, or encode
    it outward, including through the agent's own conversational output.
+9. **Run the supply-chain checks** below: `python3 scripts/audit_skill.py
+   <skill-dir> --supply-chain` reports SC-1, SC-2, SC-3 and SC-5 with file:line,
+   and lists every install source SC-4 asks you to compare by hand.
 
 An external URL fetched at runtime is the sharpest edge: the content can change
 after your review, so a skill that pulls instructions from a URL is only as
 trustworthy as that URL is today.
+
+## Supply-chain checks SC-1..SC-5
+
+What arrives with a third-party skill is rarely an obvious payload. It is an
+install line, a source, or a setup step that reaches past the skill. Each check
+below has a name the auditor prints (`--supply-chain`, off by default because a
+skill that teaches installation, like this one, names these commands on purpose).
+A hit is a question for the reviewer, not an automatic rejection; a clean run is
+not a vetting, and the reading half of the checklist above still applies.
+
+| Id | Auditor check | What it catches | What to do |
+|---|---|---|---|
+| SC-1 | `SC_UNPINNED_INSTALLER` | `npx`/`bunx`/`pnpm dlx`/`yarn dlx`/`uvx`/`pipx run` without an exact version (including `@latest`), and a download piped into a shell (`curl … \| sh`) | pin an exact version or commit, or record that you accept every future release of that publisher; download, read, then run a pinned copy of a script |
+| SC-2 | `SC_INSTALL_SOURCE` | an unknown skill pack or plugin marketplace the skill tells the agent to add (`plugin marketplace add`, `plugin install … --marketplace`, `skills add`) | review that source as you review this skill, before it is added |
+| SC-3 | `SC_GLOBAL_INSTRUCTION_WRITE` | a prompt, skill or script that edits the user's global instruction file (`~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`, `~/.gemini/GEMINI.md`) | refuse the write; a skill may show a line for the user to add themselves |
+| SC-4 | manual, from the SC-2 list | an impersonation fork: a copy of a known project under another owner | compare each source's owner with the one the project's own homepage or registry page names |
+| SC-5 | `SC_SECURITY_OFF` | a step that turns a security feature off (`csrutil disable`, `--dangerously-skip-permissions`, `defaultMode: bypassPermissions`) | refuse on a machine with real data; run such a tool only in a disposable VM or container |
+
+Why each one, from the primary sources (read 2026-10-19):
+
+- **SC-1.** `npm install <pkg>` with no version or tag "installs the `latest`
+  tag", and "Publishing a package sets the `latest` tag to the published version
+  unless the `--tag` option is used"
+  ([npm dist-tag](https://docs.npmjs.com/cli/v11/commands/npm-dist-tag)), so
+  `npx <pkg>@latest` runs whatever the publisher shipped last. A bare `npx <pkg>`
+  uses the project's local copy when there is one and otherwise fetches a package
+  remotely, at a version that page leaves unstated: treat it as unpinned. `npx`
+  prompts before installing a missing package, but "When standard input is not a
+  TTY or a CI environment is detected, `--yes` is assumed"
+  ([npm exec](https://docs.npmjs.com/cli/v11/commands/npm-exec)).
+  A pipe into a shell runs what the server sends at that moment, not the copy you read.
+- **SC-2.** "A Claude Code plugin you install can execute arbitrary code on your
+  machine with your user privileges", and "A marketplace's name tells you who
+  publishes the catalog, not what each plugin in it does"
+  ([plugin security](https://code.claude.com/docs/en/plugins/security)). With
+  auto-update on, "the files you reviewed can change on disk" (same page), and
+  `claude plugin install <name> --marketplace <source>` from a shell "adds the
+  marketplace without a confirmation step"
+  ([install plugins](https://code.claude.com/docs/en/discover-plugins)). Review
+  per that page: `claude plugin marketplace list` for the source, then the plugin's
+  `hooks/hooks.json`, `.mcp.json` and every file in `bin/`, then
+  `claude --plugin-dir <dir> plugin details <name>` for the component inventory.
+- **SC-3.** Claude Code loads `~/.claude/CLAUDE.md` as personal instructions "for
+  all projects" and, outside Cowork, loads its imports without the approval dialog
+  and "trusts them like the rest of your personal configuration"
+  ([memory](https://code.claude.com/docs/en/memory)). Codex reads
+  `AGENTS.override.md`, else `AGENTS.md`, from its home directory before any project
+  file ([AGENTS.md guide](https://learn.chatgpt.com/docs/agent-configuration/agents-md)),
+  and Gemini CLI's global `GEMINI.md` "Provides default instructions for all your
+  projects" ([GEMINI.md](https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/gemini-md.md)).
+  One line written there changes every later session on every project, and no
+  project review ever sees it.
+- **SC-4.** Claude Code "accepts the official and community names only for
+  marketplaces sourced from `github.com/anthropics/` repositories"
+  ([plugin security](https://code.claude.com/docs/en/plugins/security)). That
+  protection covers Anthropic's names; for any other project the owner comparison
+  is yours. There is no mechanical check: a table of "known" owners would be one
+  more thing to go stale.
+- **SC-5.** System Integrity Protection "restricts the root user account and limits
+  the actions that the root user can perform on protected parts of the Mac
+  operating system" ([Apple](https://support.apple.com/en-us/102149)).
+  `bypassPermissions` (the same as `--dangerously-skip-permissions`) is for
+  "isolated environments like containers, VMs, or dev containers without internet
+  access, where Claude Code cannot damage your host system"
+  ([permission modes](https://code.claude.com/docs/en/permission-modes)).
+
+What the auditor does not see: a command in markdown counts only inside a code
+span or fenced block, so a runner named in plain prose passes; a source added by
+a script that builds the command string at run time passes; and a hit in this
+skill's own references is a taught example, which is why the mode is opt-in.
 
 ## Approval gates — the five evaluation dimensions
 

@@ -59,7 +59,12 @@ copy ships the script it wraps:
 ```bash
 make-skill-audit ./my-skill --house                                    # in Claude Code
 python3 ~/.agents/skills/make-skill/scripts/audit_skill.py ./my-skill --house   # any terminal
+make-skill-audit ./their-skill --supply-chain                          # before installing a skill you did not write
 ```
+
+`--supply-chain` adds the pre-install review (SC-1..SC-5 in `references/enterprise.md`):
+unpinned installers and pipe-to-shell, install sources to vet, writes to a global
+instruction file, and steps that turn a security feature off.
 
 With no argument the skill detects the situation — a `SKILL.md` or
 `.claude-plugin/` in the current directory means it runs the audit rather than
@@ -162,12 +167,12 @@ agent opens only when the situation calls for them:
 | `agent-skills-spec.md` | the hard rules from both authorities — field limits, where the open standard and Anthropic's platform differ, budgets, which checker says no |
 | `authoring.md` | the craft — naming, third-person descriptions, degrees of freedom, workflows and feedback loops, script rules, evaluation-driven development |
 | `surfaces.md` | Claude Code vs the Claude API vs claude.ai — the Skills API (upload, versions, 8 per request), and the no-network / no-package-install limits that break scripts moved between surfaces |
-| `enterprise.md` | installing a skill you didn't write, and running a fleet — risk tiers, the review checklist, the five approval gates, lifecycle, recall limits, rollback |
+| `enterprise.md` | installing a skill you didn't write, and running a fleet — risk tiers, the review checklist, supply-chain checks SC-1..SC-5, the five approval gates, lifecycle, recall limits, rollback |
 | `retrofit.md` | the audit procedure — the 14-item checklist, what counts as evidence for a PASS, and the short form for a personal skill |
 | `outcome-evaluation.md` | the outcome-eval method — frozen inputs, baseline-vs-current arms, artifact checks, the routing/correctness/visual split, and PASS/FAIL/ERROR/NOT_RUN verdicts with no host-locked actor |
 | `host-capabilities.md` | hooks, subagents, commands, scripts and MCP dependencies — what each buys, what it costs in always-on tokens, hook events and exit-code semantics, and the degradation clauses that keep a skill working where none of them exist |
 | `claude-code-plugin.md` | the [Claude Code layer](https://code.claude.com/docs/en/plugins-reference) — `plugin.json` / `marketplace.json` schemas, plugin sources, component locations, host-only front-matter, path variables, cache and symlink rules, the `claude plugin` CLI |
-| `distribution.md` | the repo layout, every install channel, exact CLI flags, npm publishing traps, the release checklist |
+| `distribution.md` | the repo layout, every install channel, exact CLI flags, npm publishing traps, the release checklist, the Codex `AGENTS.md` byte budget |
 | `mcp.md` | [MCP](https://modelcontextprotocol.io) for a **skill author** — skill vs server, declaring the dependency, consent and untrusted-output rules |
 | `a2a.md` | [A2A](https://a2a-protocol.org) for a **skill author** — choosing it over MCP, the two meanings of "skill", driving an opaque peer safely |
 

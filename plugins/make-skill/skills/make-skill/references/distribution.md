@@ -16,6 +16,7 @@ API or claude.ai instead is `references/surfaces.md`.
 - 4. Cursor
 - 5. Ship a FAMILY via an umbrella repo
 - Platforms
+- Instruction files and their byte budget (Codex AGENTS.md)
 - Live-check set (Retrofit)
 - Release checklist (every version)
 - Toggleable release automation
@@ -65,7 +66,7 @@ the shape from `ssheleg/super-ux`:
 ├── cursor/rules/*.mdc                  # if agent-rules make sense for Cursor
 ├── bin/<name>.js + package.json        # npx installer (zero-dep Node)
 ├── test/validate.py                    # consistency validator (stdlib only)
-├── test/evals/                         # triggers.json + scenarios.json (driven here; `claude plugin eval` is gated, authoring.md)
+├── test/evals/                         # triggers.json + scenarios.json (driven here; `claude plugin eval` in authoring.md)
 ├── .github/workflows/validate.yml      # validator on push+PR (+ release.yml, off by default)
 ├── install.sh                          # POSIX fallback
 ├── README.md (English-first), CHANGELOG.md, LICENSE (MIT)
@@ -391,6 +392,32 @@ Claude Code plugin, and the skills CLI are **cross-platform** (macOS / Linux /
 Windows). `install.sh` is POSIX-only — on Windows use `npx`, the plugin, or the
 skills CLI, never `install.sh`. Build bin paths with `path.join`, never a
 hardcoded `/`.
+
+## Instruction files and their byte budget (Codex AGENTS.md)
+
+A repository that ships `AGENTS.md` for Codex works inside a byte budget, and
+passing it raises no error. The Codex
+[AGENTS.md guide](https://learn.chatgpt.com/docs/agent-configuration/agents-md),
+read 2026-10-19:
+
+- From the project root (typically the Git root) Codex walks down to the current
+  working directory, checking each directory for `AGENTS.override.md`, then
+  `AGENTS.md`, then any `project_doc_fallback_filenames`; it "includes at most one
+  file per directory".
+- It "concatenates files from the root down, joining them with blank lines", so the
+  file nearest the working directory comes last and wins a conflict.
+- It "skips empty files and stops adding files once the combined size reaches the
+  limit defined by `project_doc_max_bytes` (32 KiB by default)".
+
+The rule that follows: the chain is built root first, so what the cap loses is the
+deepest, most specific guidance. Keep the root file short; measure the whole chain
+for the deepest directory an agent works in, not each file alone; past 32 KiB,
+raise `project_doc_max_bytes` in `~/.codex/config.toml` or split the guidance into
+nested directories, as the guide advises. To see which files loaded, the guide's
+route is a plaintext log: `codex -c log_dir=./.codex-log`. This repository's
+validator measures its own chain on every run. The global file in the Codex home
+is separate, and like `~/.claude/CLAUDE.md` it is never a skill's to write
+(`references/enterprise.md`, SC-3).
 
 ## Live-check set (Retrofit)
 

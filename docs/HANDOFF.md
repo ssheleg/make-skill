@@ -1,3 +1,22 @@
+# FEED-SEO-1019 wave 6: v0.32.0, 2026-10-19
+
+Objective: supply-chain checks in the "is this skill safe to install" doctrine,
+a re-measured `claude plugin eval` note and the Codex `AGENTS.md` byte budget.
+Done on `feat/feed-1019`: SC-1..SC-5 in `references/enterprise.md` with primary
+sources; `audit_skill.py --supply-chain` with 14 regression cases
+(`test/audit_regressions/sc-supply-chain.py`); the `claude plugin eval` paragraph
+in `references/authoring.md` re-measured on Claude Code 2.1.299; the Codex section
+in `references/distribution.md` plus a chain-size check in `test/validate.py`.
+Evidence: the v0.32.0 section of [verification.md](evidence/verification.md).
+Decisions: the supply-chain mode is opt-in, because this skill teaches installation
+and its own references are full of taught `npx` lines; SC-4 (impersonation) stays
+a manual comparison, because a table of known owners would be invented and go stale.
+Open: no scored `claude plugin eval` run yet; migrating `test/evals/` to it is
+the next eval task (no board id minted here; ids come from the hub board).
+Next: release v0.32.0 (PR, merge, annotated tag, release run, npm readback, hub pin).
+
+---
+
 # FW01 source discovery correction — 2026-10-13
 
 The [source packet and receipt](evidence/runs/2026-10-13-fw01-discovery/README.md)
