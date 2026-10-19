@@ -1010,7 +1010,7 @@ for rel, txt in tracked_docs():
 # Adding a row is the author's act; the guard's job is that a row cannot rot.
 THIRD_PARTY_CLAIMS = [
     ("plugins/make-skill/skills/make-skill/references/authoring.md",
-     r"currently in early access",
+     r"prints its usage and exits 0",
      "claude plugin eval --help",
      "whether `claude plugin eval` runs for the reader"),
 ]
@@ -1377,6 +1377,55 @@ if ("`observatory-log:handling-secrets`" not in _msg
     fail("R25 self-test: the missing-back-link message misstates who routes to whom: " + _msg)
 check_backlinks_to_routed_skills()
 
+
+
+# --- Codex instruction chain fits project_doc_max_bytes (32 KiB by default) ----
+# Codex walks from the project root down to the working directory, takes at most one
+# of AGENTS.override.md / AGENTS.md per directory, concatenates them root first and
+# stops adding files once the combined size reaches project_doc_max_bytes. A chain past
+# the cap loses its deepest, most specific file without an error. Source and date:
+# references/distribution.md, "Instruction files and their byte budget".
+CODEX_DOC_MAX_BYTES = 32 * 1024
+CODEX_DOC_NAMES = ("AGENTS.override.md", "AGENTS.md")
+
+
+def codex_chains(files):
+    """{directory: combined bytes from the root down} for every directory with a doc.
+
+    `files` maps a repo-relative path to its size in bytes. One file per directory,
+    override first, empty files skipped, exactly as the Codex guide states.
+    """
+    per_dir = {}
+    for rel, size in files.items():
+        d, name = os.path.split(rel)
+        if name in CODEX_DOC_NAMES and size > 0:
+            have = per_dir.get(d)
+            if have is None or (name == CODEX_DOC_NAMES[0] and have[0] != name):
+                per_dir[d] = (name, size)
+    chains = {}
+    for d in per_dir:
+        parts = [] if d == "" else d.split(os.sep)
+        total = 0
+        for k in range(len(parts) + 1):
+            hit = per_dir.get(os.sep.join(parts[:k]))
+            total += hit[1] if hit else 0
+        chains[d] = total
+    return chains
+
+
+_tracked = subprocess.run(["git", "-C", ROOT, "ls-files"], capture_output=True,
+                          text=True).stdout.split("\n")
+_sizes = {r: os.path.getsize(os.path.join(ROOT, r)) for r in _tracked
+          if os.path.basename(r) in CODEX_DOC_NAMES and os.path.isfile(os.path.join(ROOT, r))}
+for _d, _n in sorted(codex_chains(_sizes).items()):
+    if _n >= CODEX_DOC_MAX_BYTES:
+        fail(f"{_d or '.'}: the Codex AGENTS.md chain from the root to here is {_n} bytes, "
+             f"at or past project_doc_max_bytes ({CODEX_DOC_MAX_BYTES}); Codex stops adding "
+             "files there, so the deepest guidance is lost. Shorten the root file or split it")
+if codex_chains({"AGENTS.md": 20000, "a/AGENTS.md": 9000,
+                 "a/b/AGENTS.override.md": 4000, "a/b/AGENTS.md": 99999,
+                 "c/AGENTS.md": 0}) != {"": 20000, "a": 29000, "a/b": 33000}:
+    fail("Codex chain self-test: root-down sum, override-first or empty-skip is wrong")
 
 if errors:
     print("FAIL: make-skill structure invalid")

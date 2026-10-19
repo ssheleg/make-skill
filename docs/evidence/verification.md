@@ -18,6 +18,18 @@ the release the CHANGELOG carries (MS-03).
 
 ---
 
+## Shipped state — v0.32.0 (candidate, 2026-10-19)
+
+Source checks on branch `feat/feed-1019`. Publication rows are added by the release
+receipt in HANDOFF once the tag, run and registry are read back.
+
+| REQ | What is checked | Evidence | Confirmed |
+|---|---|---|---|
+| SC-1..SC-5 | `audit_skill.py --supply-chain` names each shape with file:line; near-misses stay clean; off by default | `python3 test/audit_regressions/sc-supply-chain.py` prints 14 `ok` and `all green`; the same file against the 0.31.2 auditor stops with `TypeError: audit() got an unexpected keyword argument 'supply_chain'` | observed, source candidate |
+| plugin eval note | `claude plugin eval` behaviour on the installed host | `claude --version` prints `2.1.299 (Claude Code)`; `claude plugin eval --help` prints usage, exit 0; `claude plugin eval init --bare probe --eval-dir evals` in a scratch directory prints `Created evals/probe/prompt.md and evals/probe/graders/criteria.md`, exit 0 | observed 2026-10-19; no scored run |
+| Codex chain | this repository's AGENTS.md chain is under 32 KiB, and the chain arithmetic has a self-test | `python3 test/validate.py` exit 0 with the new check and its self-test | observed, source candidate |
+| Gate | whole suite | `npm test`, exit 0 | observed, source candidate |
+
 ## Shipped state — v0.31.2 (candidate, 2026-10-13; publication pending)
 
 This section records candidate source checks only. The version heading is the

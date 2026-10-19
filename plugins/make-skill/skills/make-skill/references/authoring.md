@@ -337,15 +337,20 @@ no-plugin arm and reports the delta — steps 3 and 5 above, performed for you.
 It defaults to publishing its HTML report to claude.ai; `--no-publish` keeps it
 local, which is the right default for an unreleased skill.
 
-**Measured 2026-08-31 on Claude Code 2.1.236: every path — `eval`, `eval init`,
-`eval init --bare`, `eval <target>` — prints ``plugin eval` is currently in
-early access`, writes nothing and exits 1.** No settings key, environment
-variable or feature flag on that machine turned it on. That is why the layout
-below exists and is what actually runs here; the day `claude plugin eval --help`
-is followed by a run rather than that line, this suite is the one to migrate.
-**Re-check before trusting either half of this paragraph** — an absence is the
-most perishable thing a document can assert, and nothing in this repository
-changes on the day it stops being true.
+**Measured 2026-10-19 on Claude Code 2.1.299: the runner opens.**
+`claude plugin eval --help` prints its usage and exits 0, and
+`claude plugin eval init --bare <name> --eval-dir evals` writes `evals/<name>/prompt.md` plus
+`graders/criteria.md` and exits 0. The earlier measurement on Claude Code 2.1.236, in
+which every path printed ``plugin eval` is currently in early access`, wrote nothing
+and exited 1, does not hold on 2.1.299. No scored run was made
+for this note, because a run spends model calls on the reader's own credential, so
+the first scored run of a suite is still its proof. Its help adds two things worth
+keeping: the suite runs on your machine as you, and "a bundled suite passing is not
+a security vetting". Use it for new suites; the house layout below is what this
+repository's own evals still use, and the fallback for a host without it.
+**Re-check before trusting either half of this paragraph:** a host's behaviour is
+the most perishable thing a document can assert, and nothing in this repository
+changes on the day it changes.
 
 House layout: `test/evals/triggers.json` (~20
 queries, half near-miss negatives) and `test/evals/scenarios.json` (≥3, the

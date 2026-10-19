@@ -104,7 +104,7 @@ Report the table before changing anything, then fix.
    against the skills already installed, and a re-run on every model the skill
    claims support for. Try `claude plugin eval` first and record what it did —
    authored-but-never-executed is the state this item exists to catch, and the
-   house layout in `test/evals/` is the fallback for when that runner is gated.
+   house layout in `test/evals/` is the fallback for a host that lacks that runner.
 9. **README**: badges (npm/CI/license), install + update matrix, English-first
    prose, and the bundled `references/` listed so a reader sees what ships.
 10. **Distribution live-checks** (`references/distribution.md`): `npx --yes

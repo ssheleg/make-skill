@@ -1,3 +1,29 @@
+## v0.32.0: supply-chain checks before install, `claude plugin eval` re-measured, the Codex byte budget
+
+- **Supply-chain checks SC-1..SC-5.** `references/enterprise.md` names five shapes a
+  pre-install review must resolve: an unpinned runtime installer or a pipe into a
+  shell (SC-1), an unknown skill pack or marketplace (SC-2), a write to the user's
+  global instruction file (SC-3), an impersonation fork (SC-4, by hand from the SC-2
+  list) and a step that turns a security feature off (SC-5). Each carries the
+  primary source it rests on, read 2026-10-19.
+- **`audit_skill.py --supply-chain`** reports SC-1, SC-2, SC-3 and SC-5 as named GAPs
+  with file:line over the skill's text files and its plugin's `hooks/` and `bin/`.
+  Off by default, so a skill that teaches installation keeps a clean conformance
+  audit. 14 cases in `test/audit_regressions/sc-supply-chain.py` (a planted positive
+  and a near-miss per check); the test fails against the 0.31.2 auditor.
+- **`claude plugin eval` re-measured.** On Claude Code 2.1.299 (2026-10-19)
+  `claude plugin eval --help` prints its usage and exits 0, and `eval init --bare`
+  writes a case and exits 0. `references/authoring.md` no longer says every path
+  prints "early access" and exits 1 (that was 2.1.236, 2026-08-31); `retrofit.md`
+  and `distribution.md` drop "gated". No scored run was made.
+  The `validate.yml` negative self-tests for this claim now plant against the new
+  wording and date.
+- **Codex `AGENTS.md` byte budget.** `references/distribution.md` records, from the
+  Codex guide, that Codex takes one file per directory from the project root down,
+  concatenates root first and stops adding files at `project_doc_max_bytes`
+  (32 KiB by default), so the deepest guidance is what a long chain loses.
+  `test/validate.py` measures this repository's chain on every run, with a self-test.
+
 ## v0.31.2 — source guard covers the repository and its exact exception
 
 - FW01 expands the Python temporary-tree source check to the owning repository,

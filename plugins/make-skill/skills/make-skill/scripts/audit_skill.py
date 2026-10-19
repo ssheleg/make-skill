@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Audit ANY skill directory against the Agent Skills standard + Anthropic's rules.
 
-    python3 audit_skill.py <skill-dir> [--house] [--json] [--quiet]
+    python3 audit_skill.py <skill-dir> [--house] [--supply-chain] [--json] [--quiet]
 
 Exit 0 when every check passes, 1 when any GAP is found, 2 on a usage error.
 
@@ -20,6 +20,12 @@ spends its context on the half that needs judgement.
             The canon states the headroom as one rule for both fields; applying
             it to one of them is how a body at 4999 tokens got a clean bill here
             and was refused by the repo's own validator.
+  --supply-chain
+            adds the pre-install review of a skill you did not write: unpinned
+            installers, install sources to vet, writes to a user's global
+            instruction file, and instructions to turn a security feature off
+            (SC-1..SC-5 in references/enterprise.md). Off by default, because a
+            skill that TEACHES installation names these commands on purpose.
 
 Python 3.9+, standard library only: it has to run wherever the skill landed.
 """
@@ -275,6 +281,43 @@ DIST_SECRET_RE = re.compile(
     r"credential|credentials|\.env|id_rsa|id_ed25519|private[_-]?key)(?:$|[._/-])")
 
 
+# --- supply-chain review (--supply-chain), SC-1..SC-5 in references/enterprise.md
+# Matched over every text file a skill or its plugin ships, quoted spans INCLUDED:
+# a third-party skill instructs with `inline code`, so blanking quotes (as the prose
+# check does) would blank the instruction itself.
+SC_TEXT_EXT = (".md", ".mdc", ".txt", ".sh", ".bash", ".zsh", ".py", ".js", ".mjs",
+               ".cjs", ".ts", ".json", ".yaml", ".yml", ".toml", "")
+# SC-1: a runner that fetches a package at run time. Pinned means an exact version
+# after the name (`pkg@1.2.3`, `@scope/pkg@1.2.3`, `pkg==1.2.3` for uvx/pipx).
+SC_RUNNER_RE = re.compile(
+    r"(?<![\w-])(?:npx|bunx|pnpm\s+dlx|yarn\s+dlx|uvx|pipx\s+run)"
+    r"((?:\s+-{1,2}[\w-]+(?:=\S+)?)*)\s+(@?[A-Za-z0-9<][\w./:<>…-]*"
+    r"(?:@[\w.^~<>=*-]+|==[\w.]+|#[\w.<>…-]+)?)")
+SC_PINNED_RE = re.compile(
+    r"(?:(?:@|==|#)v?\d+\.\d+\.\d+(?:[-+][\w.]+)?|#[0-9a-f]{40})$")
+SC_PLACEHOLDER_RE = re.compile(r"[<>…]|/$")
+SC_PIPE_SHELL_RE = re.compile(
+    r"(?<![\w-])(?:curl|wget|iwr|irm|Invoke-WebRequest|Invoke-RestMethod)\b[^|\n]*\|\s*"
+    r"(?:sudo\s+(?:-\S+\s+)*)?(?:ba|z|da|k|fi)?sh\b|\|\s*iex\b")
+# SC-2/SC-4: every source the skill tells the agent to trust, listed for the reviewer.
+SC_SOURCE_RE = re.compile(
+    r"(?:plugin\s+marketplace\s+add|plugin\s+market\s+add)\s+(?:--\S+\s+)*(\S+)"
+    r"|plugin\s+install\s+\S+\s+--marketplace\s+(\S+)"
+    r"|(?<![\w-])skills(?:@[\w.-]+)?\s+add\s+(?:--?\S+\s+)*([^\s`'\"]+)")
+# SC-3: the user's global instruction files, named with the hosts that read them.
+SC_GLOBAL_FILE_RE = re.compile(
+    r"(?:~|\$HOME|\$\{HOME\}|%USERPROFILE%)[/\\]\.(?:claude[/\\]CLAUDE\.md"
+    r"|codex[/\\]AGENTS(?:\.override)?\.md|gemini[/\\]GEMINI\.md)")
+SC_WRITE_RE = re.compile(
+    r"(?i)\btee\b|\bsed\s+-i|\b(?:add|append|edit|write|update|insert|modify|patch|"
+    r"replace|overwrite|prepend|create)\w*\b")
+SC_REDIRECT_RE = re.compile(r">>?\s*[\"']?(?=" + SC_GLOBAL_FILE_RE.pattern + r")")
+# SC-5: an instruction to switch a security feature off.
+SC_SECURITY_OFF_RE = re.compile(
+    r"csrutil\s+(?:authenticated-root\s+)?disable|--dangerously-skip-permissions"
+    r"|--allow-dangerously-skip-permissions|[\"']?defaultMode[\"']?\s*[:=]\s*[\"']?bypassPermissions")
+
+
 class Audit:
     """Collects verdicts so every check reports, rather than the first failure."""
 
@@ -470,7 +513,7 @@ def _unquote(v):
     return v
 
 
-def audit(skill_dir, house=False):
+def audit(skill_dir, house=False, supply_chain=False):
     a = Audit(skill_dir)
     name_on_disk = os.path.basename(os.path.abspath(skill_dir.rstrip("/")))
     skill_md = os.path.join(skill_dir, "SKILL.md")
@@ -534,7 +577,112 @@ def audit(skill_dir, house=False):
     _check_links(a, skill_dir, text, rel)
     _check_distribution(a, skill_dir, name_on_disk)
     _check_prose(a, body, rel)
+    if supply_chain:
+        _check_supply_chain(a, skill_dir, name_on_disk)
     return a
+
+
+def _supply_chain_files(skill_dir):
+    """Every text file the skill ships, plus the hooks/ and bin/ of its plugin.
+
+    A skill inside a Claude Code plugin sits at `<plugin>/skills/<name>`; the plugin's
+    hooks run as shell commands and its `bin/` joins the Bash tool's PATH, so a review
+    of the skill alone would read the instructions and miss the code beside them.
+    """
+    roots = [skill_dir]
+    plugin = os.path.dirname(os.path.dirname(os.path.abspath(skill_dir)))
+    if os.path.isfile(os.path.join(plugin, ".claude-plugin", "plugin.json")):
+        roots += [os.path.join(plugin, d) for d in ("hooks", "bin")]
+    for root in roots:
+        if not os.path.isdir(root):
+            continue
+        for base, dirs, files in os.walk(root):
+            dirs[:] = sorted(d for d in dirs if d not in BUNDLE_IGNORE and d != ".git")
+            for f in sorted(files):
+                full = os.path.join(base, f)
+                if os.path.splitext(f)[1].lower() in SC_TEXT_EXT and os.path.isfile(full):
+                    yield full
+
+
+def _sc_code_hits(a, found, code, rel, i):
+    """SC-1 and SC-2 over one piece of code: a script line, a fenced line, a `span`."""
+    for m in SC_RUNNER_RE.finditer(code):
+        spec = m.group(2)
+        if SC_PLACEHOLDER_RE.search(spec):
+            continue                             # `npx <name>`: a template, not a command
+        if not SC_PINNED_RE.search(spec):
+            found.add("SC_UNPINNED_INSTALLER")
+            a.gap("SC_UNPINNED_INSTALLER", "runs %r at whatever version the registry "
+                  "serves that day; pin an exact version, or record that you trust "
+                  "every future release of this publisher" % m.group(0).strip()[:70],
+                  rel, i)
+    if SC_PIPE_SHELL_RE.search(code):
+        found.add("SC_UNPINNED_INSTALLER")
+        a.gap("SC_UNPINNED_INSTALLER", "pipes a download into a shell; the script that "
+              "runs is whatever the server sends at that moment, not the one you read; "
+              "download, read, then run a pinned copy", rel, i)
+    for m in SC_SOURCE_RE.finditer(code):
+        src = next(g for g in m.groups() if g).strip("`'\"")
+        if SC_PLACEHOLDER_RE.search(src) or src.startswith("-"):
+            continue
+        found.add("SC_INSTALL_SOURCE")
+        a.gap("SC_INSTALL_SOURCE", "tells the agent to trust %r; confirm its owner is "
+              "the publisher the project's own homepage names (an impersonation fork "
+              "differs only there) and review it like this skill" % src[:70], rel, i)
+
+
+def _check_supply_chain(a, skill_dir, dir_name):
+    """SC-1..SC-5 of references/enterprise.md: what a pre-install review must resolve.
+
+    Each hit is a GAP with file:line, because each is a question only the reviewer can
+    close: pin it or accept the publisher, vet the source's owner, refuse the write to a
+    global instruction file, refuse the security switch. A clean run is not a vetting;
+    the checklist's reading half still applies.
+    """
+    anchor = os.path.dirname(os.path.abspath(skill_dir))
+    found = set()
+    for full in _supply_chain_files(skill_dir):
+        try:
+            text = open(full, encoding="utf-8").read()
+        except (UnicodeDecodeError, OSError):
+            continue
+        rel = os.path.relpath(full, anchor)
+        markdown = full.lower().endswith((".md", ".mdc", ".txt"))
+        fenced = False
+        for i, line in enumerate(text.split("\n"), start=1):
+            # In markdown, a command is code: a fenced block or an inline `span`. Prose
+            # that merely names a runner ("the npx installer") is not an instruction.
+            if markdown:
+                if line.lstrip().startswith(("```", "~~~")):
+                    fenced = not fenced
+                    continue
+                spans = [line] if fenced else re.findall(r"`([^`]*)`", line)
+            else:
+                spans = [line]
+            # a shell comment names a command, never runs it
+            for code in (re.sub(r"(?:^|\s)#\s.*$", " ", c) for c in spans):
+                _sc_code_hits(a, found, code, rel, i)
+            if SC_GLOBAL_FILE_RE.search(line) and (SC_REDIRECT_RE.search(line) or
+                                                   SC_WRITE_RE.search(
+                                                       SC_GLOBAL_FILE_RE.sub(" ", line))):
+                found.add("SC_GLOBAL_INSTRUCTION_WRITE")
+                a.gap("SC_GLOBAL_INSTRUCTION_WRITE", "writes the user's global "
+                      "instruction file, which every future session on every project "
+                      "loads; a skill may suggest a line for the user to add, never "
+                      "write it itself", rel, i)
+            if SC_SECURITY_OFF_RE.search(line):
+                found.add("SC_SECURITY_OFF")
+                a.gap("SC_SECURITY_OFF", "turns a security feature off (%r); refuse "
+                      "on a machine with real data; run only in a disposable VM or "
+                      "container" % SC_SECURITY_OFF_RE.search(line).group(0)[:50], rel, i)
+    for check, ok in (("SC_UNPINNED_INSTALLER", "no unpinned runtime installer or "
+                       "pipe-to-shell"),
+                      ("SC_INSTALL_SOURCE", "no marketplace or skill source to vet"),
+                      ("SC_GLOBAL_INSTRUCTION_WRITE", "no write to a global instruction "
+                       "file"),
+                      ("SC_SECURITY_OFF", "no instruction to turn a security feature off")):
+        if check not in found:
+            a.ok(check, ok, dir_name)
 
 
 def _check_name(a, fm, lines, dir_name, rel):
@@ -1001,11 +1149,14 @@ def main(argv):
                    help="also apply the ssheleg canon: Use-when opener, EN+RU triggers, "
                         "and the 5%% working headroom on BOTH the description (970 of "
                         "1024) and the body (4750 of 5000)")
+    p.add_argument("--supply-chain", action="store_true",
+                   help="also run the pre-install review of a skill you did not write "
+                        "(SC-1..SC-5 in references/enterprise.md)")
     p.add_argument("--json", action="store_true", help="emit results as JSON")
     p.add_argument("--quiet", action="store_true", help="print GAP lines only")
     args = p.parse_args(argv[1:])
 
-    a = audit(args.skill_dir, house=args.house)
+    a = audit(args.skill_dir, house=args.house, supply_chain=args.supply_chain)
 
     if args.json:
         print(json.dumps(a.results, indent=2, ensure_ascii=False))
