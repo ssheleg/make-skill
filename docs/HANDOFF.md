@@ -30,8 +30,23 @@ hub's task. The 2026-10-13 skill-search native-loading result was measured on th
 old description; it is not evidence for the new text. Other members' descriptions
 are theirs to trim on their own releases.
 
-Next: after merge and the v0.33.0 release (receipt appended below when read back),
-the hub re-pins make-skill 0.33.0 and re-bases its description ratchets on 500.
+Release receipt, read back 2026-10-20: PR #42 squash-merged at
+`7745e2c646c0642af8aa0796522867ba115a0f42` after its genuine `validate` run
+[39368685229](https://github.com/ssheleg/make-skill/actions/runs/39368685229) passed
+(validate, claude-plugin-validate, skills-cli-discovery, House skill audit). Annotated
+tag `v0.33.0` on that commit; release run
+[39368764122](https://github.com/ssheleg/make-skill/actions/runs/39368764122) success;
+GitHub release v0.33.0 published; `npm view @ssheleg/make-skill` prints version
+`0.33.0`, `latest: '0.33.0'`, gitHead `7745e2c`; the packed tarball carries
+`DESC_SOFT_CAP = 500` and a 470-char make-skill description. Local install:
+`npx --yes sshlg-skills@latest update` keeps the hub pin, so this machine still runs
+make-skill 0.32.0 (`claude plugin list`) until the hub re-pins; the family updater
+was not bypassed.
+
+Next (hub's task, not this repo's): re-pin make-skill 0.33.0 in ssheleg/sshlg-skills,
+re-base its description ratchets (`description-total`, the 970 "reserve",
+`route_coverage.js` `HOUSE`, `audit_bundle.py`) on the 500 soft cap, then run the
+family update so this machine installs 0.33.0.
 
 Retro: a limit stated as "5% under the cap" was read as a target by every member,
 and nothing measured the shared listing it was spending. State the budget a field

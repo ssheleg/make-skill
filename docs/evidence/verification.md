@@ -31,6 +31,7 @@ release receipt in HANDOFF once the tag, run and registry are read back.
 | Body budget | the rule fits the body working limit | `audit_skill.py --house`: `body is 4610/4750 tokens (tiktoken:cl100k_base)`; `test/validate.py` estimate under 4750 | observed, source candidate |
 | Plugin gate | both strict validations | `claude plugin validate ./plugins/make-skill --strict` and `claude plugin validate . --strict` print `Validation passed` on Claude Code 2.1.299 | observed, source candidate |
 | Gate | whole suite | `npm test`, exit 0 | observed, source candidate |
+| Publication, live | merged, tagged, released, on npm | PR #42 squash `7745e2c`; PR validate run 39368685229 success; annotated tag `v0.33.0`; release run 39368764122 success; `npm view @ssheleg/make-skill version` prints `0.33.0`, gitHead `7745e2c` | observed 2026-10-20 |
 
 ## Shipped state — v0.32.0 (candidate, 2026-10-19)
 
