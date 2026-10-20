@@ -315,7 +315,7 @@ jobs:
           # layout this validator rejects.
           for case in claim:'claims' cardver:'SKILL-CARD' readmeref:'README' \
                       bodyvar:'substituted' cmdvar:'cannot run' mdclayout:'templates' \
-                      headroom:'headroom' deschead:'working limit' xmldrift:'XML_TAG_RE' \
+                      headroom:'headroom' xmldrift:'XML_TAG_RE' \
                       ledgerunship:'no version beside it' boardunship:'backlog.md' \
                       ledgerbehind:'newest' ledgeruncut:'nobody cut' \
                       tpcdate:'no ISO date' tpcclaim:'no longer carries it' \
@@ -376,11 +376,6 @@ jobs:
               body = re.sub(r"^---\n.*?\n---\n", "", t, count=1, flags=re.S)
               need = int(4750 * 3.9) - len(body) + 40
               skill.write_text(t + "\n" + ("p" * max(need, 40)) + "\n", encoding="utf-8")
-          elif case == "deschead":   # description inside the 1024 cap, past its own limit
-              t = skill.read_text(encoding="utf-8")
-              d = re.search(r"^description: (.+?)(?=\nlicense:)", t, re.S | re.M).group(1)
-              pad = " padding phrase." * 6                      # lands between 970 and 1024
-              skill.write_text(t.replace(d, (d + pad)[:1000], 1), encoding="utf-8")
           elif case == "ledgerunship":
               # MS-03 exactly: the ledger's newest section headed `no release cut` while
               # the release it describes is tagged, on npm and at HEAD. `docs/evidence/`
@@ -404,13 +399,13 @@ jobs:
               # against nothing, which is the state MS-03 was found in.
               p = root / "docs/evidence/verification.md"
               s = p.read_text(encoding="utf-8")
-              out = re.sub(r"(?m)^(## Shipped state — )v[\d.]+", r"\g<1>v0.19.0", s, count=1)
+              out = re.sub(r"(?m)^(## Shipped state\s*(?:—|:) )v[\d.]+", r"\g<1>v0.19.0", s, count=1)
               assert out != s, "PLANT DID NOT LAND: no shipped-state version to lower"
               p.write_text(out, encoding="utf-8")
           elif case == "ledgeruncut":
               p = root / "docs/evidence/verification.md"
               s = p.read_text(encoding="utf-8")
-              out = re.sub(r"(?m)^(## Shipped state — )v[\d.]+", r"\g<1>v9.9.9", s, count=1)
+              out = re.sub(r"(?m)^(## Shipped state\s*(?:—|:) )v[\d.]+", r"\g<1>v9.9.9", s, count=1)
               assert out != s, "PLANT DID NOT LAND: no shipped-state version to falsify"
               p.write_text(out, encoding="utf-8")
           elif case.startswith("tpc"):
@@ -472,8 +467,8 @@ jobs:
                     REF_NO_TRIGGER LINK_ESCAPE WIN_PATH TIME_BRANCH; do
             echo "$out" | grep -q "\"$id\"" || { echo "auditor missed $id"; exit 1; }
           done
-          # 3. the house headroom rule must fire on a description that is legal upstream
-          #    but has no room left for a "NOT for …" clause
+          # 3. the house description budget must WARN (not GAP, exit 0) on a description
+          #    that is legal upstream but past the 500-char soft cap
           rm -rf /tmp/aud/wide && mkdir -p /tmp/aud/wide
           python3 - <<'PY'
           import pathlib
@@ -481,10 +476,12 @@ jobs:
           pathlib.Path("/tmp/aud/wide/SKILL.md").write_text(
               f"---\nname: wide\ndescription: {d[:1000]}\n---\n\n# Wide\n", encoding="utf-8")
           PY
-          if python3 "$S/scripts/audit_skill.py" /tmp/aud/wide --house --json | grep -q DESC_HEADROOM; then
-            echo "OK: auditor flags a description with no headroom"
+          wide="$(python3 "$S/scripts/audit_skill.py" /tmp/aud/wide --house --json)" || {
+            echo "ERROR: a description past the soft cap turned into a GAP"; exit 1; }
+          if printf '%s' "$wide" | python3 -c 'import json,sys; r=[x for x in json.load(sys.stdin) if x["check"]=="DESC_BUDGET"]; sys.exit(0 if r and r[0]["verdict"]=="WARN" else 1)'; then
+            echo "OK: auditor warns on a description past the soft cap"
           else
-            echo "ERROR: auditor missed DESC_HEADROOM"; exit 1
+            echo "ERROR: auditor did not WARN DESC_BUDGET"; exit 1
           fi
           echo "OK: auditor clean on its own skill, nine defects found on the fixture"
 

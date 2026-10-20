@@ -15,11 +15,11 @@ spends its context on the half that needs judgement.
             rules Anthropic's platform enforces on upload (reserved words, XML
             tags) and its authoring guidance (third person, tables of contents)
   --house   adds the ssheleg canon: description starts "Use when …", carries
-            English AND Russian trigger phrases, and holds the 5% working
-            headroom on BOTH budgets — 970 of 1024 chars, 4750 of 5000 tokens.
-            The canon states the headroom as one rule for both fields; applying
-            it to one of them is how a body at 4999 tokens got a clean bill here
-            and was refused by the repo's own validator.
+            English AND Russian trigger phrases, holds the body to its 4750 of
+            5000 token working limit, and WARNS on a description past the
+            500-char soft cap (target 400; 1024 stays the hard GAP). A WARN
+            does not change the exit code. The listing budget behind the soft
+            cap is in references/authoring.md, "The description budget".
   --supply-chain
             adds the pre-install review of a skill you did not write: unpinned
             installers, install sources to vet, writes to a user's global
@@ -40,10 +40,14 @@ import sys
 # --- limits, each with the authority that sets it --------------------------
 NAME_MAX = 64           # spec: name is 1-64 characters
 DESC_MAX = 1024         # spec: description is 1-1024 characters
-# House working limit: 5% under the cap. The description is the whole triggering
-# budget AND the field that must grow when a near-miss skill appears ("say what
-# it is NOT for"). A description at 98% of cap cannot absorb that sentence.
-DESC_TARGET = 970
+# House description budget (2026-10-20). A description is a router, not a manual.
+# Claude Code fits every skill's description into one listing budget (~30,000
+# chars measured on the operator's machine) and shows the rest as bare names:
+# 134 skills, 81 of them without a description, because family descriptions sat
+# at 870-965 chars. The old rule (5% under 1024, i.e. 970) read as a target and
+# every member filled it. Target 400, warn past 500, refuse only past 1024.
+DESC_TARGET = 400
+DESC_SOFT_CAP = 500
 # B-139 — the nine `DESC_*` rules ask WHEN and never WHAT.
 #
 # Anthropic's guidance asks a description to say what the skill DOES as well as when to
@@ -89,8 +93,8 @@ def what_half(description):
 COMPAT_MAX = 500        # spec: compatibility is 1-500 characters
 BODY_MAX_LINES = 500    # spec + Anthropic: keep the body under 500 lines
 BODY_MAX_TOKENS = 5000  # spec + Anthropic: level-2 budget
-# House working limit, the body's half of the same 5% rule DESC_TARGET states.
-# The canon writes both as one sentence — "hold 5% headroom" — and for four
+# House working limit for the body, 5% under its ceiling. (The description had the
+# same 5% rule until 2026-10-20; it now has the DESC_SOFT_CAP above.) For four
 # releases this script applied only the description half, so a body at 4999
 # tokens got 0 GAP here and was refused by the repo's own validator. Two
 # verdicts on one rule, and the permissive one was the one users got.
@@ -124,6 +128,8 @@ THRESHOLDS = {
     "BODY_MAX_TOKENS": ("spec", 5000),
     "BODY_TARGET_TOKENS": ("house", 4750),
     "DESC_MAX_CHARS": ("spec", 1024),
+    "DESC_SOFT_CAP": ("house", 500),
+    "DESC_TARGET": ("house", 400),
 }
 
 # The differential corpus: pinned counts for DEFAULT_ENCODING, measured with
@@ -337,6 +343,14 @@ class Audit:
     def gap(self, check, message, path=None, line=None):
         self.add("GAP", check, message, path, line)
 
+    def warn(self, check, message, path=None, line=None):
+        # Advice, not a defect: reported and counted, never part of the exit code.
+        self.add("WARN", check, message, path, line)
+
+    @property
+    def warnings(self):
+        return [r for r in self.results if r["verdict"] == "WARN"]
+
     @property
     def gaps(self):
         return [r for r in self.results if r["verdict"] == "GAP"]
@@ -365,7 +379,7 @@ def parse_frontmatter(text):
     A plain scalar may continue on indented lines and YAML folds them into one
     value with a space. Dropping those lines is how a description whose real
     length was 1392 characters got measured at 180 and passed both the 1024 cap
-    and the 970 working limit — a clean bill from the family's standard-keeper
+    and the then 970 working limit — a clean bill from the family's standard-keeper
     for a skill the Skills API rejects on upload (2026-08-16, B-63).
     """
     parse_frontmatter.last_duplicates = []
@@ -761,14 +775,17 @@ def _check_description(a, fm, lines, rel, house):
         else:
             a.ok("DESC_WHAT", "description states WHAT the skill does in %d chars "
                  "beyond its triggers (house rule)" % len(what), rel, ln)
-        if DESC_TARGET < len(desc) <= DESC_MAX:
-            a.gap("DESC_HEADROOM", "description is %d chars — inside the %d cap but past the "
-                  "%d working limit (house rule): leave room for the 'what this is NOT for' "
-                  "clause a near-miss neighbour will require"
-                  % (len(desc), DESC_MAX, DESC_TARGET), rel, ln)
-        elif len(desc) <= DESC_TARGET:
-            a.ok("DESC_HEADROOM", "description is %d/%d chars, inside the working limit"
-                 % (len(desc), DESC_TARGET), rel, ln)
+        # Past the spec cap DESC_LENGTH already owns the GAP; this rule only advises.
+        if DESC_SOFT_CAP < len(desc) <= DESC_MAX:
+            a.warn("DESC_BUDGET", "description is %d chars, past the %d-char soft cap "
+                   "(house rule, target %d): it competes for Claude Code's shared skill "
+                   "listing budget, and a description that does not fit is shown as a bare "
+                   "name. Keep one 'Use when' sentence, 4-8 triggers in English and "
+                   "Russian, one 'NOT for' boundary; move the rest to the body"
+                   % (len(desc), DESC_SOFT_CAP, DESC_TARGET), rel, ln)
+        elif len(desc) <= DESC_SOFT_CAP:
+            a.ok("DESC_BUDGET", "description is %d/%d chars, inside the soft cap "
+                 "(target %d)" % (len(desc), DESC_SOFT_CAP, DESC_TARGET), rel, ln)
 
 
 def _check_optional_fields(a, fm, lines, rel):
@@ -840,8 +857,7 @@ def _check_body_budget(a, body, rel, house=False):
     if not over:
         a.ok("BODY_BUDGET", "body is %d lines / %d tokens (%s; budget %d / %d)"
              % (n_lines, measured, tok_name, BODY_MAX_LINES, BODY_MAX_TOKENS), rel)
-    # The house half, and it is the same rule DESC_HEADROOM applies to the other
-    # field: a body at the ceiling cannot absorb the next paragraph, so it gets
+    # The house half of the body budget: a body at the ceiling cannot absorb the next paragraph, so it gets
     # absorbed into a reference that should have been split instead. House
     # thresholds ride the MEASURED count only — a house rule on an estimate is
     # a verdict on the instrument.
@@ -1147,8 +1163,8 @@ def main(argv):
     p.add_argument("skill_dir", help="the directory containing SKILL.md")
     p.add_argument("--house", action="store_true",
                    help="also apply the ssheleg canon: Use-when opener, EN+RU triggers, "
-                        "and the 5%% working headroom on BOTH the description (970 of "
-                        "1024) and the body (4750 of 5000)")
+                        "the body working limit (4750 of 5000 tokens) and a WARN on a "
+                        "description past the 500-char soft cap (target 400)")
     p.add_argument("--supply-chain", action="store_true",
                    help="also run the pre-install review of a skill you did not write "
                         "(SC-1..SC-5 in references/enterprise.md)")
@@ -1168,8 +1184,12 @@ def main(argv):
             if r["line"]:
                 where += ":%d" % r["line"]
             print("%-4s %-18s %-28s %s" % (r["verdict"], r["check"], where, r["message"]))
-        n_gap = len(a.gaps)
-        print("\n%d GAP, %d PASS — %s" % (n_gap, len(a.results) - n_gap, args.skill_dir))
+        n_gap, n_warn = len(a.gaps), len(a.warnings)
+        if n_warn:
+            print("\n%d GAP, %d WARN, %d PASS — %s"
+                  % (n_gap, n_warn, len(a.results) - n_gap - n_warn, args.skill_dir))
+        else:
+            print("\n%d GAP, %d PASS — %s" % (n_gap, len(a.results) - n_gap, args.skill_dir))
         if n_gap:
             print("Fix these, then re-run. The judgement half of the audit "
                   "(one job, entry point, evals, distribution) is in references/retrofit.md.")

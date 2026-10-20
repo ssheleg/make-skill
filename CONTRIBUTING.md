@@ -92,7 +92,8 @@ Fail these and CI stops you, so check them before pushing:
 - **Spec-legal front-matter, by both rulebooks.** `name` matches its directory
   and the standard's charset, carries no angle brackets and no `anthropic`/
   `claude` (Anthropic's Skills API rejects those on upload); `description`
-  ≤ 1024 chars, third person, no angle brackets; only fields from the spec or
+  ≤ 1024 chars (a WARN past the 500-char house soft cap, target 400, for every
+  shipped skill), third person, no angle brackets; only fields from the spec or
   the Claude Code extension set present; the `SKILL.md` **body** under 500 lines
   and under 5000 estimated tokens — and under the 4750 **working limit**, so the
   canon keeps 5% headroom and the next correction is not a fight with this

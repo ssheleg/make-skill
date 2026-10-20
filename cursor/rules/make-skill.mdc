@@ -46,8 +46,11 @@ canon below only ADDS to it.
 
 ## Authoring rules (every skill)
 
-- `description` starts "Use when …" with concrete trigger phrases in English AND
-  Russian. A skill nobody triggers is dead weight.
+- `description` is a router, not a manual: one "Use when …" sentence, 4-8 top
+  trigger phrases in English AND Russian, one "NOT for …" boundary. Target 400
+  chars, house soft cap 500 (1024 is the spec cap). Claude Code fits every
+  description into one ~30k-char listing and shows the overflow as bare names;
+  longer trigger lists and caveats go in the body.
 - One naming pattern, preferably gerund (`processing-pdfs`); never `helper`,
   `utils`, `tools`, `data`.
 - One skill = one job. Multiple concerns → multiple skills + a shared contract file.

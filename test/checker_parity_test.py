@@ -9,7 +9,7 @@ carried the same two false negatives:
   * a description written as a plain multi-line YAML scalar — legal YAML, folded
     into one value — had its continuation lines silently dropped. A description
     whose real length was 1392 characters was measured at 180 and passed both
-    the 1024 spec cap and the 970 working limit. The family's standard-keeper
+    the 1024 spec cap and the then 970 working limit. The family's standard-keeper
     handed a clean bill to a skill the Skills API rejects on upload.
 
   * `allowed-tools: [Read, Write]`, the inline flow sequence, was read as the
@@ -198,9 +198,93 @@ def _():
 
 @case("the drift guard refuses a limit whose value differs")
 def _():
-    code, out = validator_says(lambda s: s.replace("DESC_TARGET = 970", "DESC_TARGET = 900"))
+    code, out = validator_says(lambda s: s.replace("DESC_SOFT_CAP = 500", "DESC_SOFT_CAP = 970"))
     assert code != 0, "a diverged shared limit passed the gate"
-    assert "DESC_TARGET differs" in out, out[-500:]
+    assert "DESC_SOFT_CAP differs" in out, out[-500:]
+
+
+# --- the description budget: WARN past the soft cap, FAIL only past 1024 ------
+#
+# 2026-10-20: Claude Code's listing (~30,000 chars) showed 81 of 134 skills with no
+# description, because family descriptions sat at 870-965 chars. The rule became a
+# 400 target and a 500 soft cap that warns; 1024 stays the only failure.
+
+def budget_desc(n):
+    # The WHAT half must clear DESC_WHAT on its own, so the padding is prose, not a
+    # trigger list: the only verdict this fixture may move is the length one.
+    base = "Use when planting a budget fixture, посадить, and measuring "
+    return (base + "how a long description spends the listing budget " * 30)[:n].rstrip()
+
+
+@case("the auditor WARNs, and does not GAP, on a description past the soft cap")
+def _():
+    d = skill_dir("name: planted\ndescription: %s" % budget_desc(600))
+    a = audit_skill.audit(d, house=True)
+    hits = [r for r in a.results if r["check"] == "DESC_BUDGET"]
+    assert hits and hits[0]["verdict"] == "WARN", hits
+    assert "soft cap" in hits[0]["message"], hits[0]["message"]
+    assert not a.gaps, "a legal description past the soft cap became a GAP: %s" % a.gaps
+
+
+@case("the auditor passes DESC_BUDGET inside the soft cap, and skips it without --house")
+def _():
+    d = skill_dir("name: planted\ndescription: %s" % budget_desc(480))
+    hits = [r for r in audit_skill.audit(d, house=True).results if r["check"] == "DESC_BUDGET"]
+    assert hits and hits[0]["verdict"] == "PASS", hits
+    d = skill_dir("name: planted\ndescription: %s" % budget_desc(600))
+    hits = [r for r in audit_skill.audit(d, house=False).results if r["check"] == "DESC_BUDGET"]
+    assert not hits, "a house rule ran without --house: %s" % hits
+
+
+@case("past 1024 the auditor GAPs on the spec cap, not on the soft cap")
+def _():
+    d = skill_dir("name: planted\ndescription: %s" % budget_desc(1100))
+    a = audit_skill.audit(d, house=True)
+    assert "DESC_LENGTH" in {r["check"] for r in a.gaps}, a.gaps
+    assert not [r for r in a.results if r["check"] == "DESC_BUDGET"], "both rules fired"
+
+
+def validator_on_description(rel, length):
+    """Run the real validator on a repo copy whose skill at `rel` has a planted description."""
+    tmp = os.path.join(residue.workspace("repo"), "repo")
+    shutil.copytree(ROOT, tmp, ignore=shutil.ignore_patterns(".git", "node_modules", "__pycache__"))
+    path = os.path.join(tmp, rel)
+    with open(path, encoding="utf-8") as f:
+        src = f.read()
+    out = re.sub(r"^description: .*$", "description: " + budget_desc(length), src,
+                 count=1, flags=re.M)
+    assert out != src, "PLANT DID NOT LAND in %s" % rel
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(out)
+    r = subprocess.run([sys.executable, os.path.join(tmp, "test/validate.py")],
+                       capture_output=True, text=True, cwd=tmp)
+    return r.returncode, r.stdout + r.stderr
+
+
+@case("the validator WARNs and passes on a shipped description past the soft cap")
+def _():
+    for rel in ("plugins/make-skill/skills/make-skill/SKILL.md",
+                "plugins/make-skill/skills/skill-search/SKILL.md"):
+        code, out = validator_on_description(rel, 600)
+        assert code == 0, "%s: a 600-char description failed the gate:\n%s" % (rel, out[-800:])
+        warned = [ln for ln in out.splitlines() if ln.startswith("WARN: " + rel)]
+        assert warned and "soft cap" in warned[0], "%s: no soft-cap WARN:\n%s" % (rel, out[-800:])
+
+
+@case("the validator stays silent on the shipped descriptions, which fit the soft cap")
+def _():
+    r = subprocess.run([sys.executable, VALIDATOR], capture_output=True, text=True, cwd=ROOT)
+    assert r.returncode == 0, (r.stdout + r.stderr)[-800:]
+    assert "soft cap" not in r.stdout, "a shipped description is past the soft cap:\n" + r.stdout
+
+
+@case("the validator FAILs a shipped description past the 1024 spec cap")
+def _():
+    for rel in ("plugins/make-skill/skills/make-skill/SKILL.md",
+                "plugins/make-skill/skills/skill-search/SKILL.md"):
+        code, out = validator_on_description(rel, 1100)
+        assert code != 0, "%s: a 1100-char description passed the gate" % rel
+        assert "spec max is 1024" in out, out[-800:]
 
 
 @case("the drift guard refuses a front-matter key legal on one side only")

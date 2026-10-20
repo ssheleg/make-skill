@@ -71,7 +71,8 @@ Report the table before changing anything, then fix.
 1. **Spec floor** (`references/agent-skills-spec.md`): `name` charset + ≤64 +
    equal to the directory + no `anthropic`/`claude` + no angle brackets;
    `description` ≤1024, starts "Use when…", third person, English AND Russian
-   triggers, says what it does and when; no front-matter key outside spec ∪ host
+   triggers, says what it does and when, house soft cap 500 (target 400:
+   one sentence, 4-8 triggers, one "NOT for"); no front-matter key outside spec ∪ host
    extensions; body <500 lines and <5000 tokens; every `references/`,
    `scripts/`, `assets/` file one level deep, linked from the body with a stated
    load trigger, and a `## Contents` list past 100 lines. A skill can pass every

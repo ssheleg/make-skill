@@ -1,3 +1,44 @@
+# Description budget: v0.33.0, 2026-10-20
+
+Objective: stop family skills crowding Claude Code's skill listing. Measured on the
+operator's machine 2026-10-20: the listing budget is about 30,000 chars; this
+session's listing was 29,995 chars for 134 skills and 81 showed no description.
+Family descriptions sat at 870-965 chars because the old rule (970 of 1024) read as
+a target. Plugin skills cannot be hidden with `skillOverrides`.
+
+Done on `feat/description-budget`: the description is a router, not a manual (one
+"Use when" sentence, 4-8 EN/RU triggers, one "NOT for"; target 400, soft cap 500,
+spec cap 1024), stated in `SKILL.md`, `references/authoring.md` (*The description
+budget*), `agent-skills-spec.md`, `retrofit.md`, `claude-code-plugin.md`, the
+template, the Cursor rule, `/skill-audit` and `skill-auditor`. `audit_skill.py
+--house` emits `DESC_BUDGET` WARN past 500 (exit code unchanged); `test/validate.py`
+WARNs past 500 for every shipped skill and fails only past 1024. Own descriptions:
+make-skill 943 to 470, skill-search 540 to 397. Six new checker-parity cases.
+Evidence: the v0.33.0 section of [verification.md](evidence/verification.md).
+
+Decisions: make-skill stays at 470, above the 400 target, because the sshlg-skills
+routing table requires its five EN/RU trigger pairs (`advertised_check.js`). The
+check ID changed (`DESC_HEADROOM` retired, `DESC_BUDGET` new); no consumer outside
+this repo reads it (grep of the hub, 2026-10-20). The ledger heading accepts a colon
+as well as the em dash, so new sections follow the no-em-dash rule.
+
+Open: the hub (ssheleg/sshlg-skills) still measures the old 970 limit in its
+`description-total` and "reserve" ratchets (`test/validate.py`
+`check_the_description_reserve_is_not_spent`, `test/route_coverage.js` `HOUSE`,
+`test/audit_bundle.py`); those move when the hub re-pins this release, which is the
+hub's task. The 2026-10-13 skill-search native-loading result was measured on the
+old description; it is not evidence for the new text. Other members' descriptions
+are theirs to trim on their own releases.
+
+Next: after merge and the v0.33.0 release (receipt appended below when read back),
+the hub re-pins make-skill 0.33.0 and re-bases its description ratchets on 500.
+
+Retro: a limit stated as "5% under the cap" was read as a target by every member,
+and nothing measured the shared listing it was spending. State the budget a field
+competes for, not only its own cap, and make the soft cap a WARN people see.
+
+---
+
 # FEED-SEO-1019 wave 6: v0.32.0, 2026-10-19
 
 Objective: supply-chain checks in the "is this skill safe to install" doctrine,

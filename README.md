@@ -91,8 +91,9 @@ resolvable install — not "should work now".
 **Conformance to both rulebooks, not just a house style.** The
 [Agent Skills specification](https://agentskills.io/specification) sets hard
 limits — `name` is 1–64 chars of `a-z0-9` and single hyphens and must match its
-directory, `description` caps at 1024 characters, the body should stay under 500
-lines and 5000 tokens. [Anthropic's platform docs](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview)
+directory, `description` caps at 1024 characters (the house rule asks for 400,
+and warns past 500, because Claude Code's skill listing shows an overflow as bare
+names), the body should stay under 500 lines and 5000 tokens. [Anthropic's platform docs](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview)
 add rules the open standard is silent about and only the Skills API enforces —
 no XML tags in `name`/`description`, and no `anthropic`/`claude` anywhere in the
 name, so `claude-helper` loads fine in Claude Code and is rejected the day
@@ -165,7 +166,7 @@ agent opens only when the situation calls for them:
 | Reference | Covers |
 |---|---|
 | `agent-skills-spec.md` | the hard rules from both authorities — field limits, where the open standard and Anthropic's platform differ, budgets, which checker says no |
-| `authoring.md` | the craft — naming, third-person descriptions, degrees of freedom, workflows and feedback loops, script rules, evaluation-driven development |
+| `authoring.md` | the craft — naming, third-person descriptions, the description budget (a router, not a manual), degrees of freedom, workflows and feedback loops, script rules, evaluation-driven development |
 | `surfaces.md` | Claude Code vs the Claude API vs claude.ai — the Skills API (upload, versions, 8 per request), and the no-network / no-package-install limits that break scripts moved between surfaces |
 | `enterprise.md` | installing a skill you didn't write, and running a fleet — risk tiers, the review checklist, supply-chain checks SC-1..SC-5, the five approval gates, lifecycle, recall limits, rollback |
 | `retrofit.md` | the audit procedure — the 14-item checklist, what counts as evidence for a PASS, and the short form for a personal skill |

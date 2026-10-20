@@ -25,8 +25,9 @@ Arguments (empty when none were given): $ARGUMENTS
    entry point, evaluations, distribution, repo meta. The script cannot answer
    those. Read the file; do not reconstruct it from memory.
 
-3. Report one gap table: `PASS` / `GAP` / `NOT-RUN` per item, each with
-   `file:line` or the command output that proves it. End with exactly ONE
-   suggested next action.
+3. Report one gap table: `PASS` / `WARN` / `GAP` / `NOT-RUN` per item, each with
+   `file:line` or the command output that proves it. `WARN` is the auditor's
+   advice (a description past the 500-char soft cap): report it, it is not a
+   GAP. End with exactly ONE suggested next action.
 
 Do not fix anything until the table is reported.
