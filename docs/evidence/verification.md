@@ -18,6 +18,20 @@ the release the CHANGELOG carries (MS-03).
 
 ---
 
+## Shipped state: v0.33.0 (candidate, 2026-10-20)
+
+Source checks on branch `feat/description-budget`. Publication rows are added by the
+release receipt in HANDOFF once the tag, run and registry are read back.
+
+| REQ | What is checked | Evidence | Confirmed |
+|---|---|---|---|
+| DB-1 doctrine | the description rule (router, target 400, soft cap 500, 1024 hard) is stated wherever the 970 target was | `git grep -n "970" -- plugins cursor README.md CONTRIBUTING.md` prints only mentions of the retired rule as history (`authoring.md` *The description budget*, two comments in `audit_skill.py`); `SKILL.md`, `authoring.md`, `agent-skills-spec.md`, `retrofit.md`, `claude-code-plugin.md`, the template, the Cursor rule, the command and the agent carry the new rule | read, source candidate |
+| DB-2 checks | the auditor WARNs past 500 without a GAP; the validator WARNs past 500 for every shipped skill and fails only past 1024 | `python3 test/checker_parity_test.py`: six new `ok` cases, `PASS: checker parity`; the local run of every `validate` job step from `validate.yml` prints PASS for all 18 | observed, source candidate |
+| DB-3 own descriptions | `make-skill` 943 to 470 chars, `skill-search` 540 to 397; routed triggers kept | `audit_skill.py --house` on each: `DESC_BUDGET ... 470/500` and `397/500`, `0 GAP`; `node <hub>/test/advertised_check.js --member make-skill --root <checkout>` prints `ok: make-skill advertises all 10 routed trigger(s)` | observed, source candidate |
+| Body budget | the rule fits the body working limit | `audit_skill.py --house`: `body is 4610/4750 tokens (tiktoken:cl100k_base)`; `test/validate.py` estimate under 4750 | observed, source candidate |
+| Plugin gate | both strict validations | `claude plugin validate ./plugins/make-skill --strict` and `claude plugin validate . --strict` print `Validation passed` on Claude Code 2.1.299 | observed, source candidate |
+| Gate | whole suite | `npm test`, exit 0 | observed, source candidate |
+
 ## Shipped state — v0.32.0 (candidate, 2026-10-19)
 
 Source checks on branch `feat/feed-1019`. Publication rows are added by the release

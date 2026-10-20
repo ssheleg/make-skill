@@ -99,6 +99,8 @@ def t_thresholds_carry_their_authority():
     assert A.THRESHOLDS["BODY_MAX_TOKENS"] == ("spec", A.BODY_MAX_TOKENS)
     assert A.THRESHOLDS["BODY_TARGET_TOKENS"] == ("house", A.BODY_TARGET_TOKENS)
     assert A.THRESHOLDS["BODY_MAX_LINES"] == ("spec", A.BODY_MAX_LINES)
+    assert A.THRESHOLDS["DESC_SOFT_CAP"] == ("house", A.DESC_SOFT_CAP)
+    assert A.THRESHOLDS["DESC_TARGET"] == ("house", A.DESC_TARGET)
     owners = {o for (o, _v) in A.THRESHOLDS.values()}
     assert owners <= {"spec", "house", "host"}, f"an unowned authority: {owners}"
 

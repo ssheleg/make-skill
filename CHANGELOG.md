@@ -1,3 +1,39 @@
+## v0.33.0: the description is a router, not a manual (target 400, soft cap 500)
+
+- **Why.** Claude Code fits every skill's description into one listing budget and
+  shows the rest as bare names. Measured on the operator's machine 2026-10-20: a
+  29,995-char listing for 134 skills, 81 of them with no description, against about
+  80,000 chars of descriptions on offer. Family descriptions sat at 870-965 chars
+  because the old house rule ("5% headroom", 970 of 1024) read as a target. Plugin
+  skills cannot be hidden with `skillOverrides`, so the length is the author's lever.
+- **The rule.** One "Use when ..." sentence naming the job, the 4-8 highest-signal
+  triggers in English and Russian as one compact list, one "NOT for ..." boundary
+  with the refusal phrase if any. Target 400 chars, house soft cap 500, spec cap 1024.
+  Longer trigger lists, examples and caveats go in the body. Stated in `SKILL.md`,
+  `references/authoring.md` (new section *The description budget*),
+  `agent-skills-spec.md` (norm table and checklist), `retrofit.md` (item 1),
+  `claude-code-plugin.md` (the 2026-10-20 measurement), the `SKILL.template.md`
+  placeholder, the Cursor rule, the `/skill-audit` command and the `skill-auditor`
+  agent (which now also sums a family's descriptions against the listing budget).
+- **The checks.** `audit_skill.py --house` replaces `DESC_HEADROOM` (GAP past 970)
+  with `DESC_BUDGET`: a WARN past 500 that does not change the exit code; past 1024
+  `DESC_LENGTH` stays the GAP. The text summary counts WARN lines. `test/validate.py`
+  prints `WARN:` past 500 for every shipped skill (it read make-skill alone before)
+  and fails only past 1024. The shared constants are `DESC_TARGET = 400` and
+  `DESC_SOFT_CAP = 500`, compared by the drift guard. The CI `deschead` negative case
+  (fail at 1000 chars) is gone; the auditor step now asserts a WARN instead.
+- **Own descriptions.** `make-skill` 943 to 470 chars (it keeps the five English and
+  Russian pairs the sshlg-skills routing table requires, so it sits above the 400
+  target and under the 500 cap); `skill-search` 540 to 397. The dropped trigger
+  phrases moved into each body. To pay for the rule inside the body budget, two
+  gotchas (two token counters, time-branching text) now point at `authoring.md`
+  *Content guidelines*, where the long form lives.
+- **Tests.** Six new cases in `test/checker_parity_test.py`: the auditor WARNs and
+  does not GAP past the soft cap; it passes inside the cap and skips the rule without
+  `--house`; past 1024 only `DESC_LENGTH` fires; the validator WARNs and exits 0 on a
+  planted 600-char description in either shipped skill, stays silent on the shipped
+  ones, and fails at 1100 chars. `fix-ms-01.02.py` pins the two new thresholds' owner.
+
 ## v0.32.0: supply-chain checks before install, `claude plugin eval` re-measured, the Codex byte budget
 
 - **Supply-chain checks SC-1..SC-5.** `references/enterprise.md` names five shapes a

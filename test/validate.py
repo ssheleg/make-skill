@@ -18,10 +18,16 @@ except ImportError:
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 NAME = "make-skill"
 errors = []
+warnings = []
 
 
 def fail(m):
     errors.append(m)
+
+
+def warn(m):
+    # Advice the gate prints and does not fail on: a house soft cap, not a spec rule.
+    warnings.append(m)
 
 
 from owner_board import check as check_owner_board
@@ -205,13 +211,36 @@ DESC_MAX = 1024         # spec: description is 1-1024 characters
 COMPAT_MAX = 500        # spec: compatibility is 1-500 characters
 BODY_MAX_LINES = 500
 BODY_MAX_TOKENS = 5000
-# The working limits: 5% under each ceiling. See the budget checks for why.
+# The body working limit: 5% under its ceiling. See the budget check for why.
 BODY_TARGET_TOKENS = 4750
-DESC_TARGET_CHARS = 970
+# The description budget (2026-10-20): target 400, WARN past the 500 soft cap,
+# FAIL only past the 1024 spec cap. See the description check for why.
+DESC_TARGET_CHARS = 400
+DESC_SOFT_CAP_CHARS = 500
 CHARS_PER_TOKEN = 3.9  # measured, not assumed — see the comment at the budget check
 # Anthropic best practices: a reference longer than this gets a table of contents,
 # because a partial `head` read is what the agent often sees.
 REF_TOC_MIN_LINES = 100
+
+
+def check_description_budget(rel, desc):
+    """WARN past the house soft cap; the 1024 spec cap is the caller's FAIL.
+
+    A description is a router, not a manual. Claude Code fits every installed
+    skill's description into one listing budget and shows the rest as bare names.
+    Measured on the operator's machine 2026-10-20: a 29,995-char listing for 134
+    skills, 81 of them with no description, because family descriptions sat at
+    870-965 chars. The previous rule here (fail past 970, "5% headroom") read as
+    a target, and every member filled it. Plugin skills cannot be hidden with
+    `skillOverrides`, so the author's length is the only lever.
+    """
+    if len(desc) > DESC_SOFT_CAP_CHARS:
+        warn(f"{rel}: description is {len(desc)} chars, past the {DESC_SOFT_CAP_CHARS}-char "
+             f"soft cap (house rule, target {DESC_TARGET_CHARS}). It competes for Claude "
+             "Code's shared skill listing budget, and a description that does not fit is "
+             "shown as a bare name. Keep one 'Use when' sentence, 4-8 triggers in English "
+             "and Russian and one 'NOT for' boundary; move the rest to the body "
+             "(references/authoring.md, 'The description budget')")
 
 
 def strip_quotes(v):
@@ -245,7 +274,7 @@ def parse_frontmatter(text):
     The multi-line case is not a nicety. A plain scalar may continue on indented
     lines and YAML folds them into one value with a space; this parser dropped
     them, so a description whose real length was 1392 characters was measured at
-    180 and passed both the 1024 cap and the 970 working limit. The family's own
+    180 and passed both the 1024 cap and the then 970 working limit. The family's own
     standard-keeper handed a clean bill to a skill the Skills API rejects on
     upload, and its own gate could not catch it either (2026-08-16, B-63).
     """
@@ -335,16 +364,8 @@ else:
         else:
             if len(desc) > DESC_MAX:
                 fail(f"SKILL.md: description is {len(desc)} chars, spec max is {DESC_MAX}")
-            elif len(desc) > DESC_TARGET_CHARS:
-                # The description is the entire triggering budget, and it is the field
-                # that has to grow when a near-miss skill appears (authoring.md: "say
-                # what it is NOT for"). At 1003/1024 there was no room to add that
-                # sentence without first cutting a trigger phrase — the same disease as
-                # a body at 99% of budget, in the field that decides whether the skill
-                # fires at all.
-                fail(f"SKILL.md: description is {len(desc)} chars — inside the 1024 cap but "
-                     f"past the {DESC_TARGET_CHARS} working limit (5% headroom). Leave room "
-                     "for the 'what this is NOT for' clause a new neighbour will require")
+            else:
+                check_description_budget("plugins/make-skill/skills/make-skill/SKILL.md", desc)
             if not desc.lower().startswith("use when"):
                 fail("SKILL.md: description must start with 'Use when …' (canon)")
             if not re.search(r"[а-яё]", desc, re.I):
@@ -532,7 +553,9 @@ BOARD_REL = os.path.join("docs", "evidence", "backlog.md")
 QUOTATION_RE = re.compile(r'\*"[^"]*"\*', re.S)
 STILL_AT_RE = re.compile(r"(?:on npm is still|version stays|no release cut|"
                          r"local, unreleased)[^\n]{0,40}?`?v?(\d+\.\d+\.\d+)?`?")
-SHIPPED_STATE_RE = re.compile(r"(?m)^##\s+Shipped state\s+—\s+v(\d+\.\d+\.\d+)")
+# The separator is an em dash in every section before v0.33.0 and a colon from it on
+# (the operator's no-em-dash rule for text people read, 2026-10-18); both parse.
+SHIPPED_STATE_RE = re.compile(r"(?m)^##\s+Shipped state\s*(?:—|:)\s+v(\d+\.\d+\.\d+)")
 
 
 def _vtuple(s):
@@ -618,6 +641,14 @@ for _sib in sorted(glob.glob(os.path.join(ROOT, "plugins", "*", "skills", "*", "
     _m = re.search(r'^\s+version:\s*"?([^"\s]+)"?\s*$', _fm.group(1), re.M) if _fm else None
     if _m and plg_ver and _m.group(1) != plg_ver:
         fail(f"version mismatch: {_rel} metadata.version={_m.group(1)!r} plugin.json={plg_ver!r}")
+    # The description budget binds every shipped skill, not only make-skill: each one
+    # spends the same Claude Code listing budget.
+    _desc = parse_frontmatter(_fm.group(1)).get("description") if _fm else None
+    if isinstance(_desc, str) and _desc.strip():
+        if len(_desc) > DESC_MAX:
+            fail(f"{_rel}: description is {len(_desc)} chars, spec max is {DESC_MAX}")
+        else:
+            check_description_budget(_rel, _desc)
 
 # commands are skills now: a commands/<x>.md next to a skills/<x>/ registers the
 # same /<x> twice — the skill wins and the command is unreachable always-on cost
@@ -1121,6 +1152,7 @@ SHARED_LIMITS = [
     ("NAME_MAX", "NAME_MAX", NAME_MAX),
     ("DESC_MAX", "DESC_MAX", DESC_MAX),
     ("DESC_TARGET", "DESC_TARGET_CHARS", DESC_TARGET_CHARS),
+    ("DESC_SOFT_CAP", "DESC_SOFT_CAP_CHARS", DESC_SOFT_CAP_CHARS),
     ("COMPAT_MAX", "COMPAT_MAX", COMPAT_MAX),
     ("BODY_MAX_LINES", "BODY_MAX_LINES", BODY_MAX_LINES),
     ("BODY_MAX_TOKENS", "BODY_MAX_TOKENS", BODY_MAX_TOKENS),
@@ -1427,6 +1459,8 @@ if codex_chains({"AGENTS.md": 20000, "a/AGENTS.md": 9000,
                  "c/AGENTS.md": 0}) != {"": 20000, "a": 29000, "a/b": 33000}:
     fail("Codex chain self-test: root-down sum, override-first or empty-skip is wrong")
 
+for w in warnings:
+    print("WARN: " + w)
 if errors:
     print("FAIL: make-skill structure invalid")
     for e in errors:

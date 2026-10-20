@@ -34,7 +34,7 @@
       "lang": "en",
       "query": "is there a skill that can extract tables from a PDF?",
       "should_trigger": true,
-      "why": "explicit catalogue question — the description's own phrase 'is there a skill for'"
+      "why": "explicit catalogue question: the skill's own phrase 'is there a skill for' (in the description until 0.32.0, in the body since 0.33.0)"
     },
     {
       "id": "s02",

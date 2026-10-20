@@ -1,11 +1,11 @@
 ---
 name: skill-search
-description: Use when starting any task, as its first step before acting, to decide whether an installed skill should drive it, or when asked "which skill", "find a skill", "is there a skill for", «какой скилл», «есть ли скилл», «найди скилл», «первый шаг». Restates the request in one line, turns its meaning into concepts in English and Russian with synonyms, searches the whole installed catalogue - including skills the host hides from its listing - then opens the matching SKILL.md and follows it. NOT for building or auditing a skill (make-skill).
+description: Use when starting any task, as its first step, to decide whether an installed skill should drive it. Searches the whole installed catalogue, including skills the host hides from its listing, by concepts in English and Russian, then opens the matching SKILL.md. Triggers - "which skill", "find a skill", «какой скилл», «найди скилл», «первый шаг». NOT for building or auditing a skill (make-skill).
 license: MIT
 compatibility: Any agent. The search command needs node and npx with sshlg-skills 1.55.0 or later; without them a grep over the installed skill directories does the same job.
 metadata:
   author: ssheleg
-  version: "0.32.0"
+  version: "0.33.0"
   homepage: https://github.com/ssheleg/make-skill
 ---
 
@@ -14,7 +14,9 @@ metadata:
 Most installed skills are deliberately hidden from the host's skill listing:
 Claude Code lists descriptions within a small budget and the operator marks most
 skills `user-invocable-only`; Codex marks them `enabled = false`. The listing
-is therefore not the catalogue. Search the catalogue.
+is therefore not the catalogue. Search the catalogue. Also asked as "is there
+a skill for" / «есть ли скилл»: restate the request in one line, turn it into
+concepts with synonyms, search, then follow the matching SKILL.md.
 
 ## The step
 

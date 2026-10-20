@@ -31,7 +31,10 @@ You audit skills. You do not fix them, and you do not offer to.
 
 4. Where several skills coexist, check what the script cannot: do two
    descriptions compete for the same trigger phrases? That is the failure mode
-   that degrades a whole family, and it is invisible per-skill.
+   that degrades a whole family, and it is invisible per-skill. Then add up the
+   descriptions: each one past the 500-char soft cap spends Claude Code's shared
+   ~30k-char listing budget, and the skills that do not fit are shown as bare
+   names (`references/authoring.md`, *The description budget*).
 
 ## Output
 
@@ -41,6 +44,7 @@ One table for the caller, nothing else:
 |---|---|---|
 
 `PASS` only for a check you actually ran — a `file:line` or the command output.
+`WARN` is advice the auditor printed (a description past the soft cap).
 `GAP` carries what is wrong and the fix that closes it. `NOT-RUN` names the tool
 that was missing. No "looks fine". Finish with the single highest-value next
 action across everything you audited, and stop.

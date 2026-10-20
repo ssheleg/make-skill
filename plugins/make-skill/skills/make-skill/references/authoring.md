@@ -14,6 +14,7 @@ and [agentskills.io](https://agentskills.io/skill-creation/best-practices).
 
 - Naming — what to call the skill
 - Description — the entire triggering budget
+- The description budget: a router, not a manual
 - Where a rule lives decides whether it exists
 - Trigger eval loop — when firing is wrong
 - Degrees of freedom — how prescriptive to be
@@ -60,12 +61,52 @@ each of which changes whether the skill fires:
   'CSV'").
 - **Say what it is NOT for** when a near-miss skill exists. That sentence is what
   stops trigger theft.
-- Concise, a few sentences. Descriptions grow during tuning — re-check the 1024
-  cap after every edit.
+- Concise, a few sentences: target 400 characters, house soft cap 500. Descriptions
+  grow during tuning, so re-check the length after every edit (next section).
 - Vague descriptions are the failure mode: `Helps with documents`, `Processes
   data`, `Does stuff with files` never win a selection against a specific one.
 - Agents skip skills for tasks they can already do in one step. Descriptions earn
   their keep on specialized or multi-step work.
+
+## The description budget: a router, not a manual
+
+The description's job is to get the skill chosen; the body teaches it. A
+description that tries to do both is long, and length is paid in a shared budget.
+
+**The shape (house rule since 0.33.0).** One "Use when ..." sentence naming the
+job; the 4-8 highest-signal triggers, English AND Russian, as one compact list;
+one "NOT for ..." boundary, with the refusal phrase if the skill has one. Target
+**400 characters or less**, **soft cap 500** (the validator and `audit_skill.py
+--house` WARN above it), hard cap 1024 (the spec; FAIL). Everything else (long
+trigger lists, examples, caveats, what the skill encodes) goes in the body, where
+catalogue search still finds it.
+
+**Why, measured.** Claude Code shows the model every skill's name, but fits the
+descriptions into one listing budget: `skillListingBudgetFraction` of the context
+window, about 30,000 characters (`references/claude-code-plugin.md`, *The skill
+listing budget*). On the operator's machine on 2026-10-20 the listing was 29,995
+characters for 134 skills, and **81 of them were shown with no description**,
+because the budget was full; the descriptions on offer added up to about 80,000
+characters. Nearly every family description sat at 870-965 characters, filling
+the previous house rule ("5% headroom", 970 of 1024), which authors read as a
+target rather than a ceiling. At ~950 characters about 30 descriptions fit the
+budget; at 400, about 75.
+
+**A bare name routes worse than a short description.** A skill dropped to its
+name is still invocable, but the model rarely picks it on its own: it sees a
+word, not a job. Four hundred characters that name the job and the top triggers
+beat a thousand that never reach the listing.
+
+**The author is the only lever for plugin skills.** `skillOverrides` can hide a
+personal or project skill (`name-only`, `user-invocable-only`), but it does not
+cover plugin skills; those are managed through `/plugin`, one plugin at a time.
+A family that ships as plugins controls its share of the listing only through
+the length of its descriptions.
+
+**When the floor is above 400.** A routing table elsewhere may require phrases
+the description must keep (the sshlg-skills hub checks this with
+`test/advertised_check.js`). Keep those, cut everything else, and stay under the
+500 soft cap; record why the target was not reached.
 
 ## Where a rule lives decides whether it exists
 
@@ -205,6 +246,11 @@ the body.
   Russian encodes at 1.9–2.3 chars/token against English's 5.0 (`cl100k`), and
   rewriting the eight ssheleg routers into English cut them **3408 → 1885
   tokens** with no loss of meaning.
+- **Two token counters, ~40% apart.** `claude plugin details` reported ~7.2k
+  on-invoke for a body a real tokenizer puts at ~5.0k (the CLI assumes ~2.8
+  chars/token, cl100k gives 3.8–4.5). Budget against a tokenizer and expect the
+  CLI to look alarming for a body already inside 5000 real tokens. (Moved here
+  from `SKILL.md` in 0.33.0 to pay for the description-budget rule.)
 
 ## Selective loading — every reference earns its tokens
 
