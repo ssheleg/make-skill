@@ -1,3 +1,10 @@
+## Unreleased
+
+- `test/family_gate.py`, the family's canonical member gate (hub B-108, B-109): the board
+  parses (every row as wide as its header, no id twice) and `release.yml` keeps the tag-ancestry
+  check (`fetch-depth: 0`, `git merge-base --is-ancestor`), each watched failing on a plant by
+  `--self-test`. Wired into the gate; a byte-for-byte copy of the hub's `member-gate/family_gate.py`.
+
 ## v0.33.0: the description is a router, not a manual (target 400, soft cap 500)
 
 - **Why.** Claude Code fits every skill's description into one listing budget and
