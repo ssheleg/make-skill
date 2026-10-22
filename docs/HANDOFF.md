@@ -1,3 +1,8 @@
+## 0.33.0 pinned (2026-10-22)
+
+- **State.** The hub re-pinned make-skill 0.33.0 (its HANDOFF task) and its ratchets; installed on the operator machine.
+- **Next task.** Board empty. Next work comes from the operator's planning.
+
 # Description budget: v0.33.0, 2026-10-20
 
 Objective: stop family skills crowding Claude Code's skill listing. Measured on the
