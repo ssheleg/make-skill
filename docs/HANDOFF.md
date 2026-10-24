@@ -1,3 +1,10 @@
+## v0.33.1: the family member gate (2026-10-24)
+
+- **Done.** the family member gate: the family member gate (`test/family_gate.py`, with its shared-mechanism
+  declaration) and the documentation merged since v0.33.0, released.
+- **Next task.** After merge: tag `v0.33.1`, watch the release, then the sshlg-skills pin bump; then
+  the highest open board row.
+
 ## 0.33.0 pinned (2026-10-22)
 
 - **State.** The hub re-pinned make-skill 0.33.0 (its HANDOFF task) and its ratchets; installed on the operator machine.

@@ -18,6 +18,16 @@ the release the CHANGELOG carries (MS-03).
 
 ---
 
+## Shipped state: v0.33.1 (candidate, 2026-10-24)
+
+Source checks on branch `release/0.33.1`. Publication rows are added by the release receipt in
+HANDOFF once the tag, run and registry are read back.
+
+| REQ | What is checked | Evidence | Confirmed |
+|---|---|---|---|
+| FG-1 member gate | `test/family_gate.py`, the hub's canonical member gate with its shared-mechanism declaration, runs in `npm test` with `--self-test` | `python3 test/family_gate.py --self-test`: 3 of 3 plants caught | observed, source candidate |
+| Gate | whole suite | `npm test`, exit 0 | observed, source candidate |
+
 ## Shipped state: v0.33.0 (candidate, 2026-10-20)
 
 Source checks on branch `feat/description-budget`. Publication rows are added by the
