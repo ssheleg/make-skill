@@ -1,11 +1,11 @@
 ---
 name: make-skill
-description: Use when creating, auditing, packaging or publishing an agent skill or Claude Code plugin to the Agent Skills standard and Anthropic's platform rules. Triggers - "make a skill" / "сделай скилл", "skill audit" / «аудит скилов», "wrap it in a plugin" / "заверни в плагин", "publish a skill" / "опубликуй скилл", "retrofit a skill to the standard" / "приведи скилл к стандарту". NOT for releasing a repo that ships no skill; opt out with "no make-skill" / «без make-skill».
+description: Use when creating, auditing, packaging or publishing an agent skill or Claude Code plugin. Triggers - "make a skill" / "сделай скилл", "skill audit" / «аудит скилов», "заверни в плагин", "опубликуй скилл". NOT for a repo that ships no skill; opt out with "no make-skill" / «без make-skill».
 license: MIT
 compatibility: Authoring works on any agent. The bundled scripts/ need python3. Publishing steps need git, gh, node and npm; the plugin gates need the claude CLI. Not usable on the Claude API surface, which has no network and no runtime package install.
 metadata:
   author: ssheleg
-  version: "0.33.1"
+  version: "0.33.2"
   homepage: https://github.com/ssheleg/make-skill
 ---
 
@@ -14,9 +14,13 @@ metadata:
 Copy from a working repo (usually `~/DATA/<name>`): **`ssheleg/super-ux`**
 (multi-skill suite, Cursor rules) or **`ssheleg/task-pipeline`** (single-skill
 orchestrator, release automation). **make-skill itself** is built to this canon.
-Also for: "does this skill match the spec" / «соответствует ли скилл стандарту»,
-"is this skill safe to install" / «безопасно ли ставить скилл», `claude plugin
-validate` failures, MCP/A2A dependencies, version sync, CI.
+
+## Triggers
+
+"wrap it in a plugin", "publish a skill", "retrofit a skill to the standard" /
+"приведи скилл к стандарту", "does this skill match the spec" / «соответствует ли
+скилл стандарту», "is this skill safe to install" / «безопасно ли ставить скилл»,
+`claude plugin validate` failures, MCP/A2A dependencies, version sync, CI.
 
 ## References — load on demand
 
@@ -139,13 +143,11 @@ some non-Claude runtimes, so DETECT them, never assume "Claude Code only".
 **Each is an accelerator with a written fallback; the skill finishes its job
 without it, more slowly** — a portable body names the inline procedure, not one
 host's exact tool spelling. Write the three fallback cases into the body, in
-the agent's words, at the point it will need them — a HOST lacking a capability
-(the set differs per host: not every non-Claude runtime lacks subagents/MCP), a
+the agent's words, where it will need them — a HOST lacking a capability, a
 recommended companion absent, and a tool/interpreter/MCP server absent (state it
 once, fall back by hand, never loop; interactive auth is a human step). The
 fallback shapes are in `references/host-capabilities.md`; the per-host
-capability matrix (with each norm's owner and check date) in
-`references/agent-skills-spec.md`.
+capability matrix in `references/agent-skills-spec.md`.
 
 A fallback you know but did not write is not a fallback.
 

@@ -1,3 +1,11 @@
+## v0.33.2: descriptions within a 300-character budget
+
+- **Descriptions within a 300-character budget** (hub board row B-255 (a)): Claude Code lists every
+  skill's description in one ~30,000-character budget, and on the operator's machine the listing
+  stood at 51,178. make-skill falls from 470 to 290 characters and skill-search from 397 to 297
+  (hub measure). Both gain a `## Triggers` section holding the phrases the descriptions dropped;
+  make-skill's body trims two clauses so it stays inside its 4,750-token working limit (~4,740).
+
 ## v0.33.1: the family member gate
 
 - `test/family_gate.py`, the family's canonical member gate (hub B-108, B-109): the board
