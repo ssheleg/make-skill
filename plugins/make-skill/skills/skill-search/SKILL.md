@@ -1,11 +1,11 @@
 ---
 name: skill-search
-description: Use when starting any task, as its first step, to decide whether an installed skill should drive it. Searches the whole installed catalogue, including skills the host hides from its listing, by concepts in English and Russian, then opens the matching SKILL.md. Triggers - "which skill", "find a skill", «какой скилл», «найди скилл», «первый шаг». NOT for building or auditing a skill (make-skill).
+description: Use when starting any task, as its first step, to decide whether an installed skill should drive it. Searches the whole catalogue, hidden skills included, by concepts in English and Russian. Triggers - "which skill", «какой скилл», «найди скилл». NOT for building or auditing a skill (make-skill).
 license: MIT
 compatibility: Any agent. The search command needs node and npx with sshlg-skills 1.55.0 or later; without them a grep over the installed skill directories does the same job.
 metadata:
   author: ssheleg
-  version: "0.33.1"
+  version: "0.33.2"
   homepage: https://github.com/ssheleg/make-skill
 ---
 
@@ -55,6 +55,11 @@ Add the host's own skill directory if it keeps one elsewhere. A multi-line
 `description:` escapes this pattern — widen it to the whole file when nothing
 matches. Read the `description:` of each hit before opening it. Nothing found → say so
 in one line and do the task without a skill; never loop on the search.
+
+## Triggers
+
+"which skill", "find a skill", «какой скилл», «найди скилл», «первый шаг», the first
+step of any task.
 
 ## Boundaries
 

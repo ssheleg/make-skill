@@ -18,6 +18,17 @@ the release the CHANGELOG carries (MS-03).
 
 ---
 
+## Shipped state: v0.33.2 (candidate, 2026-10-25)
+
+Source checks on branch `desc-budget`. Publication rows are added by the release receipt in
+HANDOFF once the tag, run and registry are read back.
+
+| REQ | What is checked | Evidence | Confirmed |
+|---|---|---|---|
+| B-255 (a) descriptions | both descriptions at or under 300 characters, hub measure | make-skill 470 to 290, skill-search 397 to 297; the hub's `node test/advertised_check.js --member make-skill` ok (10 routed triggers) | observed, source candidate |
+| Body budget | SKILL.md body inside the 4,750-token working limit after the `## Triggers` section | `python3 test/validate.py` PASS (~4,740 estimated tokens) | observed, source candidate |
+| Gate | whole suite | `npm test`, exit 0 | observed, source candidate |
+
 ## Shipped state: v0.33.1 (candidate, 2026-10-24)
 
 Source checks on branch `release/0.33.1`. Publication rows are added by the release receipt in
