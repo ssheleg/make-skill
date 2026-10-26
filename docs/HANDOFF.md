@@ -1,3 +1,12 @@
+## v0.33.3: the description target is 300 characters (2026-10-26)
+
+- **Done.** The canon's description target is 300 characters (hub B-257), matching the family
+  budget set by B-255: `SKILL.md`, the references, the template, the Cursor rule, README,
+  CONTRIBUTING, the eval scenario and both `DESC_TARGET` constants. Soft cap 500 and spec cap
+  1024 unchanged. Gate: `npm test` exit 0.
+- **Next task.** After merge: tag `v0.33.3`, watch the release, then the sshlg-skills pin bump; then
+  the highest open board row.
+
 ## v0.33.2: descriptions within a 300-character budget (2026-10-25)
 
 - **Done.** Every skill description in this member is at or under 300 characters (hub measure:

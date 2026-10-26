@@ -213,9 +213,9 @@ BODY_MAX_LINES = 500
 BODY_MAX_TOKENS = 5000
 # The body working limit: 5% under its ceiling. See the budget check for why.
 BODY_TARGET_TOKENS = 4750
-# The description budget (2026-10-20): target 400, WARN past the 500 soft cap,
+# The description budget (2026-10-20, target 300 since 2026-10-26): WARN past the 500 soft cap,
 # FAIL only past the 1024 spec cap. See the description check for why.
-DESC_TARGET_CHARS = 400
+DESC_TARGET_CHARS = 300
 DESC_SOFT_CAP_CHARS = 500
 CHARS_PER_TOKEN = 3.9  # measured, not assumed — see the comment at the budget check
 # Anthropic best practices: a reference longer than this gets a table of contents,

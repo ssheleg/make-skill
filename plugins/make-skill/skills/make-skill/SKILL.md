@@ -5,7 +5,7 @@ license: MIT
 compatibility: Authoring works on any agent. The bundled scripts/ need python3. Publishing steps need git, gh, node and npm; the plugin gates need the claude CLI. Not usable on the Claude API surface, which has no network and no runtime package install.
 metadata:
   author: ssheleg
-  version: "0.33.2"
+  version: "0.33.3"
   homepage: https://github.com/ssheleg/make-skill
 ---
 
@@ -108,7 +108,7 @@ House additions on top of the spec:
   → *Content guidelines*).
 - `description` is a **router, not a manual**: one "Use when …" sentence, 4-8
   top triggers in English AND Russian, one "NOT for …" boundary with any refusal
-  phrase. **Target ≤400 chars, soft cap 500** (WARN; 1024 fails): an overflow of
+  phrase. **Target ≤300 chars, soft cap 500** (WARN; 1024 fails): an overflow of
   Claude Code's ~30k-char listing shows as a bare name. The rest goes in the
   body (`references/authoring.md` → *The description budget*).
 - One naming pattern, preferably gerund (`processing-pdfs`); never `helper`,

@@ -17,7 +17,7 @@ spends its context on the half that needs judgement.
   --house   adds the ssheleg canon: description starts "Use when …", carries
             English AND Russian trigger phrases, holds the body to its 4750 of
             5000 token working limit, and WARNS on a description past the
-            500-char soft cap (target 400; 1024 stays the hard GAP). A WARN
+            500-char soft cap (target 300; 1024 stays the hard GAP). A WARN
             does not change the exit code. The listing budget behind the soft
             cap is in references/authoring.md, "The description budget".
   --supply-chain
@@ -46,7 +46,8 @@ DESC_MAX = 1024         # spec: description is 1-1024 characters
 # 134 skills, 81 of them without a description, because family descriptions sat
 # at 870-965 chars. The old rule (5% under 1024, i.e. 970) read as a target and
 # every member filled it. Target 400, warn past 500, refuse only past 1024.
-DESC_TARGET = 400
+# 2026-10-26 (hub B-255): the family target fell to 300; the soft cap stays 500.
+DESC_TARGET = 300
 DESC_SOFT_CAP = 500
 # B-139 — the nine `DESC_*` rules ask WHEN and never WHAT.
 #
@@ -129,7 +130,7 @@ THRESHOLDS = {
     "BODY_TARGET_TOKENS": ("house", 4750),
     "DESC_MAX_CHARS": ("spec", 1024),
     "DESC_SOFT_CAP": ("house", 500),
-    "DESC_TARGET": ("house", 400),
+    "DESC_TARGET": ("house", 300),
 }
 
 # The differential corpus: pinned counts for DEFAULT_ENCODING, measured with
@@ -1164,7 +1165,7 @@ def main(argv):
     p.add_argument("--house", action="store_true",
                    help="also apply the ssheleg canon: Use-when opener, EN+RU triggers, "
                         "the body working limit (4750 of 5000 tokens) and a WARN on a "
-                        "description past the 500-char soft cap (target 400)")
+                        "description past the 500-char soft cap (target 300)")
     p.add_argument("--supply-chain", action="store_true",
                    help="also run the pre-install review of a skill you did not write "
                         "(SC-1..SC-5 in references/enterprise.md)")

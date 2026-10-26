@@ -172,7 +172,7 @@ a number with no owner reads as physics, and an unversioned norm has no expiry:
 | `name` ≤ 64 chars, `description` ≤ 1024 | spec | required | 2026-09-09 |
 | body < 5000 tokens | spec | recommended | 2026-09-09 |
 | body < 4750 tokens (headroom) | house | recommended | 2026-09-09 |
-| `description` ≤ 500 chars (soft cap, WARN; target 400) | house | recommended | 2026-10-20 |
+| `description` ≤ 500 chars (soft cap, WARN; target 300) | house | recommended | 2026-10-26 |
 | Skills API: 8 skills/request, 30 MB | host | required (that surface) | 2026-09-09 |
 | `--strict` validates SKILL.md frontmatter | host (Claude Code ≥ v2.1.233) | n/a | 2026-09-09 |
 
@@ -185,7 +185,7 @@ worse authoring, not an install error everywhere.
 - [ ] `name`: matches dir, ≤64 chars, `[a-z0-9-]`, no leading/trailing/double
       hyphen, no `anthropic`/`claude`, no angle brackets
 - [ ] `description`: 1–1024 chars, no angle brackets, third person, says what it
-      does AND when to use it, concrete triggers listed; house: target 400,
+      does AND when to use it, concrete triggers listed; house: target 300,
       WARN past 500
 - [ ] optional fields legal: `compatibility` ≤500, `metadata` all-string map,
       `allowed-tools` a space-separated string
