@@ -244,7 +244,7 @@ Read from the [skills](https://code.claude.com/docs/en/skills) and
   30000 budget"* — a large catalogue loses most descriptions silently. Again on
   2026-10-20, operator machine: 29,995 chars for 134 skills, 81 shown with no
   description, against ~80,000 chars of descriptions on offer. The house answer
-  is a short description (target 400, soft cap 500): `references/authoring.md`,
+  is a short description (target 300, soft cap 500): `references/authoring.md`,
   *The description budget*.
 - Each entry's `description` + `when_to_use` is cut at `skillListingMaxDescChars`
   (default **1,536**). The spec's own `description` cap of 1024 is tighter and

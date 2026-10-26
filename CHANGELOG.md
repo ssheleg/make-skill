@@ -1,3 +1,13 @@
+## v0.33.3: the description target is 300 characters
+
+- **The description target is 300 characters** (hub board row B-257): the family moved to a
+  300-character budget on 2026-10-26 (B-255), but the canon new members and retrofits read
+  still said 400, so a skill written to it would raise the family total the hub ratchet holds.
+  `SKILL.md`, `references/authoring.md`, `retrofit.md`, `agent-skills-spec.md`, the
+  `SKILL.template.md` description, `README.md`, `CONTRIBUTING.md`, the eval scenario and both
+  `DESC_TARGET` constants (`audit_skill.py`, `test/validate.py`) now say 300. The soft cap
+  (500, WARN) and the spec cap (1024, FAIL) are unchanged: only the advisory target moved.
+
 ## v0.33.2: descriptions within a 300-character budget
 
 - **Descriptions within a 300-character budget** (hub board row B-255 (a)): Claude Code lists every

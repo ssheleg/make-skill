@@ -47,7 +47,7 @@ canon below only ADDS to it.
 ## Authoring rules (every skill)
 
 - `description` is a router, not a manual: one "Use when …" sentence, 4-8 top
-  trigger phrases in English AND Russian, one "NOT for …" boundary. Target 400
+  trigger phrases in English AND Russian, one "NOT for …" boundary. Target 300
   chars, house soft cap 500 (1024 is the spec cap). Claude Code fits every
   description into one ~30k-char listing and shows the overflow as bare names;
   longer trigger lists and caveats go in the body.

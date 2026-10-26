@@ -1,6 +1,6 @@
 ---
 name: skill-name-here
-description: Use when THE JOB IN ONE SENTENCE, saying what the skill does. Triggers - 4-8 top phrases in English AND Russian. NOT for THE NEAREST NEIGHBOUR, plus the refusal phrase if any. Third person, target 400 chars, house soft cap 500, spec max 1024, no angle brackets. Longer trigger lists go in the body.
+description: Use when THE JOB IN ONE SENTENCE, saying what the skill does. Triggers - 4-8 top phrases in English AND Russian. NOT for THE NEAREST NEIGHBOUR, plus the refusal phrase if any. Third person, target 300 chars, house soft cap 500, spec max 1024, no angle brackets. Longer trigger lists go in the body.
 # Optional, spec-legal — delete the ones you don't need:
 # license: MIT
 # compatibility: runtime / system packages / required MCP server / protocol version
@@ -24,7 +24,7 @@ Spec floor — https://agentskills.io/specification plus Anthropic's platform ru
   name        1-64 chars, a-z0-9 and single internal hyphens, == directory name,
               no angle brackets, never containing "anthropic" or "claude"
   description 1-1024 chars, third person, no angle brackets, what + when
-              (house: target 400, soft cap 500; a router, not a manual)
+              (house: target 300, soft cap 500; a router, not a manual)
   body        < 500 lines and < 5000 tokens
 Heavier material → references/ (docs), scripts/ (code), assets/ (templates,
 schemas) inside THIS directory, one level deep, each linked from the body with a

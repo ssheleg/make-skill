@@ -61,7 +61,7 @@ each of which changes whether the skill fires:
   'CSV'").
 - **Say what it is NOT for** when a near-miss skill exists. That sentence is what
   stops trigger theft.
-- Concise, a few sentences: target 400 characters, house soft cap 500. Descriptions
+- Concise, a few sentences: target 300 characters, house soft cap 500. Descriptions
   grow during tuning, so re-check the length after every edit (next section).
 - Vague descriptions are the failure mode: `Helps with documents`, `Processes
   data`, `Does stuff with files` never win a selection against a specific one.
@@ -76,7 +76,7 @@ description that tries to do both is long, and length is paid in a shared budget
 **The shape (house rule since 0.33.0).** One "Use when ..." sentence naming the
 job; the 4-8 highest-signal triggers, English AND Russian, as one compact list;
 one "NOT for ..." boundary, with the refusal phrase if the skill has one. Target
-**400 characters or less**, **soft cap 500** (the validator and `audit_skill.py
+**300 characters or less**, **soft cap 500** (the validator and `audit_skill.py
 --house` WARN above it), hard cap 1024 (the spec; FAIL). Everything else (long
 trigger lists, examples, caveats, what the skill encodes) goes in the body, where
 catalogue search still finds it.
@@ -90,11 +90,13 @@ because the budget was full; the descriptions on offer added up to about 80,000
 characters. Nearly every family description sat at 870-965 characters, filling
 the previous house rule ("5% headroom", 970 of 1024), which authors read as a
 target rather than a ceiling. At ~950 characters about 30 descriptions fit the
-budget; at 400, about 75.
+budget; at 400, about 75; at 300, about 100. The family moved its target from 400
+to 300 on 2026-10-26 (hub B-255): 39 descriptions fell from 16,102 to 11,470
+characters in total, and the measured listing from 51,178 to 47,297.
 
 **A bare name routes worse than a short description.** A skill dropped to its
 name is still invocable, but the model rarely picks it on its own: it sees a
-word, not a job. Four hundred characters that name the job and the top triggers
+word, not a job. Three hundred characters that name the job and the top triggers
 beat a thousand that never reach the listing.
 
 **The author is the only lever for plugin skills.** `skillOverrides` can hide a
@@ -103,7 +105,7 @@ cover plugin skills; those are managed through `/plugin`, one plugin at a time.
 A family that ships as plugins controls its share of the listing only through
 the length of its descriptions.
 
-**When the floor is above 400.** A routing table elsewhere may require phrases
+**When the floor is above 300.** A routing table elsewhere may require phrases
 the description must keep (the sshlg-skills hub checks this with
 `test/advertised_check.js`). Keep those, cut everything else, and stay under the
 500 soft cap; record why the target was not reached.

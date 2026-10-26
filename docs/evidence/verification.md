@@ -18,6 +18,17 @@ the release the CHANGELOG carries (MS-03).
 
 ---
 
+## Shipped state: v0.33.3 (candidate, 2026-10-26)
+
+Source checks on branch `fix/description-target-300`. Publication rows are added by the release
+receipt in HANDOFF once the tag, run and registry are read back.
+
+| REQ | What is checked | Evidence | Confirmed |
+|---|---|---|---|
+| B-257 target | every live statement of the description target says 300; the soft cap 500 and spec cap 1024 are unchanged | `git grep -n "400" -- plugins cursor README.md CONTRIBUTING.md test/validate.py test/evals` prints only the 2026-10-20 history (`authoring.md` *The description budget*, one comment in `audit_skill.py`) | observed, source candidate |
+| Constants agree | `DESC_TARGET` (`audit_skill.py`) and `DESC_TARGET_CHARS` (`test/validate.py`) are both 300; the parity table checks they match | `python3 test/validate.py` PASS | observed, source candidate |
+| Gate | whole suite | `npm test`, exit 0 | observed, source candidate |
+
 ## Shipped state: v0.33.2 (candidate, 2026-10-25)
 
 Source checks on branch `desc-budget`. Publication rows are added by the release receipt in

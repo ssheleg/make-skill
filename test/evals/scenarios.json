@@ -10,7 +10,7 @@
       "expected_behavior": [
         "Announces the chosen workflow (Create — distributable) before writing files",
         "SKILL.md frontmatter has name == the skill directory name, no 'anthropic'/'claude' substring, no angle brackets",
-        "description starts with 'Use when', is third person, carries English AND Russian trigger phrases, and stays under the 500-character house soft cap (target 400; 1024 is the spec cap)",
+        "description starts with 'Use when', is third person, carries English AND Russian trigger phrases, and stays under the 500-character house soft cap (target 300; 1024 is the spec cap)",
         "Body stays under 500 lines and under 5000 tokens; heavier material goes to references/ inside the skill directory",
         "Every bundled reference is linked from the body with a stated load condition, and any reference over 100 lines opens with a '## Contents' list",
         "Creates .claude-plugin/marketplace.json and plugins/<name>/.claude-plugin/plugin.json, both with $schema, with only manifests inside .claude-plugin/",

@@ -91,7 +91,7 @@ resolvable install — not "should work now".
 **Conformance to both rulebooks, not just a house style.** The
 [Agent Skills specification](https://agentskills.io/specification) sets hard
 limits — `name` is 1–64 chars of `a-z0-9` and single hyphens and must match its
-directory, `description` caps at 1024 characters (the house rule asks for 400,
+directory, `description` caps at 1024 characters (the house rule asks for 300,
 and warns past 500, because Claude Code's skill listing shows an overflow as bare
 names), the body should stay under 500 lines and 5000 tokens. [Anthropic's platform docs](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview)
 add rules the open standard is silent about and only the Skills API enforces —
