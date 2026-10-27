@@ -4,11 +4,14 @@
 limits stated below.** Before that date this file said "authored, never
 executed", and that state is preserved in git history rather than restated here.
 
-`triggers.json` (22 queries) and `scenarios.json` (4 behavioural scenarios) are
+`triggers.json` (23 queries) and `scenarios.json` (4 behavioural scenarios) are
 validated for shape on every commit — query count, both classes present on both
 sides of the split, three or more scenarios, every referenced fixture on disk —
 and the counts in this file are compared against the artifacts by
 `test/evals_validate.py`, so a stated number cannot drift silently.
+
+q23 («проверь скилл по стандарту», added 2026-10-27 with that trigger phrase) is not
+in any dated run below: those measured q01 to q22.
 
 ## Dated runs
 

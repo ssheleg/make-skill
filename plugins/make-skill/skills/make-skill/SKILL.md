@@ -5,7 +5,7 @@ license: MIT
 compatibility: Authoring works on any agent. The bundled scripts/ need python3. Publishing steps need git, gh, node and npm; the plugin gates need the claude CLI. Not usable on the Claude API surface, which has no network and no runtime package install.
 metadata:
   author: ssheleg
-  version: "0.33.3"
+  version: "0.33.4"
   homepage: https://github.com/ssheleg/make-skill
 ---
 
@@ -19,8 +19,10 @@ orchestrator, release automation). **make-skill itself** is built to this canon.
 
 "wrap it in a plugin", "publish a skill", "retrofit a skill to the standard" /
 "приведи скилл к стандарту", "does this skill match the spec" / «соответствует ли
-скилл стандарту», "is this skill safe to install" / «безопасно ли ставить скилл»,
-`claude plugin validate` failures, MCP/A2A dependencies, version sync, CI.
+скилл стандарту», "check a skill against the standard" /
+«проверь скилл по стандарту», "is this skill safe to install" /
+«безопасно ли ставить скилл», `claude plugin validate` failures, MCP/A2A
+dependencies, version sync, CI.
 
 ## References — load on demand
 
@@ -31,7 +33,7 @@ orchestrator, release automation). **make-skill itself** is built to this canon.
 | `references/surfaces.md` | shipping anywhere but Claude Code — Skills API upload/versions/8-per-request, claude.ai zip, the no-network limits |
 | `references/enterprise.md` | reviewing, adapting or installing an external skill — dependency closure, provenance, risk tiers, lifecycle |
 | `references/retrofit.md` | auditing an existing skill/repo — the 14-item checklist, the evidence rules, the personal-skill short form |
-| `references/outcome-evaluation.md` | proving a skill changed real outcomes — frozen inputs, baseline vs current, artifact checks, the routing/correctness/visual split, PASS/FAIL/ERROR/NOT_RUN |
+| `references/outcome-evaluation.md` | proving a skill changed real outcomes: frozen inputs, baseline vs current, artifact checks, routing/correctness/visual, PASS/FAIL/ERROR/NOT_RUN |
 | `references/host-capabilities.md` | shipping a **hook, subagent, command, script or MCP dependency** — what each buys and costs, hook events and exit codes, the degradation clauses |
 | `references/claude-code-plugin.md` | anything shipping as a **Claude Code plugin/marketplace** — manifest schemas, component layout, path variables, `validate` failures |
 | `references/distribution.md` | the repo layout, releases, and all five channels — plugin, skills CLI, npx, Cursor, umbrella family repo |
@@ -49,7 +51,7 @@ Detect from the request and any path in `$ARGUMENTS`; announce the choice.
 |---|---|
 | New skill, only for this user's agents | Create (personal) |
 | New skill, installable by others/other agents | Create (distributable) |
-| Existing skill or repo below this standard, "does this match the spec?" | Retrofit |
+| Existing skill or repo below this standard | Retrofit |
 | Personal skill should become installable | Promote |
 | Finding a skill to USE | `skill-search` |
 

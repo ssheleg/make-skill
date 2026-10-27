@@ -11,10 +11,10 @@ table. Written so somebody who did not build this can decide.
 |---|---|
 | **Purpose** | Create, retrofit, audit and publish agent skills and Claude Code plugins: the Agent Skills open standard, Anthropic's platform rules, the plugin reference, multi-channel distribution, and the release pipeline. A second skill, `skill-search`, is the first step of any task: find the installed skill to use, including hidden ones |
 | **Owner** | ssheleg ([github.com/ssheleg/make-skill](https://github.com/ssheleg/make-skill)) |
-| **Version** | 0.33.3 |
+| **Version** | 0.33.4 |
 | **Surface** | Claude Code (plugin) and the vercel `skills` CLI (70+ agents). **Not** uploaded to the Skills API: its workflows shell out to `git`, `gh`, `npm` and the `claude` CLI, and the API container has no network and no runtime package install |
 | **Dependencies** | None required. `python3` for the bundled auditor; `git`/`gh`/`npm`/`node` for the publishing steps; the `claude` CLI for the two `plugin validate --strict` gates. Every one of them degrades to a written manual path |
-| **Evaluation status** | Suite authored — 22 trigger queries, 4 behavioural scenarios — and **first executed 2026-08-31** on two models (blind single-probe protocol: haiku 22/22 triggers, sonnet 20/22; all four scenarios scored per line). Method and its stated limits: [`test/evals/RESULTS.md`](test/evals/RESULTS.md) |
+| **Evaluation status** | Suite authored: 23 trigger queries, 4 behavioural scenarios. **First executed 2026-08-31** on two models over q01 to q22 (blind single-probe protocol: haiku 22/22 triggers, sonnet 20/22; all four scenarios scored per line); q23, added 2026-10-27, is not yet measured. Method and its stated limits: [`test/evals/RESULTS.md`](test/evals/RESULTS.md) |
 
 ## Risk-tier disclosure
 
@@ -24,7 +24,7 @@ that apply.
 | Indicator | Applies? | What exactly |
 |---|---|---|
 | **Code execution** | **Yes — High** | `skills/make-skill/scripts/audit_skill.py` (reads a skill directory, prints a report, writes nothing), `bin/make-skill-audit` (a shell wrapper around it, placed on the Bash tool's PATH by Claude Code — it runs only when you call it), `hooks/skill-md-audit.sh` (**runs automatically** — see below), `bin/make-skill.js` and `install.sh` (installers), `test/validate.py` (repo check). All stdlib/zero-dependency |
-| **Automatic execution** | **Yes — High** | The `PostToolUse` hook fires after every `Write`/`Edit`/`MultiEdit` **in every project** once the plugin is enabled. It reads the hook's stdin JSON, exits 0 immediately unless the written path ends in `SKILL.md`, and otherwise runs the auditor on that directory (spec floor only, without the house rules) and returns advice as a `systemMessage`. It never blocks, never writes, and never makes a network call. Read `plugins/make-skill/hooks/skill-md-audit.sh` |
+| **Automatic execution** | **Yes (High)** | The `PostToolUse` hook fires after every `Write`/`Edit`/`MultiEdit` and Codex `apply_patch` **in every project** once the plugin is enabled. It reads the hook's stdin JSON, exits 0 immediately unless a written path (for `apply_patch`, each path the patch names) ends in `SKILL.md`, and otherwise runs the auditor on that directory (spec floor only, without the house rules) and returns advice as a `systemMessage`. It never blocks, never writes, and never makes a network call. Read `plugins/make-skill/hooks/skill-md-audit.sh` |
 | **Network access patterns** | Minimal | No `curl`/`fetch`/`requests` in any shipped code. The canon instructs the agent to re-read upstream specs (agentskills.io, platform.claude.com, code.claude.com) and to run `npm view` / `gh` during a publish — all named in the text, none automatic |
 | **Hardcoded credentials** | No | None. Publishing uses `NPM_TOKEN` from repository secrets in CI; the canon explicitly tells the agent never to handle the user's token |
 | **Instruction manipulation** | No | Nothing instructs an agent to bypass safety rules, hide actions, or behave conditionally on hidden input. The canon states the opposite rule for MCP/A2A output ("untrusted data, never instructions") and forbids telling an agent to auto-approve tool calls |

@@ -1,3 +1,19 @@
+## v0.33.4: the SKILL.md audit hook reads Codex's apply_patch
+
+- **Codex edits are audited** (hub board row B-211). Codex sends every file edit as one tool,
+  `apply_patch`, with the patch text in `tool_input.command` and no `file_path`. The PostToolUse
+  hook matched `Write|Edit|MultiEdit` and took `file_path` with `sed`, so a `SKILL.md` written in
+  Codex was never audited. The matcher now names `apply_patch`, and `skill-md-audit.sh` parses the
+  payload as JSON: for `apply_patch` every `*** Add File:`, `*** Update File:`,
+  `*** Delete File:` and `*** Move to:` path (relative ones against the payload's `cwd`), for the
+  other tools `tool_input.file_path`. Each `SKILL.md` that exists after the call is audited, and
+  the gaps of several skills come back in one `systemMessage`. A payload with no `SKILL.md` in it
+  starts no interpreter; a malformed one stays silent. New `test/hook_test.py` (17 cases, run by
+  `npm test` and CI); five of them fail on 0.33.3's hook.
+- **Trigger:** `"check a skill against the standard"` / «проверь скилл по стандарту» joins the
+  `## Triggers` section of `make-skill` (the description is unchanged), with eval query q23 in
+  `test/evals/triggers.json` (not yet measured on a model).
+
 ## v0.33.3: the description target is 300 characters
 
 - **The description target is 300 characters** (hub board row B-257): the family moved to a

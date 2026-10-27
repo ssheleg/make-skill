@@ -12,7 +12,7 @@ model's behavior with the skill installed, which no unit test can stand in for.
 
 | File | What it holds |
 |---|---|
-| `triggers.json` | 22 trigger queries, half `should_trigger: true`, half near-misses that share keywords but need something else |
+| `triggers.json` | 23 trigger queries: 12 `should_trigger: true`, 11 near-misses that share keywords but need something else |
 | `scenarios.json` | behavioral evaluations in Anthropic's shape — `skills`, `query`, `files`, `expected_behavior` |
 | `skill-search/triggers.json` | trigger queries for the `skill-search` skill, English and Russian in both classes (B-147; count computed by `evals_validate.py`). Structurally validated by `evals_validate.py`; dated native-loading observations and limits are in [RESULTS.md](RESULTS.md#skill-search-native-loading-2026-10-13). Actual catalogue execution and task quality remain separate |
 | `fixtures/` | inputs a scenario points at (never named `SKILL.md`: the skills CLI ships every one it finds) |
@@ -33,7 +33,7 @@ model's behavior with the skill installed, which no unit test can stand in for.
 5. Stop after five iterations and keep the iteration with the best **validation**
    pass rate, which is not always the last one.
 
-The negatives are the point. A description that fires on all ten true queries and
+The negatives are the point. A description that fires on every true query and
 also on "review my pull request" is worse than one that misses two, because it
 steals turns from every other skill installed.
 

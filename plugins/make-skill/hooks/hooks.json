@@ -1,9 +1,9 @@
 {
-  "description": "make-skill — spec check on every SKILL.md write. The hook exits 0 without output for any path that is not a SKILL.md, so installing this plugin globally changes nothing in projects that do not author skills. It applies the Agent Skills spec floor only (no --house), so it never imposes this repo's own conventions on someone else's skill. It never blocks: PostToolUse runs after the write, and the result is advice, not a veto.",
+  "description": "make-skill: spec check on every SKILL.md write. It also reads Codex's apply_patch (every Add, Update, Delete and Move-to path in the patch text). The hook exits 0 without output for any path that is not a SKILL.md, so installing this plugin globally changes nothing in projects that do not author skills. It applies the Agent Skills spec floor only (no --house), so it never imposes this repo's own conventions on someone else's skill. It never blocks: PostToolUse runs after the write, and the result is advice, not a veto.",
   "hooks": {
     "PostToolUse": [
       {
-        "matcher": "Write|Edit|MultiEdit",
+        "matcher": "Write|Edit|MultiEdit|apply_patch",
         "hooks": [
           {
             "type": "command",
