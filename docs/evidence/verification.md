@@ -18,6 +18,16 @@ the release the CHANGELOG carries (MS-03).
 
 ---
 
+## Shipped state: v0.33.5 (candidate, 2026-10-27)
+
+Source checks on branch `waves/1027-make-skill-m`. Publication rows are added by the release
+receipt in HANDOFF once the tag, run and registry are read back.
+
+| REQ | What is checked | Evidence | Confirmed |
+|---|---|---|---|
+| B-285 head | skill-search's description names its subject within its first 57 characters, still opens with "Use when" and stays under 300 characters | `python3 plugins/make-skill/skills/make-skill/scripts/audit_skill.py --house plugins/make-skill/skills/skill-search`: 0 GAP, 18 PASS (294 characters) | observed, source candidate |
+| Gate | whole suite | `npm test`, exit 0 | observed, source candidate |
+
 ## Shipped state: v0.33.4 (candidate, 2026-10-27)
 
 Source checks on branch `waves/1027-make-skill`. Publication rows are added by the release
