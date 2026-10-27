@@ -501,6 +501,9 @@ jobs:
           out=$(echo "{\"tool_name\":\"Edit\",\"tool_input\":{\"file_path\":\"$PWD/plugins/make-skill/skills/make-skill/SKILL.md\"}}" | "$H")
           test -z "$out" || { echo "ERROR: hook complained about a clean SKILL.md: $out"; exit 1; }
           echo "OK: hook no-ops, advises, and never blocks"
+          # Codex's apply_patch, malformed payloads and no python3 (hub B-211): the same
+          # file `npm test` runs locally.
+          python3 test/hook_test.py
 
       - name: install.sh syntax check
         run: bash -n install.sh

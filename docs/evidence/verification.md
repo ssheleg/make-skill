@@ -18,6 +18,19 @@ the release the CHANGELOG carries (MS-03).
 
 ---
 
+## Shipped state: v0.33.4 (candidate, 2026-10-27)
+
+Source checks on branch `waves/1027-make-skill`. Publication rows are added by the release
+receipt in HANDOFF once the tag, run and registry are read back.
+
+| REQ | What is checked | Evidence | Confirmed |
+|---|---|---|---|
+| B-211 apply_patch | an `apply_patch` that adds, updates or moves onto a broken `SKILL.md` (absolute, relative to the payload `cwd`, or with the patch in `tool_input.input`) returns advice; two broken skills in one patch are named in one message | `python3 test/hook_test.py`: 17 ok; against 0.33.3's hook, 5 of the apply_patch cases fail | observed, source candidate |
+| Silent paths | a clean `SKILL.md`, an unrelated path, a deleted `SKILL.md`, malformed payloads and no python3 on PATH print nothing and exit 0 | `python3 test/hook_test.py` | observed, source candidate |
+| Claude shapes | `Write`/`Edit` cases unchanged | `python3 test/hook_test.py`, and CI's "Hook is silent unless a SKILL.md was written" step | observed, source candidate |
+| Trigger | `## Triggers` holds «проверь скилл по стандарту» on one line; eval q23 validates | `grep -n "проверь скилл по стандарту" plugins/make-skill/skills/make-skill/SKILL.md`; `python3 test/evals_validate.py` (23 trigger cases) | observed, source candidate |
+| Gate | whole suite | `npm test`, exit 0 | observed, source candidate |
+
 ## Shipped state: v0.33.3 (candidate, 2026-10-26)
 
 Source checks on branch `fix/description-target-300`. Publication rows are added by the release

@@ -1,3 +1,19 @@
+## v0.33.4: the SKILL.md audit hook reads Codex's apply_patch (2026-10-27)
+
+- **Objective.** Hub board row B-211 (make-skill part): the PostToolUse audit never ran on a
+  `SKILL.md` written in Codex, whose edits arrive as `apply_patch` with the patch in
+  `tool_input.command`. Also a coordinator request: route «проверь скилл по стандарту» here.
+- **Done.** `hooks/hooks.json` matcher `Write|Edit|MultiEdit|apply_patch`; `hooks/skill-md-audit.sh`
+  parses the payload as JSON and audits every existing `SKILL.md` a call wrote; new
+  `test/hook_test.py` (in `npm test` and CI); SECURITY.md and SKILL-CARD.md describe the new tool.
+  `## Triggers` gained "check a skill against the standard" / «проверь скилл по стандарту», with
+  eval query q23.
+- **Checks run.** `npm test` on the candidate tree; `test/hook_test.py` against 0.33.3's hook (5
+  apply_patch cases fail there). PR, CI run, merge commit and release run: in the pull request.
+- **Open.** q23 has no model measurement yet (RESULTS.md says so).
+- **Next task.** After the release: the sshlg-skills pin bump to 0.33.4 (hub B-211 close, and the
+  hub routing row for «проверь скилл по стандарту»); then the highest open board row.
+
 ## v0.33.3: the description target is 300 characters (2026-10-26)
 
 - **Done.** The canon's description target is 300 characters (hub B-257), matching the family

@@ -18,10 +18,11 @@ hook. Knowing exactly what runs where is most of the threat model — and the ho
 is the only thing that runs without you asking:
 
 - **`plugins/make-skill/hooks/skill-md-audit.sh`** runs on every `Write`,
-  `Edit` and `MultiEdit` **in every project** once the plugin is enabled. It
-  reads the hook's stdin JSON and **exits 0 immediately, printing nothing,
-  unless the written path ends in `SKILL.md`** — so in a project that does not
-  author skills it is a no-op you never see. When it is a `SKILL.md`, it runs
+  `Edit` and `MultiEdit`, and on Codex's `apply_patch`, **in every project** once
+  the plugin is enabled. It reads the hook's stdin JSON and **exits 0
+  immediately, printing nothing, unless a written path ends in `SKILL.md`**
+  (for `apply_patch`, every path the patch adds, updates or moves to). In a
+  project that does not author skills it is a no-op you never see. When it is a `SKILL.md`, it runs
   the bundled auditor on that directory and returns the report as advice
   (`systemMessage`). It never blocks, never writes a file, never makes a network
   call, and needs no `jq`. Read it before enabling the plugin — it is short.
