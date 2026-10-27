@@ -1,3 +1,10 @@
+## v0.33.5: skill-search names its subject first
+
+- **skill-search's description names its subject within the first 57 characters** (hub board row
+  B-285; Hermes shows only that many). The head was "Use when starting any task, as its first
+  step, to decide " and is now "Use when searching installed skills, as the first step of". 294
+  characters; the "Use when" canon, triggers and the NOT-for boundary are unchanged.
+
 ## v0.33.4: the SKILL.md audit hook reads Codex's apply_patch
 
 - **Codex edits are audited** (hub board row B-211). Codex sends every file edit as one tool,

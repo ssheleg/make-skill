@@ -1,3 +1,12 @@
+## v0.33.5: skill-search names its subject first (2026-10-27)
+
+- **Objective.** Hub board row B-285 (make-skill part): Hermes shows only the first 57 characters
+  of a description, and skill-search's never named its subject there.
+- **Done.** The description opens "Use when searching installed skills, as the first step of any
+  task, for one that should drive it." (294 characters; triggers and boundary unchanged).
+- **Checks run.** `npm test` on the candidate tree; `audit_skill.py --house` on skill-search.
+- **Next task.** After merge: tag `v0.33.5`, watch the release, then the sshlg-skills pin bump.
+
 ## v0.33.4: the SKILL.md audit hook reads Codex's apply_patch (2026-10-27)
 
 - **Objective.** Hub board row B-211 (make-skill part): the PostToolUse audit never ran on a
