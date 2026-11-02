@@ -1232,7 +1232,8 @@ def check_routed_triggers_still_advertised():
     discloses instead of passing, because a check that cannot look must never read as one
     that looked.
     """
-    script = os.path.join(str(ROOT), "..", "..", "test", "advertised_check.js")
+    # B-304: a standalone CI clone points SSHLG_HUB_ROOT at a checkout of the hub.
+    script = os.path.join(os.environ.get("SSHLG_HUB_ROOT") or os.path.join(str(ROOT), "..", ".."), "test", "advertised_check.js")
     if not os.path.isfile(script):
         _disclose_routing("routed triggers — no sshlg-skills umbrella above this checkout")
         return
