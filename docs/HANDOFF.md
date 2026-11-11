@@ -1,3 +1,17 @@
+## v0.33.6: npm trusted publishing, one family update command (2026-11-11)
+
+- **Objective.** The operator's 2026-11-11 family audit order («пройди по всем и найди проблемы
+  ... по всем скилам в семье»), findings MS-1 to MS-5 and MS-7 for make-skill.
+- **Done.** See CHANGELOG v0.33.6: family update caveat, OIDC-only publishing (canon,
+  SKILL-CARD, CONTRIBUTING, `release.yml`), the agent runs `npm publish`, Gotchas trimmed to
+  pointers, retired eval neighbour marked.
+- **Checks run.** `npm test` on the candidate tree; `audit_skill.py --house` on make-skill.
+- **Open.** make-skill had never published through OIDC: if the v0.33.6 publish job fails
+  with `ENEEDAUTH` or `E403`, the package's Trusted Publisher on npmjs.com is unset, a human
+  gate (the owner's security key) at `https://www.npmjs.com/package/@ssheleg/make-skill/access`.
+- **Next task.** After merge: tag `v0.33.6`, watch the release, read back npm; then the
+  sshlg-skills pin bump (the hub's own session).
+
 ## v0.33.5: skill-search names its subject first (2026-10-27)
 
 - **Objective.** Hub board row B-285 (make-skill part): Hermes shows only the first 57 characters

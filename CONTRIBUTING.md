@@ -204,8 +204,8 @@ npx --yes sshlg-skills@latest list     # the new number must appear here
 
 There is no manual `npm publish` step in any repo in the family. Every one of
 them carries a `release.yml` whose `publish` job runs on a `v*` tag with
-`PUBLISH_NPMJS` armed, authenticating through `NPM_TOKEN` **and** OIDC trusted
-publishing, and skipping the version when the registry already has it.
+`PUBLISH_NPMJS` armed, authenticating through npm trusted publishing (OIDC) with
+no npm token anywhere, and skipping the version when the registry already has it.
 
 Since `sshlg-skills` v0.20.0 the drift itself is checked: `test/check_pins.py`
 compares every pin against the registry and fails the build when one is

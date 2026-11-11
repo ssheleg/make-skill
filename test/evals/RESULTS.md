@@ -168,6 +168,13 @@ candidate list is the missing measurement.
 Re-measure the neighbour table whenever the installed set changes: coexistence
 is a property of the set, not of the skill.
 
+**Retired neighbour, noted 2026-11-11.** `claude-mem` is retired on the author's
+machine, so `claude-mem:version-bump` is no longer installed there, and no
+installed skill claims the same manifest-bump-and-release job. The table above
+and q21/q22 stay as measured on 2026-08-10 and 2026-08-31, against a skill that
+was installed then; they are not re-run here (model evals cost money). The next
+re-measure against the current roster replaces the row.
+
 
 ## Skill-search native loading, 2026-10-13
 

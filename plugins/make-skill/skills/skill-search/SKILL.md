@@ -5,7 +5,7 @@ license: MIT
 compatibility: Any agent. The search command needs node and npx with sshlg-skills 1.55.0 or later; without them a grep over the installed skill directories does the same job.
 metadata:
   author: ssheleg
-  version: "0.33.5"
+  version: "0.33.6"
   homepage: https://github.com/ssheleg/make-skill
 ---
 

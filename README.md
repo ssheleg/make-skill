@@ -257,7 +257,11 @@ npx --yes sshlg-skills@latest list    # what the current release of each member 
 
 Restart your agent afterwards: skills and hooks load at session start.
 
-Per-channel, when you are updating this one member only:
+Inside the family, `npx --yes sshlg-skills@latest update` is the only update
+command: it runs the plugin, skills-CLI and prune steps together and keeps the pins.
+The per-channel commands below are for a **standalone** install of make-skill (one
+made outside the family launcher); a family member updated through them bypasses
+the family's pins:
 
 **One channel per agent.** A plugin plus a plain `~/.claude/skills` copy on the
 same Claude Code install shadow each other, and the stale one usually wins.
