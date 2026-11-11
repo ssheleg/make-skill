@@ -18,6 +18,18 @@ the release the CHANGELOG carries (MS-03).
 
 ---
 
+## Shipped state: v0.33.6 (candidate, 2026-11-11)
+
+Source checks on branch `fix/audit-1111`. Publication rows are added by the release receipt
+in HANDOFF once the tag, run and registry are read back.
+
+| REQ | What is checked | Evidence | Confirmed |
+|---|---|---|---|
+| MS-1, MS-2 | SKILL.md, README and `distribution.md`'s shadow rule say a family member updates only through `npx --yes sshlg-skills@latest update`; the per-channel commands are for standalone skills | `grep -n "sshlg-skills@latest update" plugins/make-skill/skills/make-skill/SKILL.md README.md plugins/make-skill/skills/make-skill/references/distribution.md` | observed, source candidate |
+| MS-3 | no live text tells anyone to create or paste an `NPM_TOKEN`; `release.yml`'s publish step carries no `NODE_AUTH_TOKEN` | `git grep -n -e NPM_TOKEN -e NODE_AUTH_TOKEN -- plugins SKILL-CARD.md CONTRIBUTING.md .github` prints only lines that say the token is gone | observed, source candidate |
+| MS-7 | SKILL.md body under its working limit | `audit_skill.py --house plugins/make-skill/skills/make-skill`: 0 GAP, 19 PASS, body 4515/4750 tokens (4631 before) | observed, source candidate |
+| Gate | whole suite | `npm test`, exit 0 | observed, source candidate |
+
 ## Shipped state: v0.33.5 (candidate, 2026-10-27)
 
 Source checks on branch `waves/1027-make-skill-m`. Publication rows are added by the release

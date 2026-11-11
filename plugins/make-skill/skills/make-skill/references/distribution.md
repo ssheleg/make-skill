@@ -37,7 +37,11 @@ npx skills update <name> --global --yes && rm -f ~/.claude/skills/<name>
 ```
 
 Put that prune inside whatever script performs the update, so the supported path
-can't leave a shadow behind. A symlink shadows exactly as a directory does — check
+can't leave a shadow behind. That command is for a **standalone** skill: a member
+of a family with its own launcher (the ssheleg family) never runs it, and updates
+only through the launcher, `npx --yes sshlg-skills@latest update`, which runs the
+plugin, skills-CLI and prune steps together and keeps the pins (Release checklist
+step 6). A symlink shadows exactly as a directory does: check
 with `ls -ld`, and remember `find -type f` will not see through it.
 
 ## The distributable repo layout
@@ -176,20 +180,23 @@ package's own repo, `npx` resolves the local package and reports a false
 
 ### npm gotchas — each one cost a debugging round
 
-- **npm 2FA:** an interactive `npm publish` throws EOTP, and a *classic* token
-  does not get past it. Two ways out, both of which remove the human step for
-  good — set one up rather than planning a manual publish forever:
-  - **Trusted publishing (OIDC) — preferred, no credential exists to leak.**
-    npm CLI ≥ 11.5.1, Node ≥ 22.14, `permissions: id-token: write`, and the
-    package configured on npmjs.com with the exact workflow *filename* as its
-    trusted publisher. No `NODE_AUTH_TOKEN` at all.
-  - **Granular automation token** in `NPM_TOKEN`, passed as `NODE_AUTH_TOKEN`.
-    Works immediately with no npmjs.com setup, at the cost of a long-lived
-    credential to rotate.
-
-  Write the workflow so both work — always grant `id-token: write` and always
-  pass `NODE_AUTH_TOKEN` from the secret. Then adopting OIDC later is deleting a
-  secret, not editing CI. `id-token: write` is also what signs `--provenance`.
+- **npm 2FA:** an interactive `npm publish` throws EOTP and asks for a one-time
+  code. CI publishing removes that step for good, and the route is **trusted
+  publishing (OIDC)**: no npm token exists anywhere, so none can leak or expire.
+  The ssheleg family publishes only this way; its `NPM_TOKEN` repository secrets
+  were deleted. What it takes:
+  - the workflow: `permissions: id-token: write`, npm CLI ≥ 11.5.1 (install
+    `npm@latest` in the job; the bundled npm is not guaranteed to be new enough)
+    and Node ≥ 22.14, `actions/setup-node` with `registry-url`, and **no**
+    `NODE_AUTH_TOKEN` on the publish step. `id-token: write` also signs
+    `--provenance`.
+  - **one setting on npmjs.com, set once per package by its owner:** package →
+    *Settings* → *Trusted Publisher* (`https://www.npmjs.com/package/<name>/access`)
+    → GitHub Actions, the owner, the repository, workflow filename `release.yml`,
+    no environment, permission `npm publish` (not `npm stage publish`). It needs
+    the owner's security key, so it is the one human step; everything else is the
+    agent's. Until it is set, the tag's publish job fails with `ENEEDAUTH` or
+    `E403`: that is this gate, not a bug in the workflow.
 
   Three properties the job needs, each earned the hard way:
   - **Skip a version already on the registry.** Publishing over one is a hard
@@ -314,12 +321,15 @@ is not a complete sentence.
 
 ## First publish — the 11-step sequence
 
-Run it end-to-end in one session. The only human step is npm 2FA, and step 9
-removes even that for every release after this one.
+Run it end-to-end in one session. The agent runs every command. A person is
+needed only for what needs their own hand: an npm sign-in or one-time code during
+the first `npm publish`, and the Trusted Publisher setting of step 9, after which
+no release needs anyone.
 
 1. **Preflight before code:** `npm view <name>` (E404 = free — but read the
    name-similarity trap above); `gh auth status` (may lie — try the operation
-   anyway); `npm whoami` (401 → plan the 2FA human step, keep building).
+   anyway); `npm whoami` (401 → an `npm login` is a human gate; record it and
+   keep building).
 2. Build per the SKILL.md layout; `git init -b main`; conventional commits; set
    the local git identity if `git config user.email` is empty.
 3. House validator + functional tests + BOTH `claude plugin validate … --strict`
@@ -333,18 +343,20 @@ removes even that for every release after this one.
    (`actions/workflows/validate.yml/badge.svg`), license.
 6. **CI:** poll `gh run list --repo <owner>/<name> --limit 1` until
    `completed success`. Red = fix now, not later.
-7. **npm:** `npm publish --dry-run` (eye the tarball) → `npm publish`. On
-   EOTP/2FA hand the user exactly one command (`cd <repo> && npm publish`), wait,
-   then verify `npm view <name> version` and e2e `npx <name>@<ver> --help`
-   **from a non-repo cwd**.
+7. **npm:** `npm publish --dry-run` (eye the tarball) → `npm publish`, both run
+   by the agent. On EOTP the gate is only the one-time code: ask for it, run
+   `npm publish --otp=<code>` yourself, then verify `npm view <name> version`
+   and e2e `npx <name>@<ver> --help` **from a non-repo cwd**.
 8. **Install for the user:** `claude plugin marketplace add <owner>/<name>` +
    `claude plugin install <name>@<name>`; verify
    `npx --yes skills add <owner>/<name> --list` finds the skills.
 9. **Arm CI publishing so this is the last manual publish.** Ship the release
-   workflow, then hand over two commands — `gh secret set NPM_TOKEN --repo
-   <owner>/<name>` (a GRANULAR AUTOMATION token; the user pastes it, never you)
-   and `gh variable set PUBLISH_NPMJS --body true --repo <owner>/<name>`. Secret
-   first: arming the variable with no token queues a red run on the next tag.
+   workflow (OIDC, per §3 *npm gotchas*); the package's owner sets its Trusted
+   Publisher on npmjs.com once (§3 names every field; it needs their security
+   key). Then the agent runs `gh variable set PUBLISH_NPMJS --body true --repo
+   <owner>/<name>`. Trusted Publisher first: arming the variable without it
+   queues a red run (`ENEEDAUTH` or `E403`) on the next tag. No npm token is
+   created, pasted or stored.
 10. **Done = five verified facts:** repo + CI green; npm resolvable via npx;
    plugin installed; skills-CLI discovery works; the next tag publishes without
    a human.

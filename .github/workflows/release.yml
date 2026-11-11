@@ -168,12 +168,13 @@ jobs:
     # — six of seven packages were behind when this was written. Armed per
     # repository by the PUBLISH_NPMJS variable.
     #
-    # Auth works two ways on purpose. NODE_AUTH_TOKEN comes from the NPM_TOKEN
-    # secret (it must be a GRANULAR AUTOMATION token — a classic token is still
-    # refused by 2FA). `id-token: write` is granted regardless, which is what npm
-    # trusted publishing (OIDC) needs: name this workflow as the package's trusted
-    # publisher on npmjs.com, delete the secret, and this file keeps working with
-    # no long-lived credential at all. It also signs provenance.
+    # Auth is npm trusted publishing (OIDC) only: `id-token: write` lets npm
+    # exchange the job's identity for a short-lived publish token, and it signs
+    # provenance. No npm token exists in this repository (the family's NPM_TOKEN
+    # secrets were deleted). The package's Trusted Publisher on npmjs.com names
+    # GitHub Actions, ssheleg/make-skill, workflow release.yml, no environment,
+    # permission `npm publish`. Until it is set, publish fails with ENEEDAUTH or
+    # E403, and setting it is the one human step (the owner's security key).
     needs: release
     if: vars.PUBLISH_NPMJS == 'true'
     runs-on: ubuntu-latest
@@ -231,8 +232,6 @@ jobs:
 
       - name: npm publish
         if: steps.pub.outputs.skip == 'false'
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --provenance
 
       - name: The registry must actually serve it

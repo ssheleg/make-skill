@@ -5,7 +5,7 @@ license: MIT
 compatibility: Authoring works on any agent. The bundled scripts/ need python3. Publishing steps need git, gh, node and npm; the plugin gates need the claude CLI. Not usable on the Claude API surface, which has no network and no runtime package install.
 metadata:
   author: ssheleg
-  version: "0.33.5"
+  version: "0.33.6"
   homepage: https://github.com/ssheleg/make-skill
 ---
 
@@ -198,8 +198,11 @@ regardless:
 
 ### First publish — end-to-end, same session
 
-Take it ALL the way, no half-done handoffs. Only the first publish needs a human
-(npm 2FA); **arming CI publishing is part of shipping**, so the second does not.
+Take it ALL the way, no half-done handoffs. The agent runs every command,
+`npm publish` included; a person is needed only for a one-time code npm asks for
+and the one-time Trusted Publisher setting on npmjs.com (it needs the owner's
+security key). **Arming CI publishing is part of shipping**, so the second
+release needs no one.
 **The 11-step sequence is in `references/distribution.md` → *First publish*.**
 Done = the five VERIFIED facts in that sequence's step 10 — nothing assumed.
 
@@ -260,10 +263,9 @@ merely incomplete:
 
 ## Gotchas (each cost a debugging round)
 
-- **npm publishing has a five-trap list** — 2FA/EOTP, a name-similarity 403 that
-  `npm view` cannot predict, auth failures masked as 404, read-replica lag, and
-  `npx` resolving locally inside the package's own repo. Each with its fix in
-  `references/distribution.md` → **read it before any publish.**
+- **npm publishing traps** (2FA, name-similarity 403, auth masked as 404,
+  replica lag, local `npx`): `references/distribution.md` → *npm gotchas*,
+  **read before any publish**; installer traps sit beside them.
 - **A stray `SKILL.md` anywhere in the repo ships as a REAL skill** — the skills
   CLI discovers every one in the tree, so a skeleton named `SKILL.md` lands in
   every agent as a placeholder (seen live: a skill named `<skill-name>`). Name
@@ -274,21 +276,13 @@ merely incomplete:
   name one after a skill** in the same plugin (both claim `/<x>`, the skill wins,
   the command is unreachable always-on cost). Details:
   `references/host-capabilities.md`.
-- **Writing the installer or validator?** More traps (piped-stdin readline,
-  raw-mode pickers, ANSI literals, python 3.9 drift) are in
-  `references/distribution.md` → *Installer implementation traps*.
-- **gh auth status may lie** (invalid token while git+ssh works): attempt the
-  operation before declaring it blocked.
-- **Duplicate-shadow: the stale copy wins, and it regrows.** A plugin install
-  plus a plain `~/.claude/skills/<name>` copy = two listings; `npx skills
-  add|update … --global` recreates that path **even when `claude-code` was never
-  targeted**, so the prune belongs inside the update command: `npx skills update
-  <name> --global --yes && rm -f ~/.claude/skills/<name>`. Plugin commands also
-  need the full id — `claude plugin update <name>` answers "Plugin not found".
-- **A pinned `version` you forget to bump freezes every user.** The version is
-  the update cache key: twenty commits under `0.6.1` and `/plugin update` still
-  says "already at the latest version". (Omitting it is legal — the git SHA then
-  drives updates. This canon pins and bumps.)
+- **`gh auth status` may lie**: attempt the operation before calling it blocked.
+- **Duplicate-shadow: the stale copy wins, and it regrows** with every `npx
+  skills … --global`. A family member updates ONLY through `npx --yes
+  sshlg-skills@latest update`; the per-channel commands and the prune are for
+  standalone skills (`references/distribution.md` → *The shadow rule*).
+- **A pinned `version` you forget to bump freezes every user**: it is the update
+  cache key (`references/claude-code-plugin.md`). This canon pins and bumps.
 - **Time-branching text rots**: superseded material goes under `## Old
   patterns`; a dated provenance line ages well (`references/authoring.md` →
   *Content guidelines*).
@@ -309,8 +303,9 @@ session:
 - everything green BEFORE the tag: `python3 test/validate.py` plus BOTH
   `claude plugin validate … --strict` runs;
 - **refresh THIS machine's global installs as Definition of Done** (per global
-  `~/.claude/CLAUDE.md`) — the exact three-command sequence is checklist step 6;
-  then remind about the restart;
+  `~/.claude/CLAUDE.md`), checklist step 6: a family member is one command,
+  `npx --yes sshlg-skills@latest update`; only a standalone skill takes the
+  three-command sequence. Then remind about the restart;
 - **move the family pin in the SAME session.** A member released without its
   umbrella pin bumped is invisible: `list` advertises the old version and
   `update` installs it (seen here 2026-08-10);

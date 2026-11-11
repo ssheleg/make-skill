@@ -1,3 +1,35 @@
+## v0.33.6: npm publishing is trusted publishing only; family updates take one command
+
+From the 2026-11-11 family audit (findings MS-1 to MS-5 and MS-7).
+
+- **Family members update with one command** (MS-1, MS-2). The Gotchas, the Release section
+  and README's update table gave `npx skills update <name> --global --yes && rm -f
+  ~/.claude/skills/<name>` and `claude plugin update make-skill@make-skill` with no family
+  caveat, and the Release section called checklist step 6 "the exact three-command
+  sequence". They now say what `references/distribution.md` step 6 already said: a family
+  member updates only through `npx --yes sshlg-skills@latest update`; the per-channel
+  commands and the prune are for standalone skills. The shadow rule in `distribution.md`
+  says the same beside its command.
+- **npm publishing is OIDC trusted publishing, with no token** (MS-3). The canon described a
+  `NPM_TOKEN` repository secret the operator pastes; the family's `NPM_TOKEN` secrets were
+  deleted and the hub's v1.87.0 published through OIDC with the secret empty (run
+  42909985882). `distribution.md` (npm gotchas, First publish steps 1 and 9), `SKILL-CARD.md`
+  and `CONTRIBUTING.md` now describe the OIDC route and name its one human step: the
+  package's Trusted Publisher on npmjs.com (GitHub Actions, owner, repository, workflow
+  `release.yml`, no environment, permission `npm publish`), which needs the owner's
+  security key. `release.yml` no longer passes `NODE_AUTH_TOKEN` to `npm publish`.
+- **The agent runs `npm publish`** (MS-4). The first publish no longer hands the user a
+  command: on EOTP only the one-time code is the human gate, and the agent runs
+  `npm publish --otp=<code>`.
+- **Gotchas point instead of repeating** (MS-7). The npm, installer, `gh auth`, shadow and
+  version-pin bullets duplicated `distribution.md` and `claude-code-plugin.md`; each is now
+  a short pointer. The SKILL.md body is 4515 tokens (was 4631; working limit 4750).
+- **Retired eval neighbour marked** (MS-5). `claude-mem:version-bump`, the measured near-miss
+  behind q21/q22, is retired on the author's machine. No installed skill claims the same
+  job, so the queries and the measured table stay, and `test/evals/RESULTS.md` and
+  `triggers.json` say the neighbour is retired (noted 2026-11-11). No model eval was re-run.
+- No skill `description` changed.
+
 ## v0.33.5: skill-search names its subject first
 
 - **skill-search's description names its subject within the first 57 characters** (hub board row
