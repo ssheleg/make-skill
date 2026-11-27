@@ -25,8 +25,8 @@ concepts with synonyms, search, then follow the matching SKILL.md.
 2. **Decide whether a skill could help.** None for a question, an explanation,
    or a one-line edit — say so and proceed. Everything else continues.
 3. **Turn the meaning into concepts**: 3–8 short terms in English AND Russian,
-   plus synonyms and the artifact involved (`pdf, документ, extract text,
-   извлечь текст`). Name the domain, not the verb alone.
+   plus synonyms and the artifact involved (`pdf, «документ», extract text,
+   «извлечь текст»`). Name the domain, not the verb alone.
 4. **Search the whole catalogue:**
 
    ```bash

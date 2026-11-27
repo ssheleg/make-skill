@@ -49,7 +49,7 @@ set means the set is not "all green", however many PASSes surround it.
 ## Worked examples, one per axis
 
 ```
-axis: routing      input: "подключи оплату картой"        expect: stripe-billing fires
+axis: routing      input: «подключи оплату картой»        expect: stripe-billing fires
 axis: routing      input: "explain what a webhook is"     expect: no skill fires
 axis: correctness  artifact: the generated SKILL.md       check: audit_skill.py exits 0
 axis: visual       artifact: the rendered landing hero    check: judge rubric §type-rhythm

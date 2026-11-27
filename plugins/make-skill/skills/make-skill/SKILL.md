@@ -1,6 +1,6 @@
 ---
 name: make-skill
-description: Use when creating, auditing, packaging or publishing an agent skill or Claude Code plugin. Triggers - "make a skill" / "сделай скилл", "skill audit" / «аудит скилов», "заверни в плагин", "опубликуй скилл". NOT for a repo that ships no skill; opt out with "no make-skill" / «без make-skill».
+description: Use when creating, auditing, packaging or publishing an agent skill or Claude Code plugin. Triggers - "make a skill" / «сделай скилл», "skill audit" / «аудит скилов», «заверни в плагин», «опубликуй скилл». NOT for a repo that ships no skill; opt out with "no make-skill" / «без make-skill».
 license: MIT
 compatibility: Authoring works on any agent. The bundled scripts/ need python3. Publishing steps need git, gh, node and npm; the plugin gates need the claude CLI. Not usable on the Claude API surface, which has no network and no runtime package install.
 metadata:
@@ -18,7 +18,7 @@ orchestrator, release automation). **make-skill itself** is built to this canon.
 ## Triggers
 
 "wrap it in a plugin", "publish a skill", "retrofit a skill to the standard" /
-"приведи скилл к стандарту", "does this skill match the spec" / «соответствует ли
+«приведи скилл к стандарту», "does this skill match the spec" / «соответствует ли
 скилл стандарту», "check a skill against the standard" /
 «проверь скилл по стандарту», "is this skill safe to install" /
 «безопасно ли ставить скилл», `claude plugin validate` failures, MCP/A2A

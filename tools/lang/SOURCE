@@ -1,0 +1,4 @@
+# Vendored copy of the English-docs scanner (order 72185b98, wave 1).
+# Origin: passioncode-ai/fabric-workspace tools/lang/cyrillic_scan.py, branch docs/english-docs-scan
+# (not yet on main when copied on 2026-11-27); repin to the main commit once it lands.
+sha256 fc1138bb5be8afbc91fb3e1082465c83ac8b8d593f892dfa9b8a2baaff24169a  tools/lang/cyrillic_scan.py
