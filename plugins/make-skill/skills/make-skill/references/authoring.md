@@ -356,7 +356,7 @@ Two shapes recur and both belong in every gate's fixtures:
   `github:owner/repo` shorthand, so the check printed `skip` and reported success
   for work it never did.
 - **The word inside another word.** Any matcher over prose needs the near-miss:
-  `lease` inside *please*, `аудит` inside *аудитория*, `seo` inside *Seoul*. These
+  `lease` inside *please*, «аудит» inside «аудитория», `seo` inside *Seoul*. These
   are found by running the gate over a real corpus, not by reading it.
 
 **Count the cases, do not restate the count.** A summary line saying *"5 cases"*

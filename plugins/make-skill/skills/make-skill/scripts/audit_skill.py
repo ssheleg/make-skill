@@ -64,7 +64,7 @@ DESC_SOFT_CAP = 500
 # The floor is 60 and it is deliberately permissive. Measured on the shipped family, the
 # smallest honest WHAT half is **149** characters (`ux-audit`) and the largest 949, so 60
 # clears every real description by more than double and still catches
-# `Use when the user asks. Triggers - "x" / "у".`, whose WHAT half is 13.
+# `Use when the user asks. Triggers - "x" / «у».`, whose WHAT half is 13.
 #
 # **This rule finds no gap today, and that is stated rather than hidden.** A standard is
 # for the description not yet written; a rule that fires on nothing now is only worth

@@ -38,6 +38,8 @@ python3 test/validate.py
 
 Exit 0 prints `PASS: …`. Every failure names the file and the rule.
 
+System docs and code comments are English (`python3 tools/lang/cyrillic_scan.py check .`, part of `npm test`); enable the staged-files pre-commit hook once per clone with `git config core.hooksPath .githooks`.
+
 `npm test` is the gate proper — the validator, the eval-set validator and its self-test,
 the four suites, then the audit regressions, in order:
 

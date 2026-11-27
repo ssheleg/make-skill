@@ -32,6 +32,8 @@ jobs:
 
       - name: Structural validator
         run: python3 test/validate.py
+      - name: English system docs (order 72185b98)
+        run: python3 tools/lang/cyrillic_scan.py check .
       - name: The plant guard itself (content AND mode, and the incident that named it)
         run: python3 test/plant_guard_test.py
 
